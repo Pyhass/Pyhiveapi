@@ -1,0 +1,344 @@
+{
+    "device_list_sensor": [
+        {
+            "HA_DeviceType": "Hub_OnlineStatus",
+            "Hive_NodeID": "parent-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Hub",
+            "Hive_DeviceType": "Hub"
+        },
+        {
+            "HA_DeviceType": "Hub_SMOKE_CO",
+            "Hive_NodeID": "hub-0000-0000-0000-000000000001",
+            "Hive_NodeName": "HubSmoke Detection",
+            "Hive_DeviceType": "Hub"
+        },
+        {
+            "HA_DeviceType": "Hub_DOG_BARK",
+            "Hive_NodeID": "hub-0000-0000-0000-000000000001",
+            "Hive_NodeName": "HubDog Bark Detection",
+            "Hive_DeviceType": "Hub"
+        },
+        {
+            "HA_DeviceType": "Hub_GLASS_BREAK",
+            "Hive_NodeID": "hub-0000-0000-0000-000000000001",
+            "Hive_NodeName": "HubGlass Break Detection",
+            "Hive_DeviceType": "Hub"
+        },
+        {
+            "HA_DeviceType": "Heating_CurrentTemperature",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating"
+        },
+        {
+            "HA_DeviceType": "Heating_TargetTemperature",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating"
+        },
+        {
+            "HA_DeviceType": "Heating_State",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating"
+        },
+        {
+            "HA_DeviceType": "Heating_Mode",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating"
+        },
+        {
+            "HA_DeviceType": "Heating_Boost",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_BatteryLevel",
+            "Hive_NodeID": "thermostat-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "thermostatui"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Availability",
+            "Hive_NodeID": "thermostat-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "thermostatui"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_BatteryLevel",
+            "Hive_NodeID": "motion-sensor-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "motionsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Availability",
+            "Hive_NodeID": "motion-sensor-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "motionsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_BatteryLevel",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Availability",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Availability",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000002",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_BatteryLevel",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000003",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Availability",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000003",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_BatteryLevel",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000002",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Mode",
+            "Hive_NodeID": "light-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Light 3",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Availability",
+            "Hive_NodeID": "light-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Light 3",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Mode",
+            "Hive_NodeID": "light-0000-0000-0000-000000000004",
+            "Hive_NodeName": "Light 4",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Availability",
+            "Hive_NodeID": "light-0000-0000-0000-000000000004",
+            "Hive_NodeName": "Light 4",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Mode",
+            "Hive_NodeID": "light-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Light 2",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Availability",
+            "Hive_NodeID": "light-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Light 2",
+            "Hive_DeviceType": "warmwhitelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Mode",
+            "Hive_NodeID": "light-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Light 1",
+            "Hive_DeviceType": "tuneablelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Availability",
+            "Hive_NodeID": "light-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Light 1",
+            "Hive_DeviceType": "tuneablelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Mode",
+            "Hive_NodeID": "light-0000-0000-0000-000000000005",
+            "Hive_NodeName": "Light 5",
+            "Hive_DeviceType": "tuneablelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light_Availability",
+            "Hive_NodeID": "light-0000-0000-0000-000000000005",
+            "Hive_NodeName": "Light 5",
+            "Hive_DeviceType": "tuneablelight"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Mode",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Plug 1",
+            "Hive_DeviceType": "activeplug"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Availability",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Plug 1",
+            "Hive_DeviceType": "activeplug"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Mode",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Plug 2",
+            "Hive_DeviceType": "activeplug"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Availability",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Plug 2",
+            "Hive_DeviceType": "activeplug"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Mode",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Plug 3",
+            "Hive_DeviceType": "activeplug"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug_Availability",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Plug 3",
+            "Hive_DeviceType": "activeplug"
+        }
+    ],
+    "device_list_binary_sensor": [
+        {
+            "HA_DeviceType": "Hive_Device_Binary_Sensor",
+            "Hive_NodeID": "motion-sensor-0000-0000-000000000001",
+            "Hive_NodeName": "Motion Sensor 1",
+            "Hive_DeviceType": "motionsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Binary_Sensor",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000001",
+            "Hive_NodeName": "Contact Sensor 1",
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Binary_Sensor",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000002",
+            "Hive_NodeName": "Contact Sensor 2",
+            "Hive_DeviceType": "contactsensor"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Binary_Sensor",
+            "Hive_NodeID": "contact-sensor-0000-0000-000000000003",
+            "Hive_NodeName": "Contact Sensor 3",
+            "Hive_DeviceType": "contactsensor"
+        }
+    ],
+    "device_list_climate": [
+        {
+            "HA_DeviceType": "Heating",
+            "Hive_NodeID": "heating-0000-0000-0000-000000000001",
+            "Hive_NodeName": null,
+            "Hive_DeviceType": "Heating",
+            "Thermostat_NodeID": "thermostat-0000-0000-0000-000000000001"
+        }
+    ],
+    "device_list_light": [
+        {
+            "HA_DeviceType": "Hive_Device_Light",
+            "Hive_Light_DeviceType": "warmwhitelight",
+            "Hive_NodeID": "light-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Light 3",
+            "Hive_DeviceType": "Light"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light",
+            "Hive_Light_DeviceType": "warmwhitelight",
+            "Hive_NodeID": "light-0000-0000-0000-000000000004",
+            "Hive_NodeName": "Light 4",
+            "Hive_DeviceType": "Light"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light",
+            "Hive_Light_DeviceType": "warmwhitelight",
+            "Hive_NodeID": "light-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Light 2",
+            "Hive_DeviceType": "Light"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light",
+            "Hive_Light_DeviceType": "tuneablelight",
+            "Hive_NodeID": "light-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Light 1",
+            "Hive_DeviceType": "Light"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Light",
+            "Hive_Light_DeviceType": "tuneablelight",
+            "Hive_NodeID": "light-0000-0000-0000-000000000005",
+            "Hive_NodeName": "Light 5",
+            "Hive_DeviceType": "Light"
+        }
+    ],
+    "device_list_plug": [
+        {
+            "HA_DeviceType": "Hive_Device_Plug",
+            "Hive_Switch_DeviceType": "activeplug",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Plug 1",
+            "Hive_DeviceType": "Switch"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug",
+            "Hive_Switch_DeviceType": "activeplug",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Plug 2",
+            "Hive_DeviceType": "Switch"
+        },
+        {
+            "HA_DeviceType": "Hive_Device_Plug",
+            "Hive_Switch_DeviceType": "activeplug",
+            "Hive_NodeID": "plug-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Plug 3",
+            "Hive_DeviceType": "Switch"
+        },
+        {
+            "HA_DeviceType": "Hive_Action",
+            "Hive_Switch_DeviceType": "Action",
+            "Hive_NodeID": "action1-0000-0000-0000-000000000001",
+            "Hive_NodeName": "Action 1",
+            "Hive_DeviceType": "Action"
+        },
+        {
+            "HA_DeviceType": "Hive_Action",
+            "Hive_Switch_DeviceType": "Action",
+            "Hive_NodeID": "action2-0000-0000-0000-000000000002",
+            "Hive_NodeName": "Action 2",
+            "Hive_DeviceType": "Action"
+        },
+        {
+            "HA_DeviceType": "Hive_Action",
+            "Hive_Switch_DeviceType": "Action",
+            "Hive_NodeID": "action3-0000-0000-0000-000000000003",
+            "Hive_NodeName": "Action 3",
+            "Hive_DeviceType": "Action"
+        },
+        {
+            "HA_DeviceType": "Hive_Action",
+            "Hive_Switch_DeviceType": "Action",
+            "Hive_NodeID": "action4-0000-0000-0000-000000000004",
+            "Hive_NodeName": "Action 4",
+            "Hive_DeviceType": "Action"
+        },
+        {
+            "HA_DeviceType": "Hive_Action",
+            "Hive_Switch_DeviceType": "Action",
+            "Hive_NodeID": "action5-0000-0000-0000-000000000005",
+            "Hive_NodeName": "Action 5",
+            "Hive_DeviceType": "Action"
+        }
+    ]
+}

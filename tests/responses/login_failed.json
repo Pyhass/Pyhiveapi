@@ -1,0 +1,6 @@
+{
+    "original": "<Response [400]>",
+    "parsed": {
+        "error": "NOT_AUTHORIZED"
+    }
+}

@@ -1,15 +1,20 @@
 # general things to ignore
 build/
 dist/
-*.vscode/
 *.egg-info/
 *.egg
 *.py[cod]
 __pycache__/
 *.so
 *~
+.vscode/*
+<<<<<<< HEAD
+=======
+build
+dist
+pyhiveapi.egg-info
+>>>>>>> climate_hotwater-update
 
 # due to using tox and pytest
 .tox
 .cache
-.idea

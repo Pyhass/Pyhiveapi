@@ -1,0 +1,10 @@
+{
+    "weather": {
+        "icon": "light_rain_showers",
+        "description": "Light rain shower",
+        "temperature": {
+            "unit": "C",
+            "value": 8
+        }
+    }
+}

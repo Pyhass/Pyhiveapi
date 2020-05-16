@@ -1,0 +1,100 @@
+{
+    "monday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "tuesday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "wednesday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "thursday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "friday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "saturday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ],
+    "sunday": [
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 300
+        },
+        {
+            "value": {
+                "target": 20
+            },
+            "start": 960
+        }
+    ]
+}

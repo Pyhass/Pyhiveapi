@@ -1,0 +1,7 @@
+{
+    "original": "<Response [200]>",
+    "parsed": {
+        "status": "ON",
+        "brightness": 95
+    }
+}

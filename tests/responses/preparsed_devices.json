@@ -1,0 +1,857 @@
+[
+    {
+        "id": "parent-0000-0000-0000-000000000001",
+        "type": "hub",
+        "sortOrder": 0,
+        "created": 1466594464511,
+        "lastSeen": 1550320637378,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SENSE",
+            "version": "1.0.0-5999-16.0",
+            "manufacturer": "AlertMe",
+            "hardwareIdentifier": "HIR-771",
+            "power": "mains",
+            "signal": 100,
+            "uptime": 1738705,
+            "operation": "DEPLOYED",
+            "ipAddress": "192.168.1.168",
+            "macAddress": "00:1C:2B:1C:2E:68",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "REBOOT_HUB",
+                "MIMIC_MODE",
+                "ActionsDaylight",
+                "ActionsMultiOutput",
+                "SLT5_INSTALL",
+                "DATA_SHARING",
+                "NOTIFICATIONS",
+                "CHANGE_WIFI",
+                "ACTIONS_2",
+                "INSTALL_PHILIPS_HUE",
+                "PRODUCT_GROUP"
+            ],
+            "pmz": "OK",
+            "connection": "wifi",
+            "daylight": {
+                "status": "LIGHT",
+                "nextDark": 1550337661000,
+                "nextLight": 1550388301000,
+                "nextSunrise": 1550388300000,
+                "nextSunset": 1550337660000
+            },
+            "mimicMode": {
+                "consumers": [
+                    "light-0000-0000-0000-000000000003",
+                    "light-0000-0000-0000-000000000002",
+                    "light-0000-0000-0000-000000000004"
+                ],
+                "enabled": false,
+                "start": "21:00",
+                "end": "23:00"
+            },
+            "assistedLiving": {
+                "noMorningActivity": false,
+                "nightTime": false,
+                "learning": true
+            }
+        },
+        "state": {
+            "name": "Hub",
+            "discovery": false
+        }
+    },
+    {
+        "id": "parent-0000-0000-0000-000000000002",
+        "type": "boilermodule",
+        "sortOrder": 0,
+        "created": 1498773552677,
+        "lastSeen": 1524848995008,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLR1",
+            "version": "09134640",
+            "manufacturer": "Computime",
+            "power": "mains",
+            "signal": 100,
+            "zone": "parent-0000-0000-0000-000000000002",
+            "tui": "thermostat-0000-0000-0000-000000000001",
+            "modelVariant": "SLR1",
+            "capabilities": [
+                "INFORMATION"
+            ]
+        },
+        "state": {
+            "name": "Thermostat",
+            "zoneName": "Thermostat"
+        }
+    },
+    {
+        "id": "thermostat-0000-0000-0000-000000000001",
+        "type": "thermostatui",
+        "sortOrder": 0,
+        "created": 1498773546051,
+        "lastSeen": 1549431062371,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLT3",
+            "version": "03130406",
+            "manufacturer": "Computime",
+            "power": "battery",
+            "signal": 100,
+            "battery": 40,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "HEATING_ALERTS",
+                "GEOLOCATION",
+                "HOLIDAY_MODE",
+                "SLT3B_REPLACEMENT",
+                "OPTIMUM_START"
+            ],
+            "modelVariant": "SLT3",
+            "zone": "parent-0000-0000-0000-000000000002"
+        },
+        "state": {
+            "name": "Thermostat",
+            "zoneName": "Thermostat"
+        }
+    },
+    {
+        "id": "camera-0000-0000-0000-000000000001",
+        "type": "hivecamera",
+        "sortOrder": 0,
+        "created": 1543677886208,
+        "lastSeen": 1550320722000,
+        "props": {
+            "online": true,
+            "model": "HCI001",
+            "version": "V0_0_00_093_svn825",
+            "manufacturer": "Hive",
+            "hardwareIdentifier": "51385FC1F5024E748A446456449E9601",
+            "power": "mains",
+            "signal": 37,
+            "battery": 100,
+            "ipAddress": "000.168.0.00",
+            "macAddress": "00:0A:11:BB:22:CC",
+            "temperature": "40",
+            "hardwareVersion": "H4",
+            "capabilities": [
+                "CAMERA_VIDEO",
+                "CAMERA_DETECTION",
+                "CAMERA_DEVICE",
+                "NOTIFICATIONS",
+                "INFORMATION",
+                "CHANGE_WIFI",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Camera 1",
+            "resolution": "1080P",
+            "motionDetection": "ALL",
+            "audioDetection": "ALL",
+            "ledDot": false,
+            "ledRing": true,
+            "soundAlert": true,
+            "nightVision": "AUTO",
+            "invertImage": false,
+            "cameraAudio": true,
+            "motionSensitivity": "LOW",
+            "audioSensitivity": "LOW",
+            "timeZone": "Europe/London",
+            "notificationScheduleEnabled": false,
+            "notificationsMode": "DISABLED",
+            "frameRate": "30",
+            "cameraZoom": "1X",
+            "storage": "CLOUD",
+            "activityZone": "ALL",
+            "scheduleEnabled": false,
+            "mode": "ARMED",
+            "systemNotificationSettings": {
+                "connectionStatus": true,
+                "batteryLevel": true,
+                "overheating": true
+            },
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ]
+            },
+            "notificationSchedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000001",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1495824791604,
+        "lastSeen": 1549431134911,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01045700",
+            "manufacturer": "Computime",
+            "power": "mains",
+            "signal": 99,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 1"
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000002",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1543675662673,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01035700",
+            "manufacturer": "Computime",
+            "power": "mains",
+            "signal": 100,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 2"
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000003",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1512759057107,
+        "lastSeen": 1549431076054,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01035700",
+            "manufacturer": "Computime",
+            "power": "mains",
+            "signal": 100,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 3"
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000003",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1495822458543,
+        "lastSeen": 1547585974529,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "power": "mains",
+            "signal": 99,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 3"
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000004",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1495819606370,
+        "lastSeen": 1549742852622,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "power": "mains",
+            "signal": 99,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 4"
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000002",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1470158558350,
+        "lastSeen": 1543686750227,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "power": "mains",
+            "signal": 99,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 2"
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000001",
+        "type": "tuneablelight",
+        "sortOrder": 0,
+        "created": 1543676094101,
+        "lastSeen": 1550215521717,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "TWBulb01UK",
+            "version": "11300002",
+            "manufacturer": "Aurora",
+            "power": "mains",
+            "signal": 96,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 1"
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000005",
+        "type": "tuneablelight",
+        "sortOrder": 0,
+        "created": 1543676824201,
+        "lastSeen": 1548315854100,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "TWBulb01UK",
+            "version": "11300002",
+            "manufacturer": "Aurora",
+            "power": "mains",
+            "signal": 96,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 5"
+        }
+    },
+    {
+        "id": "motion-sensor-0000-0000-000000000001",
+        "type": "motionsensor",
+        "sortOrder": 0,
+        "created": 1495823441915,
+        "lastSeen": 1546318436728,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "MOT003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "power": "battery",
+            "signal": 99,
+            "battery": 80,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Motion Sensor 1"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000001",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1498308140974,
+        "lastSeen": 1549430905506,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "DWS003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "power": "battery",
+            "signal": 100,
+            "battery": 100,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 1"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000002",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1543762412780,
+        "lastSeen": 1550177054944,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "DWS003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "power": "battery",
+            "signal": 100,
+            "battery": 100,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 2"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000003",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1500998859813,
+        "lastSeen": 1536931887105,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": false,
+            "model": "DWS003",
+            "version": "04002603",
+            "manufacturer": "HiveHome.com",
+            "power": "battery",
+            "signal": 100,
+            "battery": 60,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 3"
+        }
+    }
+]

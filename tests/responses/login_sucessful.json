@@ -1,0 +1,42 @@
+{
+    "original": "<Response [200]>",
+    "parsed": {
+        "user": {
+            "id": "111111111-2222-3333-4444-555555555555",
+            "username": "test_email@email.co.uk",
+            "firstName": "test",
+            "lastName": "email",
+            "address": "1 London Street ",
+            "city": "London",
+            "country": "United Kingdom",
+            "countryCode": "GB",
+            "postcode": "AA1 BB2",
+            "longitude": -1.234567,
+            "latitude": 12.34567,
+            "pin": "0000",
+            "email": "test_email@email.co.uk",
+            "mobile": "",
+            "phone": "",
+            "timezone": "Europe/London",
+            "locale": "en-GB",
+            "temperatureUnit": "C"
+        },
+        "status": "OK",
+        "alerts": {
+            "failuresEmail": false,
+            "failuresSMS": false,
+            "warningsEmail": false,
+            "warningsSMS": false,
+            "nightAlerts": false
+        },
+        "media": {
+            "allowAnalyticsSharing": false
+        },
+        "token": "Test_Token",
+        "platform": {
+            "name": "eu-west-1",
+            "endpoint": "https://beekeeper-uk.hivehome.com/1.0",
+            "honeycomb": "https://api-prod.bgchprod.info"
+        }
+    }
+}

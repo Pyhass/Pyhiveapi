@@ -1,0 +1,2571 @@
+[
+    {
+        "id": "hub-0000-0000-0000-000000000001",
+        "type": "sense",
+        "sortOrder": 0,
+        "created": 1343971266301,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SENSE",
+            "version": "1.0.0-5999-16.0",
+            "manufacturer": "AlertMe",
+            "sensors": {
+                "GLASS_BREAK": {
+                    "active": true,
+                    "clipid": "Clip 1",
+                    "start": 1549184714000,
+                    "end": 1549184716000
+                },
+                "SMOKE_CO": {
+                    "active": false,
+                    "clipid": "Clip 2",
+                    "start": 1543759418000,
+                    "end": 1543759429000
+                },
+                "DOG_BARK": {
+                    "active": false,
+                    "clipid": "Clip 3",
+                    "start": 1550225420000,
+                    "end": 1550225422000
+                }
+            },
+            "capabilities": [
+                "NOTIFICATIONS",
+                "CHANGE_WIFI",
+                "INFORMATION",
+                "DATA_SHARING",
+                "RENAME",
+                "REBOOT_HUB"
+            ]
+        },
+        "state": {
+            "name": "Hub",
+            "mute": false,
+            "sensors": {
+                "GLASS_BREAK": true,
+                "SMOKE_CO": true,
+                "DOG_BARK": true
+            }
+        }
+    },
+    {
+        "id": "heating-0000-0000-0000-000000000001",
+        "type": "heating",
+        "sortOrder": 0,
+        "created": 1294771598031,
+        "lastSeen": 1574348291098,
+        "parent": "parent-0000-0000-0000-000000000002",
+        "props": {
+            "online": true,
+            "model": "SLR1",
+            "version": "09134640",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "HEATING_ALERTS",
+                "GEOLOCATION",
+                "HOLIDAY_MODE",
+                "BOOST",
+                "OPTIMUM_START"
+            ],
+            "holidayMode": {
+                "enabled": false,
+                "start": null,
+                "end": null,
+                "temperature": 7
+            },
+            "modelVariant": "SLR1",
+            "working": true,
+            "pmz": "OK",
+            "previous": {
+                "mode": "MANUAL",
+                "target": 19.5
+            },
+            "scheduleOverride": true,
+            "temperature": 20.28,
+            "zone": "parent-0000-0000-0000-000000000002"
+        },
+        "state": {
+            "name": "Thermostat",
+            "boost": 8,
+            "frostProtection": 7,
+            "mode": "BOOST",
+            "schedule": {
+                "monday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "thursday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "friday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "saturday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ],
+                "sunday": [
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 300
+                    },
+                    {
+                        "value": {
+                            "target": 20
+                        },
+                        "start": 960
+                    }
+                ]
+            },
+            "target": 22,
+            "optimumStart": true,
+            "failureStatus": "NORMAL"
+        }
+    },
+    {
+        "id": "camera-0000-0000-0000-000000000001",
+        "type": "hivecamera",
+        "sortOrder": 0,
+        "created": 1243477586508,
+        "lastSeen": 1553324607010,
+        "props": {
+            "online": true,
+            "model": "HCI001",
+            "version": "V0_0_00_093_svn825",
+            "manufacturer": "Hive",
+            "hardwareIdentifier": "51385FC1F5024E748A446456449E9601",
+            "ipAddress": "000.168.0.00",
+            "macAddress": "00:0A:11:BB:22:CC",
+            "temperature": "40",
+            "hardwareVersion": "H4",
+            "capabilities": [
+                "CAMERA_VIDEO",
+                "CAMERA_DETECTION",
+                "CAMERA_DEVICE",
+                "NOTIFICATIONS",
+                "INFORMATION",
+                "CHANGE_WIFI",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Camera 1",
+            "resolution": "1080P",
+            "motionDetection": "ALL",
+            "audioDetection": "ALL",
+            "ledDot": false,
+            "ledRing": true,
+            "soundAlert": true,
+            "nightVision": "AUTO",
+            "invertImage": false,
+            "cameraAudio": true,
+            "motionSensitivity": "LOW",
+            "audioSensitivity": "LOW",
+            "timeZone": "Europe/London",
+            "notificationScheduleEnabled": false,
+            "notificationsMode": "DISABLED",
+            "frameRate": "30",
+            "cameraZoom": "1X",
+            "storage": "CLOUD",
+            "activityZone": "ALL",
+            "scheduleEnabled": false,
+            "mode": "ARMED",
+            "systemNotificationSettings": {
+                "connectionStatus": true,
+                "batteryLevel": true,
+                "overheating": true
+            },
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "mode": "PRIVACY"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "mode": "ARMED"
+                        }
+                    }
+                ]
+            },
+            "notificationSchedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "state": "DISABLE"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "state": "ENABLE"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000001",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1295844392614,
+        "lastSeen": 1549431134911,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01045700",
+            "manufacturer": "Computime",
+            "powerConsumption": 0,
+            "onSince": 1550266428863,
+            "inUse": false,
+            "deviceClass": "UNKNOWN",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 1",
+            "status": "OFF",
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 480,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000002",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1523679665643,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01035700",
+            "manufacturer": "Computime",
+            "powerConsumption": 0,
+            "onSince": 1553134057795,
+            "inUse": false,
+            "deviceClass": "UNKNOWN",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 2",
+            "status": "OFF",
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "plug-0000-0000-0000-000000000003",
+        "type": "activeplug",
+        "sortOrder": 0,
+        "created": 1512759057107,
+        "lastSeen": 1549431076054,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "SLP2b",
+            "version": "01035700",
+            "manufacturer": "Computime",
+            "powerConsumption": 0,
+            "onSince": 1550266371454,
+            "inUse": false,
+            "deviceClass": "UNKNOWN",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE"
+            ]
+        },
+        "state": {
+            "name": "Plug 3",
+            "status": "OFF",
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 1320,
+                        "value": {
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1380,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000003",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1995324452543,
+        "lastSeen": 1147535994599,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "SCHEDULE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 3",
+            "status": "OFF",
+            "brightness": 100,
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000004",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1495819606370,
+        "lastSeen": 1549742852622,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "SCHEDULE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 4",
+            "status": "OFF",
+            "brightness": 100,
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000002",
+        "type": "warmwhitelight",
+        "sortOrder": 0,
+        "created": 1470158558350,
+        "lastSeen": 1543686750227,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "FWBulb01",
+            "version": "11480002",
+            "manufacturer": "Aurora",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "SCHEDULE",
+                "IDENTIFY_DEVICE"
+            ]
+        },
+        "state": {
+            "name": "Light 2",
+            "status": "OFF",
+            "brightness": 100,
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 1095,
+                        "value": {
+                            "brightness": 5,
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1350,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000001",
+        "type": "tuneablelight",
+        "sortOrder": 0,
+        "created": 1543676094101,
+        "lastSeen": 1550215521717,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "TWBulb01UK",
+            "version": "11300002",
+            "manufacturer": "Aurora",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "LIGHT_TUNEABLE",
+                "SCHEDULE",
+                "IDENTIFY_DEVICE"
+            ],
+            "colourTemperature": {
+                "min": 2700,
+                "max": 6535
+            }
+        },
+        "state": {
+            "name": "Light 1",
+            "status": "OFF",
+            "brightness": 100,
+            "mode": "MANUAL",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 390,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 510,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 100,
+                            "colourTemperature": 4617.5,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1290,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            },
+            "colourTemperature": 2703
+        }
+    },
+    {
+        "id": "light-0000-0000-0000-000000000005",
+        "type": "tuneablelight",
+        "sortOrder": 0,
+        "created": 1543676824201,
+        "lastSeen": 1548315854100,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "TWBulb01UK",
+            "version": "11300002",
+            "manufacturer": "Aurora",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "GROUPABLE",
+                "MIMIC_MODE",
+                "LIGHT_TUNEABLE",
+                "SCHEDULE",
+                "IDENTIFY_DEVICE"
+            ],
+            "colourTemperature": {
+                "min": 2700,
+                "max": 6535
+            }
+        },
+        "state": {
+            "name": "Light 5",
+            "status": "OFF",
+            "brightness": 55,
+            "mode": "SCHEDULE",
+            "schedule": {
+                "monday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 55,
+                            "colourTemperature": 4021.666732788086,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 55,
+                            "colourTemperature": 4021.666732788086,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 55,
+                            "colourTemperature": 4021.666732788086,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "thursday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 55,
+                            "colourTemperature": 4021.666732788086,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "friday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 960,
+                        "value": {
+                            "brightness": 55,
+                            "colourTemperature": 4021.666732788086,
+                            "colourMode": "TUNABLE",
+                            "status": "ON"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "saturday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ],
+                "sunday": [
+                    {
+                        "start": 0,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    },
+                    {
+                        "start": 1080,
+                        "value": {
+                            "status": "OFF"
+                        }
+                    }
+                ]
+            },
+            "colourTemperature": 4022
+        }
+    },
+    {
+        "id": "motion-sensor-0000-0000-000000000001",
+        "type": "motionsensor",
+        "sortOrder": 0,
+        "created": 1495823441915,
+        "lastSeen": 1546318436728,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "MOT003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "motion": {
+                "status": false,
+                "end": 1550320252962
+            },
+            "deviceClass": "UNKNOWN",
+            "statusChanged": 1550320252962,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "MOTION_SENSOR"
+            ]
+        },
+        "state": {
+            "name": "Motion Sensor 1"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000001",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1498308140974,
+        "lastSeen": 1549430905506,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "DWS003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "status": "CLOSED",
+            "statusChanged": 1550319940352,
+            "deviceClass": "UNKNOWN",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "CONTACT_SENSOR"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 1"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000002",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1543762412780,
+        "lastSeen": 1550177054944,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": true,
+            "model": "DWS003",
+            "version": "05042603",
+            "manufacturer": "HiveHome.com",
+            "status": "CLOSED",
+            "statusChanged": 1550310866196,
+            "deviceClass": "UNKNOWN",
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "CONTACT_SENSOR"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 2"
+        }
+    },
+    {
+        "id": "contact-sensor-0000-0000-000000000003",
+        "type": "contactsensor",
+        "sortOrder": 0,
+        "created": 1500998859813,
+        "lastSeen": 1536931887105,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+            "online": false,
+            "model": "DWS003",
+            "version": "04002603",
+            "manufacturer": "HiveHome.com",
+            "status": "OPEN",
+            "statusChanged": 1547488095058,
+            "capabilities": [
+                "INFORMATION",
+                "RENAME",
+                "DELETE",
+                "CONTACT_SENSOR"
+            ]
+        },
+        "state": {
+            "name": "Contact Sensor 3"
+        }
+    },
+    {
+        "id": "hotwater-0000-0000-0000-000000000001",
+        "type": "hotwater",
+        "sortOrder": 0,
+        "created": 1490945300074,
+        "lastSeen": 1496048965374,
+        "parent": "parent-0000-0000-0000-000000000002",
+        "props": {
+            "online": true,
+            "model": "SLR2",
+            "version": "08074640",
+            "zone": "parent-0000-0000-0000-000000000002",
+            "maxEvents": 6,
+            "holidayMode": {
+                "enabled": false,
+                "start": 1494063000000,
+                "end": 1494167400000
+            },
+            "capabilities": [
+                "BOOST",
+                "HOLIDAY_MODE"
+            ],
+            "previous": {
+                "mode": "OFF"
+            },
+            "pmz": "OK"
+        },
+        "state": {
+            "name": "Thermostat",
+            "mode": "OFF",
+            "schedule": {
+                "monday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 405
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 435
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "tuesday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 495
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 525
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "wednesday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 405
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 435
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "thursday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 405
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 435
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "friday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 405
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 435
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "saturday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 405
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 435
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ],
+                "sunday": [
+                    {
+                        "value": {
+                            "status": "ON"
+                        },
+                        "start": 495
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 525
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 720
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 840
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 960
+                    },
+                    {
+                        "value": {
+                            "status": "OFF"
+                        },
+                        "start": 1290
+                    }
+                ]
+            },
+            "boost": null,
+            "status": "OFF"
+        }
+    }
+]

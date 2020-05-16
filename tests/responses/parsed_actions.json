@@ -1,0 +1,254 @@
+{
+    "action1-0000-0000-0000-000000000001": {
+        "id": "action1-0000-0000-0000-000000000001",
+        "created": 1498848808604,
+        "name": "Action 1",
+        "enabled": true,
+        "entitlements": [],
+        "entitled": true,
+        "template": "contact-sensor-canvas.1",
+        "events": [
+            {
+                "id": "contact-sensor-0000-0000-000000000001",
+                "group": "when",
+                "type": "contact-sensor",
+                "settings": {
+                    "event": "OPEN"
+                }
+            },
+            {
+                "group": "while",
+                "type": "schedule",
+                "settings": {
+                    "schedule": {
+                        "monday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "tuesday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "wednesday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "thursday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "friday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "saturday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ],
+                        "sunday": [
+                            {
+                                "start": 0,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            },
+                            {
+                                "start": 1425,
+                                "value": {
+                                    "state": "ARM"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "group": "then",
+                "type": "notification",
+                "settings": {
+                    "email": false,
+                    "push": true,
+                    "sms": false
+                }
+            }
+        ]
+    },
+    "action2-0000-0000-0000-000000000002": {
+        "id": "action2-0000-0000-0000-000000000002",
+        "created": 1534796888391,
+        "name": "Action 2",
+        "enabled": false,
+        "entitlements": [],
+        "entitled": true,
+        "template": "motion-sensor-light-dark-light-on-duration.1",
+        "events": [
+            {
+                "id": "motion-sensor-0000-0000-000000000001",
+                "group": "when",
+                "type": "motion-sensor"
+            },
+            {
+                "group": "while",
+                "type": "light-dark",
+                "settings": {
+                    "period": "DARK",
+                    "fromOffset": 0,
+                    "untilOffset": 0
+                }
+            },
+            {
+                "id": "light-0000-0000-0000-000000000001",
+                "group": "then",
+                "duration": 180,
+                "type": "light",
+                "settings": {
+                    "status": "ON",
+                    "brightness": 5
+                }
+            }
+        ]
+    },
+    "action3-0000-0000-0000-000000000003": {
+        "id": "action3-0000-0000-0000-000000000003",
+        "created": 1543763163317,
+        "name": "Action 3",
+        "enabled": true,
+        "entitlements": [],
+        "entitled": true,
+        "template": "contact-sensor-canvas.1",
+        "events": [
+            {
+                "id": "contact-sensor-0000-0000-000000000002",
+                "group": "when",
+                "type": "contact-sensor",
+                "settings": {
+                    "event": "OPEN"
+                }
+            },
+            {
+                "id": "light-0000-0000-0000-000000000002",
+                "group": "then",
+                "type": "light",
+                "settings": {
+                    "status": "ON",
+                    "brightness": 100
+                }
+            }
+        ]
+    },
+    "action4-0000-0000-0000-000000000004": {
+        "id": "action4-0000-0000-0000-000000000004",
+        "created": 1543763220373,
+        "name": "Action 4",
+        "enabled": true,
+        "entitlements": [],
+        "entitled": true,
+        "template": "contact-sensor-canvas.1",
+        "events": [
+            {
+                "id": "contact-sensor-0000-0000-000000000002",
+                "group": "when",
+                "type": "contact-sensor",
+                "settings": {
+                    "event": "CLOSED"
+                }
+            },
+            {
+                "id": "light-0000-0000-0000-000000000002",
+                "group": "then",
+                "type": "light",
+                "settings": {
+                    "status": "OFF"
+                }
+            }
+        ]
+    },
+    "action5-0000-0000-0000-000000000005": {
+        "id": "action5-0000-0000-0000-000000000005",
+        "created": 1543781304658,
+        "name": "Action 5",
+        "enabled": true,
+        "entitlements": [],
+        "entitled": true,
+        "template": "contact-sensor-canvas.1",
+        "events": [
+            {
+                "id": "contact-sensor-0000-0000-000000000002",
+                "group": "when",
+                "type": "contact-sensor",
+                "settings": {
+                    "event": "OPEN"
+                }
+            },
+            {
+                "group": "then",
+                "type": "notification",
+                "settings": {
+                    "email": false,
+                    "push": true,
+                    "sms": false
+                }
+            }
+        ]
+    }
+}
