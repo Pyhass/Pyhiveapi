@@ -1,6 +1,8 @@
 """"Hive Heating Module. """
 import asyncio
 from datetime import datetime
+from typing import Optional
+from aiohttp import ClientSession
 from .hive_session import Session
 from .hive_data import Data
 from .custom_logging import Logger
@@ -11,7 +13,7 @@ from .hive_async_api import Hive_Async
 class Heating:
     """Hive Heating Code."""
 
-    def __init__(self, websession):
+    def __init__(self, websession: Optional[ClientSession] = None):
         """Initialise."""
         self.hive = Hive_Async(websession)
         self.session = Session(websession)
@@ -21,29 +23,31 @@ class Heating:
 
     async def get_heating(self, device):
         await self.log.log(device["hive_id"], self.type, "Getting heating data.")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         error = await self.log.error_check(device["hive_id"], self.type, online)
 
         dev_data = {}
-        if device["thermostat_id"] in Data.devices:
-            data = Data.devices[device["thermostat_id"]]
+        if device["device_id"] in Data.devices:
+            data = Data.devices[device["device_id"]]
             dev_data = {"hive_id": device["hive_id"],
                         "hive_name": device["hive_name"],
                         "hive_type": device["hive_type"],
                         "ha_name": device["ha_name"],
                         "ha_type": device["ha_type"],
-                        "thermostat_id": device["thermostat_id"],
+                        "device_id": device["device_id"],
+                        "device_name": device["device_name"],
                         "temperatureunit": device["temperatureunit"],
                         "min_temp": await self.min_temperature(device),
                         "max_temp": await self.max_temperature(device),
                         "current_temperature": await self.current_temperature(device),
                         "target_temperature": await self.target_temperature(device),
                         "action": await self.current_operation(device),
-                        "mode": await self.mode(device),
+                        "mode": await self.get_mode(device),
                         "boost": await self.boost(device),
                         "device_data": data.get("props", None),
                         "parent_device": data.get("parent", None),
-                        "attributes": await self.attr.state_attributes(device["thermostat_id"],
+                        "custom": device.get("custom", None),
+                        "attributes": await self.attr.state_attributes(device["device_id"],
                                                                        device["hive_type"])
                         }
         if not error:
@@ -56,14 +60,14 @@ class Heating:
     async def min_temperature(device):
         """Get heating minimum target temperature."""
         if device["hive_type"] == "nathermostat":
-            return Data.product[device["hive_id"]]["props"]["minHeat"]
+            return Data.products[device["hive_id"]]["props"]["minHeat"]
         return 5
 
     @staticmethod
     async def max_temperature(device):
         """Get heating maximum target temperature."""
         if device["hive_type"] == "nathermostat":
-            return Data.product[device["hive_id"]]["props"]["maxHeat"]
+            return Data.products[device["hive_id"]]["props"]["maxHeat"]
         return 32
 
     async def current_temperature(self, device):
@@ -71,7 +75,7 @@ class Heating:
         from datetime import datetime
 
         await self.log.log(device["hive_id"], "Extra", "Getting current temp")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         f_state = None
         state = None
         final = None
@@ -147,7 +151,7 @@ class Heating:
     async def target_temperature(self, device):
         """Get heating target temperature."""
         await self.log.log(device["hive_id"], "Extra", "Getting target temp")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         state = None
         final = None
 
@@ -166,10 +170,10 @@ class Heating:
 
         return final if final is None else Data.NODES[device["hive_id"]]["TargetTemp"]
 
-    async def mode(self, device):
+    async def get_mode(self, device):
         """Get heating current mode."""
         await self.log.log(device["hive_id"], "Extra", "Getting mode")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         state = None
         final = None
 
@@ -191,7 +195,7 @@ class Heating:
     async def get_state(self, device):
         """Get heating current state."""
         await self.log.log(device["hive_id"], "Extra", "Getting state")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         state = None
         final = None
 
@@ -215,7 +219,7 @@ class Heating:
     async def current_operation(self, device):
         """Get heating current operation."""
         await self.log.log(device["hive_id"], "Extra", "Getting current operation")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         state = None
         final = None
 
@@ -236,7 +240,7 @@ class Heating:
     async def boost(self, device):
         """Get heating boost current status."""
         await self.log.log(device["hive_id"], "Extra", "Getting boost status")
-        online = await self.attr.online_offline(device["thermostat_id"])
+        online = await self.attr.online_offline(device["device_id"])
         state = None
         final = None
 
@@ -259,7 +263,7 @@ class Heating:
         """Get heating boost time remaining."""
         if await self.boost(device) == "ON":
             await self.log.log(device["hive_id"], "Extra", "Getting boost time")
-            online = await self.attr.online_offline(device["thermostat_id"])
+            online = await self.attr.online_offline(device["device_id"])
             state = None
             final = None
 
@@ -280,31 +284,31 @@ class Heating:
         return None
 
     @staticmethod
-    def get_operation_modes():
+    async def get_operation_modes():
         """Get heating list of possible modes."""
         return ["SCHEDULE", "MANUAL", "OFF"]
 
-    def get_schedule_now_next_later(self, device):
+    async def get_schedule_now_next_later(self, device):
         """Hive get heating schedule now, next and later."""
-        self.log.log(device["hive_id"], "Extra", "Getting schedule")
-        state = self.attr.online_offline(device["thermostat_id"])
-        current_mode = self.mode(device["hive_id"])
+        await self.log.log(device["hive_id"], "Extra", "Getting schedule")
+        state = await self.attr.online_offline(device["device_id"])
+        current_mode = await self.get_mode(device)
         state = None
         final = None
 
         if device["hive_id"] in Data.products:
             if state != "Offline" and current_mode == "SCHEDULE":
                 data = Data.products[device["hive_id"]]
-                state = self.session.p_get_schedule_nnl(
+                state = await self.session.p_get_schedule_nnl(
                     Session(), (data["state"]["schedule"])
                 )
-                self.log.log(device["hive_id"], "Extra",
-                             "Schedule is {0}", info=str(state))
-            self.log.error_check(device["hive_id"], "Extra", state)
+                await self.log.log(device["hive_id"], "Extra",
+                                   "Schedule is {0}", info=str(state))
+            await self.log.error_check(device["hive_id"], "Extra", state)
             final = state
             Data.NODES[device["hive_id"]]["snnl"] = final
         else:
-            self.log.error_check(device["hive_id"], "ERROR", "Failed")
+            await self.log.error_check(device["hive_id"], "ERROR", "Failed")
 
         return final if final is None else Data.NODES[device["hive_id"]]["snnl"]
 

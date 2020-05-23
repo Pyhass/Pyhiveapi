@@ -27,9 +27,9 @@ class Attributes:
 
             if _type in Data.HIVE_TYPES["Sensor"]:
                 data = Data.products[n_id]
-                rec = str(data["props"].get("presenceLastChanged", None))
+                rec = data["props"].get("presenceLastChanged", False)
                 if rec:
-                    trim = "{:10.10}".format(rec)
+                    trim = "{:10.10}".format(str(rec))
                     time = await Session.epochtime(
                         trim, "%d-%m-%Y %H:%M:%S", "from_epoch")
                     attr.update({"state_changed": time})

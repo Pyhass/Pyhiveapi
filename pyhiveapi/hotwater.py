@@ -1,5 +1,7 @@
 """"Hive Hotwater Module. """
 import asyncio
+from typing import Optional
+from aiohttp import ClientSession
 
 from .hive_session import Session
 from .hive_data import Data
@@ -11,7 +13,7 @@ from .hive_async_api import Hive_Async
 class Hotwater:
     """Hive Hotwater Code."""
 
-    def __init__(self, websession):
+    def __init__(self, websession: Optional[ClientSession] = None):
         """Initialise."""
         self.hive = Hive_Async(websession)
         self.session = Session(websession)
@@ -26,16 +28,19 @@ class Hotwater:
         error = await self.log.error_check(device["hive_id"], self.type, online)
 
         dev_data = {}
-        if device["hive_id"] in Data.devices:
-            data = Data.devices[device["hive_id"]]
+        if device["device_id"] in Data.devices:
+            data = Data.devices[device["device_id"]]
             dev_data = {"hive_id": device["hive_id"],
                         "hive_name": device["hive_name"],
                         "hive_type": device["hive_type"],
                         "ha_name": device["ha_name"],
                         "ha_type": device["ha_type"],
+                        "device_id": device["device_id"],
+                        "device_name": device["device_name"],
                         "current_operation": await self.get_mode(device),
                         "device_data": data.get("props", None),
                         "parent_device": data.get("parent", None),
+                        "custom": device.get("custom", None),
                         "attributes": await self.attr.state_attributes(device["hive_id"],
                                                                        device["hive_type"])
                         }
@@ -153,8 +158,8 @@ class Hotwater:
         final = None
 
         if device["hive_id"] in Data.products:
-            self.session.hive_api_logon()
-            mode_current = await self.get_mode(device["hive_id"])
+            await self.session.hive_api_logon()
+            mode_current = await self.get_mode(device)
             if not online and mode_current == "SCHEDULE":
                 data = Data.products[device["hive_id"]]
                 state = self.session.p_get_schedule_nnl(

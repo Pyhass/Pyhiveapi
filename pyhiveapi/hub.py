@@ -15,28 +15,6 @@ class Hub:
         self.type = "Hub"
         self.log_type = "Sensor"
 
-    async def hub_status(self, device):
-        """Get the online status of the Hive hub."""
-        await self.log.log(device["hive_id"], "Extra", "Getting Hive hub status")
-        online = await self.attr.online_offline(device["hive_id"])
-        state = None
-        final = None
-
-        if device["hive_id"] in Data.devices:
-            if online:
-                data = Data.devices[device["hive_id"]]
-                state = data["props"]["online"]
-                final = Data.HIVETOHA[self.type]["Status"].get(state, state)
-                await self.log.log(device["hive_id"], "Extra", "Status is {0}", info=final)
-            await self.log.error_check(device["hive_id"], "Extra", online)
-            final = Data.HIVETOHA[self.type]["Status"].get(state, state)
-            Data.NODES[device["hive_id"]]["State"] = final
-
-        else:
-            await self.log.error_check(device["hive_id"], "ERROR", "Failed")
-
-        return final if final is None else Data.NODES[device["hive_id"]]["State"]
-
     async def hub_smoke(self, device):
         """Get the online status of the Hive hub."""
         await self.log.log(device["hive_id"], "Extra", "Getting smoke detection status")

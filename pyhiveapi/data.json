@@ -1,6 +1,26 @@
 {
   "original": "Using File",
   "parsed": {
+    "user": {
+      "id": "user-0000-0000-0000-000000000001",
+      "username": "test@test.com",
+      "firstName": "FirstName",
+      "lastName": "LastName",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "countryCode": "GB",
+      "postcode": "AAA BBB",
+      "longitude": -9.025986,
+      "latitude": 98.82936,
+      "pin": "0000",
+      "email": "test@test.com",
+      "mobile": "",
+      "phone": "",
+      "timezone": "Europe/London",
+      "locale": "en-GB",
+      "temperatureUnit": "C"
+    },
     "products": [
       {
         "id": "hub-0000-0000-0000-000000000001",
@@ -82,7 +102,7 @@
           "working": true,
           "pmz": "OK",
           "previous": {
-            "mode": "MANUAL",
+            "mode": "SCHEDULE",
             "target": 19.5
           },
           "scheduleOverride": true,
@@ -90,7 +110,7 @@
           "zone": "parent-0000-0000-0000-000000000002"
         },
         "state": {
-          "name": "UK Thermostat",
+          "name": "Heating",
           "boost": 8,
           "frostProtection": 7,
           "mode": "BOOST",
@@ -1783,7 +1803,7 @@
         },
         "state": {
           "name": "Light 2",
-          "status": "OFF",
+          "status": "ON",
           "brightness": 100,
           "mode": "MANUAL",
           "schedule": {
@@ -2185,7 +2205,7 @@
         },
         "state": {
           "name": "Light 5",
-          "status": "OFF",
+          "status": "ON",
           "brightness": 55,
           "mode": "SCHEDULE",
           "schedule": {
@@ -2337,6 +2357,331 @@
         }
       },
       {
+        "id": "light-0000-0000-0000-000000000006",
+        "type": "colourtuneablelight",
+        "sortOrder": 4,
+        "created": 1478271219243,
+        "lastSeen": 1504707448065,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+          "online": true,
+          "model": "RGBBulb01UK",
+          "version": "11200002",
+          "manufacturer": "Aurora",
+          "colourTemperature": {
+            "min": 2700,
+            "max": 6535
+          }
+        },
+        "state": {
+          "name": "Light 6",
+          "status": "ON",
+          "hue": 0,
+          "saturation": 99,
+          "value": 100,
+          "brightness": 100,
+          "colourMode": "COLOUR",
+          "colourTemperature": 2703,
+          "mode": "MANUAL",
+          "schedule": {
+            "monday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "tuesday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "wednesday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "thursday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "friday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "saturday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ],
+            "sunday": [
+              {
+                "start": 390,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 510,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              },
+              {
+                "start": 960,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "ON"
+                }
+              },
+              {
+                "start": 1290,
+                "value": {
+                  "saturation": 99,
+                  "value": 100,
+                  "hue": 0,
+                  "colourMode": "COLOUR",
+                  "status": "OFF"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
         "id": "motion-sensor-0000-0000-000000000001",
         "type": "motionsensor",
         "sortOrder": 0,
@@ -2447,8 +2792,8 @@
           "pmz": "OK"
         },
         "state": {
-          "name": "Thermostat",
-          "mode": "OFF",
+          "name": "Hotwater",
+          "mode": "SCHEDULE",
           "schedule": {
             "monday": [
               {
@@ -3487,6 +3832,33 @@
         },
         "state": {
           "name": "Light 5"
+        }
+      },
+      {
+        "id": "light-0000-0000-0000-000000000006",
+        "type": "colourtuneablelight",
+        "sortOrder": 0,
+        "created": 1543676824201,
+        "lastSeen": 1548315854100,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+          "online": true,
+          "model": "RGBBulb01UK",
+          "version": "11200002",
+          "manufacturer": "Aurora",
+          "power": "mains",
+          "signal": 96,
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "GROUPABLE",
+            "MIMIC_MODE",
+            "IDENTIFY_DEVICE"
+          ]
+        },
+        "state": {
+          "name": "Light 6"
         }
       },
       {

@@ -10,7 +10,7 @@ class Weather:
     def __init__(self):
         self.log = Logger()
 
-    async def temperature(self):
+    async def temperature(self, device):
         """Get Hive Weather temperature."""
         await self.log.log("Weather", "Temp", "Getting outside temp.")
         return Data.w_temperature_value

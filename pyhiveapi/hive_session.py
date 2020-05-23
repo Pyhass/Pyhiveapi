@@ -7,9 +7,9 @@ import time
 import json
 import asyncio
 from typing import Optional
-from datetime import datetime, timedelta
 from aiohttp import ClientSession
-from aiofile import AIOFile
+from datetime import datetime, timedelta
+
 
 from .hive_data import Data
 from .custom_logging import Logger
@@ -24,22 +24,20 @@ MINUTES_BETWEEN_LOGONS = 15
 class Session:
     """Hive Session Code"""
 
-    def __init__(self, session: Optional[ClientSession] = None,):
+    def __init__(self, websession: Optional[ClientSession] = None):
         """Initialise the base variable values."""
         self.update_lock = asyncio.Lock()
         self.api_lock = asyncio.Lock()
-        self.hive = Hive_Async(session)
+        self.hive = Hive_Async(websession)
         self.log = Logger()
         self.attr = Attributes()
         self.devices = {}
         self.type = "Session"
 
     async def open_file(self, file):
-        path = os.path.dirname(__file__) + '/' + file
-        async with AIOFile(path, 'a') as afp:
-            while True:
-                json_data = await afp.read(4096)
-        data = await json.loads(json_data)
+        path = os.path.expanduser("~") + "/pyhiveapi" + '/' + file
+        with open(path, 'r') as j:
+            data = json.loads(j.read())
 
         return data
 
@@ -332,55 +330,90 @@ class Session:
             p = Data.products[a_product]
             if Data.products[a_product]["type"] == "sense":
                 await self.add_list("sensor", p, ha_name="Glass Detection",
-                                    hive_type="_GLASS_BREAK", hub_id=p["parent"])
+                                    hive_type="_GLASS_BREAK", hub_id=p["parent"],
+                                    device_id=p["parent"], device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name="Smoke Detection",
-                                    hive_type="_SMOKE_CO", hub_id=p["parent"])
+                                    hive_type="_SMOKE_CO", hub_id=p["parent"],
+                                    device_id=p["parent"], device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name="Dog Bark Detection",
-                                    hive_type="_DOG_BARK", hub_id=p["parent"])
+                                    hive_type="_DOG_BARK", hub_id=p["parent"],
+                                    device_id=p["parent"], device_name=p["state"]["name"])
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Heating"]:
-                thermostat_id = p["props"].get("zone", p["id"])
+                device_id = p["props"].get("zone", p["id"])
+                device_name = p["state"].get("name", "Heating")
                 for device in Data.devices:
-                    if Data.devices[device]["type"] in Data.HIVE_TYPES["Thermo"]:
-                        device = Data.devices[device]
-                        if p["parent"] == device["props"]["zone"]:
-                            thermostat_id = device["id"]
+                    try:
+                        if Data.devices[device]["type"] in Data.HIVE_TYPES["Thermo"]:
+                            device = Data.devices[device]
+                            if p["parent"] == device["props"]["zone"]:
+                                device_id = device["id"]
+                                device_name = device["state"]["name"]
+                    except:
+                        pass
                 Data.MODE.append(p["id"])
-                await self.add_list("climate", p, thermostat_id=thermostat_id,
+                await self.add_list("climate", p, device_id=device_id, device_name=device_name,
                                     temperatureunit=Data.user["temperatureUnit"])
                 await self.add_list("sensor", p, ha_name=" Current Temperature",
-                                    hive_type="_CurrentTemperature")
+                                    hive_type="_CurrentTemperature", custom="Heating_CurrentTemperature",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" Target Temperature",
-                                    hive_type="_TargetTemperature")
+                                    hive_type="_TargetTemperature", custom="Heating_TargetTemperature",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" State",
-                                    hive_type="_State")
+                                    hive_type="_State", custom="Heating_State",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" Mode",
-                                    hive_type="_Mode")
+                                    hive_type="_Mode", custom="Heating_Mode",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" Boost",
-                                    hive_type="_Boost")
+                                    hive_type="_Boost", custom="Heating_Boost",
+                                    device_id=device_id, device_name=device_name)
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Hotwater"]:
-                await self.add_list("water_heater", p)
+                device_id = p["props"].get("zone", p["id"])
+                device_name = p["state"].get("name", "Hotwater")
+                for device in Data.devices:
+                    try:
+                        if Data.devices[device]["type"] in Data.HIVE_TYPES["Thermo"]:
+                            device = Data.devices[device]
+                            if p["parent"] == device["props"]["zone"]:
+                                device_id = device["id"]
+                                device_name = device["state"]["name"]
+                    except:
+                        pass
+                await self.add_list("water_heater", p, device_id=device_id,
+                                    device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" State",
-                                    hive_type="_State")
+                                    hive_type="_State", custom="HotWater_State",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" Mode",
-                                    hive_type="_Mode")
+                                    hive_type="_Mode", custom="HotWater_Mode",
+                                    device_id=device_id, device_name=device_name)
                 await self.add_list("sensor", p, ha_name=" Boost",
-                                    hive_type="_Boost")
+                                    hive_type="_Boost", custom="HotWater_Boost",
+                                    device_id=device_id, device_name=device_name)
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Plug"]:
                 Data.MODE.append(p["id"])
-                await self.add_list("switch", p)
+                await self.add_list("switch", p, device_id=p["id"],
+                                    device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name=" Mode",
-                                    hive_type="_Mode")
+                                    hive_type="_Mode", custom="Mode",
+                                    device_id=p["id"], device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name=" Availability",
-                                    hive_type="_Availability")
+                                    hive_type="_Availability", custom="Availability",
+                                    device_id=p["id"], device_name=p["state"]["name"])
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Light"]:
                 Data.MODE.append(p["id"])
-                await self.add_list("light", p)
+                await self.add_list("light", p, device_id=p["id"],
+                                    device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name=" Mode",
-                                    hive_type="_Mode")
+                                    hive_type="_Mode", custom="Mode",
+                                    device_id=p["id"], device_name=p["state"]["name"])
                 await self.add_list("sensor", p, ha_name=" Availability",
-                                    hive_type="_Availability")
+                                    hive_type="_Availability", custom="Availability",
+                                    device_id=p["id"], device_name=p["state"]["name"])
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Sensor"]:
-                await self.add_list("binary_sensor", p)
+                await self.add_list("binary_sensor", p, device_id=p["id"],
+                                    device_name=p["state"]["name"])
 
         for a_device in Data.devices:
             d = Data.devices[a_device]
@@ -389,12 +422,15 @@ class Session:
                     or Data.devices[a_device]["type"] in Data.HIVE_TYPES["Sensor"]):
                 Data.BATTERY.append(d["id"])
                 await self.add_list("sensor", d, ha_name=" Battery Level",
-                                    hive_type="_BatteryLevel")
+                                    hive_type="_BatteryLevel", custom="Battery",
+                                    device_id=d["id"], device_name=d["state"]["name"])
                 await self.add_list("sensor", d, ha_name=" Availability",
-                                    hive_type="_Availability")
+                                    hive_type="_Availability", custom="Availability",
+                                    device_id=d["id"], device_name=d["state"]["name"])
             if Data.devices[a_device]["type"] in Data.HIVE_TYPES["Hub"]:
                 await self.add_list("sensor", d, ha_name=" Online Status",
-                                    hive_type="_OnlineStatus")
+                                    hive_type="_OnlineStatus", device_id=d["id"],
+                                    device_name=d["state"]["name"])
 
         for action in Data.actions:
             a = Data.actions[action]
@@ -406,7 +442,8 @@ class Session:
             await self.add_list("sensor", {}, hive_id=Data.w_nodeid,
                                 hive_name="Hive Weather",
                                 ha_name="Hive Weather",
-                                hive_type="Weather_OutsideTemperature")
+                                hive_type="Weather_OutsideTemperature",
+                                custom="Weather")
 
         await self.log.log("No_ID", self.type, "Hive component has initialised")
 

@@ -1,6 +1,8 @@
 """Hive Light Module."""
 import colorsys
 import asyncio
+from typing import Optional
+from aiohttp import ClientSession
 
 from .hive_session import Session
 from .hive_data import Data
@@ -12,7 +14,7 @@ from .hive_async_api import Hive_Async
 class Light:
     """Hive Light Code."""
 
-    def __init__(self, websession):
+    def __init__(self, websession: Optional[ClientSession] = None):
         """Initialise."""
         self.hive = Hive_Async(websession)
         self.session = Session(websession)
@@ -34,10 +36,13 @@ class Light:
                         "hive_type": device["hive_type"],
                         "ha_name": device["ha_name"],
                         "ha_type": device["ha_type"],
+                        "device_id": device["device_id"],
+                        "device_name": device["device_name"],
                         "state": await self.get_state(device),
                         "brightness": await self.get_brightness(device),
                         "device_data": data.get("props", None),
                         "parent_device": data.get("parent", None),
+                        "custom": device.get("custom", None),
                         "attributes": await self.attr.state_attributes(device["hive_id"],
                                                                        device["hive_type"])
                         }

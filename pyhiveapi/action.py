@@ -1,5 +1,7 @@
 """Hive Action Module."""
 import asyncio
+from typing import Optional
+from aiohttp import ClientSession
 
 from .hive_session import Session
 from .hive_data import Data
@@ -11,7 +13,7 @@ from .hive_async_api import Hive_Async
 class Action:
     """Hive Action Code."""
 
-    def __init__(self, websession):
+    def __init__(self, websession: Optional[ClientSession] = None):
         """Initialise."""
         self.hive = Hive_Async(websession)
         self.session = Session(websession)
@@ -32,7 +34,9 @@ class Action:
                         "ha_name": device["ha_name"],
                         "ha_type": device["ha_type"],
                         "state": await self.get_state(device),
-                        "power_usage": None
+                        "power_usage": None,
+                        "device_data": {},
+                        "custom": device.get("custom", None)
                         }
 
         await self.log.log(device["hive_id"], self.type,
