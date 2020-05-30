@@ -117,9 +117,9 @@ class Heating_Tests(unittest.TestCase):
     @patch("pyhiveapi.hive_session.Session.hive_api_get_nodes", return_value=None)
     @patch(
         "pyhiveapi.hive_api.Hive.set_state",
-        return_value=open_file("set_state_sucessful.json"),
+        return_value=open_file("set_state_successful.json"),
     )
-    def test_set_target_temperature_sucessful(self, Check_login, Get_nodes, Set_state):
+    def test_set_target_temperature_successful(self, Check_login, Get_nodes, Set_state):
         end = None
         id_n = "heating-0000-0000-0000-000000000001"
         end = Heating.set_target_temperature(Heating(), id_n, 32)

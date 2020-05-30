@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyhiveapi",
-    version="2020.1",
+    version="2020.1_b1",
     description="A Python library to interface with the Hive API",
     long_description="A Python library to interface with the Hive API",
     url="https://github.com/Rendili/pyhiveapi",
@@ -24,5 +24,5 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     entry_points={"console_scripts": [
         "pyhiveapi=pyhiveapi.pyhiveapi:Pyhiveapi"]},
-    install_requires=["aiohttp==3.6.1", "aiofiles"],
+    install_requires=["aiohttp==3.6.1", "requests"],
 )

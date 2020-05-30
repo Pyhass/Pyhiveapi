@@ -1,5 +1,6 @@
 """Hive API Module."""
 import asyncio
+import curlify
 
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional

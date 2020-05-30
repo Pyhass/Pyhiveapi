@@ -353,19 +353,19 @@ class Session:
                 Data.MODE.append(p["id"])
                 await self.add_list("climate", p, device_id=device_id, device_name=device_name,
                                     temperatureunit=Data.user["temperatureUnit"])
-                await self.add_list("sensor", p, ha_name=" Current Temperature",
+                await self.add_list("sensor", p, ha_name=" Heating Current Temperature",
                                     hive_type="_CurrentTemperature", custom="Heating_CurrentTemperature",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" Target Temperature",
+                await self.add_list("sensor", p, ha_name=" Heating Target Temperature",
                                     hive_type="_TargetTemperature", custom="Heating_TargetTemperature",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" State",
+                await self.add_list("sensor", p, ha_name=" Heating State",
                                     hive_type="_State", custom="Heating_State",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" Mode",
+                await self.add_list("sensor", p, ha_name=" Heating Mode",
                                     hive_type="_Mode", custom="Heating_Mode",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" Boost",
+                await self.add_list("sensor", p, ha_name=" Heating Boost",
                                     hive_type="_Boost", custom="Heating_Boost",
                                     device_id=device_id, device_name=device_name)
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Hotwater"]:
@@ -382,13 +382,13 @@ class Session:
                         pass
                 await self.add_list("water_heater", p, device_id=device_id,
                                     device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" State",
+                await self.add_list("sensor", p, ha_name=" Hotwater State",
                                     hive_type="_State", custom="HotWater_State",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" Mode",
+                await self.add_list("sensor", p, ha_name=" Hotwater Mode",
                                     hive_type="_Mode", custom="HotWater_Mode",
                                     device_id=device_id, device_name=device_name)
-                await self.add_list("sensor", p, ha_name=" Boost",
+                await self.add_list("sensor", p, ha_name=" Hotwater Boost",
                                     hive_type="_Boost", custom="HotWater_Boost",
                                     device_id=device_id, device_name=device_name)
             if Data.products[a_product]["type"] in Data.HIVE_TYPES["Plug"]:

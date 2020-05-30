@@ -44,7 +44,7 @@ class Action_Tests(unittest.TestCase):
     @patch("pyhiveapi.hive_session.Session.hive_api_get_nodes", return_value=None)
     @patch(
         "pyhiveapi.hive_api.Hive.set_action",
-        return_value=open_file("set_state_sucessful.json"),
+        return_value=open_file("set_state_successful.json"),
     )
     def test_turn_action_on(self, Check_login, Get_nodes, Set_state):
         id_n = "action2-0000-0000-0000-000000000002"
@@ -56,7 +56,7 @@ class Action_Tests(unittest.TestCase):
     @patch("pyhiveapi.hive_session.Session.hive_api_get_nodes", return_value=None)
     @patch(
         "pyhiveapi.hive_api.Hive.set_action",
-        return_value=open_file("set_state_sucessful.json"),
+        return_value=open_file("set_state_successful.json"),
     )
     def test_turn_action_off(self, Check_login, Get_nodes, Set_state):
         id_n = "action1-0000-0000-0000-000000000001"

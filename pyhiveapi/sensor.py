@@ -93,18 +93,16 @@ class Sensor:
 
     async def online(self, device):
         """Get the online status of the Hive hub."""
-        await self.log.log(device["hive_id"], "Extra", "Getting Hive hub status")
-        online = await self.attributes.online_offline(device["hive_id"])
+        await self.log.log(device["hive_id"], "Extra", "Getting status")
         state = None
         final = None
 
         if device["hive_id"] in Data.devices:
-            if online:
-                data = Data.devices[device["hive_id"]]
-                state = data["props"]["online"]
-                final = Data.HIVETOHA[self.type].get(state, state)
-                await self.log.log(device["hive_id"], "Extra", "Status is {0}", info=final)
-            await self.log.error_check(device["hive_id"], "Extra", online)
+            data = Data.devices[device["hive_id"]]
+            state = data["props"]["online"]
+            final = Data.HIVETOHA[self.type].get(state, state)
+            await self.log.log(device["hive_id"], "Extra", "Status is {0}", info=final)
+            await self.log.error_check(device["hive_id"], "Extra", state)
             final = Data.HIVETOHA[self.type].get(state, state)
             Data.NODES[device["hive_id"]]["State"] = final
 

@@ -20,9 +20,9 @@ class Hive_Session_Tests(unittest.TestCase):
 
     @patch(
         "pyhiveapi.hive_session.Hive.login",
-        return_value=open_file("login_sucessful.json"),
+        return_value=open_file("login_successful.json"),
     )
-    def test_login_sucessfully(self, Session_login_function):
+    def test_login_successfully(self, Session_login_function):
         print("Session ID is {0}".format(Data.sess_id))
         Session.hive_api_logon(Session())
         print("Session ID is {0}".format(Data.sess_id))
@@ -39,7 +39,7 @@ class Hive_Session_Tests(unittest.TestCase):
 
     @patch(
         "pyhiveapi.hive_session.Hive.login",
-        return_value=open_file("login_sucessful.json"),
+        return_value=open_file("login_successful.json"),
     )
     def test_token_refresh_required(self, Session_login_function):
         previous = datetime.datetime(2017, 1, 1, 12, 0, 0)
@@ -64,7 +64,7 @@ class Hive_Session_Tests(unittest.TestCase):
 
     @patch(
         "pyhiveapi.hive_session.Hive.login",
-        return_value=open_file("login_sucessful.json"),
+        return_value=open_file("login_successful.json"),
     )
     def test_token_refresh_no_session_id(self, Session_login_function):
         print("Last logon time - {0}".format(Data.s_logon_datetime))
@@ -76,7 +76,7 @@ class Hive_Session_Tests(unittest.TestCase):
 
     @patch(
         "pyhiveapi.hive_session.Hive.login",
-        return_value=open_file("login_sucessful.json"),
+        return_value=open_file("login_successful.json"),
     )
     def test_token_refresh_using_file(self, Session_login_function):
         previous = datetime.datetime(2017, 1, 1, 12, 0, 0)

@@ -46,9 +46,9 @@ class Plug_Tests(unittest.TestCase):
     @patch("pyhiveapi.hive_session.Session.hive_api_get_nodes", return_value=None)
     @patch(
         "pyhiveapi.hive_api.Hive.set_state",
-        return_value=open_file("set_state_sucessful.json"),
+        return_value=open_file("set_state_successful.json"),
     )
-    def test_turn_on_sucessful(self, Check_login, Get_nodes, Set_state):
+    def test_turn_on_successful(self, Check_login, Get_nodes, Set_state):
         end = None
         id_n = "plug-0000-0000-0000-000000000001"
         end = Plug.turn_on(Plug(), id_n)
@@ -72,9 +72,9 @@ class Plug_Tests(unittest.TestCase):
     @patch("pyhiveapi.hive_session.Session.hive_api_get_nodes", return_value=None)
     @patch(
         "pyhiveapi.hive_api.Hive.set_state",
-        return_value=open_file("set_state_sucessful.json"),
+        return_value=open_file("set_state_successful.json"),
     )
-    def test_turn_off_sucessful(self, Check_login, Get_nodes, Set_state):
+    def test_turn_off_successful(self, Check_login, Get_nodes, Set_state):
         end = None
         id_n = "plug-0000-0000-0000-000000000001"
         end = Plug.turn_off(Plug(), id_n)
