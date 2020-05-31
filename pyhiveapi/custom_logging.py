@@ -70,7 +70,7 @@ class Logger:
                     + name
                     + " : "
                     + new_message.format(data)
-                    + "\n\n"
+                    + "\n"
                 )
                 l_file.close()
             except FileNotFoundError:

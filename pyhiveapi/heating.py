@@ -354,8 +354,8 @@ class Heating:
 
     async def turn_boost_on(self, device, mins, temp):
         """Turn heating boost on."""
-        if mins > 0 and temp >= await self.min_temperature():
-            if temp <= await self.max_temperature():
+        if mins > 0 and temp >= await self.min_temperature(device):
+            if temp <= await self.max_temperature(device):
                 await self.log.log(device["hive_id"], "Extra", "Enabling boost for {0}")
                 await self.session.hive_api_logon()
                 final = False
@@ -389,7 +389,7 @@ class Heating:
             await self.session.hive_api_logon()
             data = Data.products[device["hive_id"]]
             await self.session.get_devices(device["hive_id"])
-            if await self.boost(device["hive_id"]) == "ON":
+            if await self.boost(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode == "MANUAL" or prev_mode == "OFF":
                     pre_temp = data["props"]["previous"].get("target", 7)
@@ -401,7 +401,7 @@ class Heating:
                     resp = await self.hive.set_state(Data.sess_id, data["type"],
                                                      device["hive_id"], mode=prev_mode)
                 if resp["original"] == 200:
-                    await self.session.get_devices(Session(), device["hive_id"])
+                    await self.session.get_devices(device["hive_id"])
                     final = True
                     await self.log.log(
                         device["hive_id"], "API", "Boost disabled - " + "API response 200")

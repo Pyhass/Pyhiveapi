@@ -1,6 +1,5 @@
 """Hive API Module."""
 import asyncio
-import curlify
 
 from aiohttp import ClientSession, ClientResponse
 from typing import Optional
@@ -194,13 +193,6 @@ class Hive_Async:
         )
 
         url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
-
-        await self.log.log(
-            n_id,
-            "api_core",
-            "Headers >\n{0}\nURL >\n{1}\n"
-            + "Payload\n{2}\n".format(self.headers, url, jsc),
-        )
         try:
             await self.request('post', url,  data=jsc)
         except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
@@ -213,12 +205,6 @@ class Hive_Async:
         self.headers.update({"authorization": token})
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id
-        await self.log.log(
-            n_id,
-            "api_core",
-            "Headers >\n{0}\nURL >\n{1}\n"
-            + "Payload\n{2}\n".format(self.headers, url, jsc),
-        )
         try:
             await self.request('put', url,  data=jsc)
         except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
