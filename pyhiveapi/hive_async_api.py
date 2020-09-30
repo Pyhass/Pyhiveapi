@@ -14,7 +14,7 @@ class Hive_Async:
         """Hive API initialisation."""
         self.log = Logger()
         self.urls = {
-            "login": "https://beekeeper.hivehome.com/1.0/global/login",
+            "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "base": "https://beekeeper-uk.hivehome.com/1.0",
             "weather": "https://weather.prod.bgchprod.info/weather",
