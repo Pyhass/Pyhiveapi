@@ -172,7 +172,7 @@ class Pyhiveapi:
 
         HIVE_API.platform_name = ""
 
-        HIVE_API.urls.global_login = "https://beekeeper.hivehome.com/1.0/global/login"
+        HIVE_API.urls.global_login = "https://beekeeper.hivehome.com/1.0/cognito/login"
         HIVE_API.urls.base = ""
         HIVE_API.urls.weather = "https://weather.prod.bgchprod.info/weather"
         HIVE_API.urls.holiday_mode = "/holiday-mode"
