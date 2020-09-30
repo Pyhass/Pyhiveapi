@@ -22,10 +22,10 @@ class Data:
         "Heating": {False: "OFF"},
         "Hotwater": {"MANUAL": "ON", None: "OFF", False: "OFF"},
         "Hub": {
-            "Status": {True: "Online", False: "Offline"},
-            "Smoke": {True: "Alarm Detected", False: "Clear"},
-            "Dog": {True: "Barking Detected", False: "Clear"},
-            "Glass": {True: "Noise Detected", False: "Clear"},
+            "Status": {True: 1, False: 0},
+            "Smoke": {True: 1, False: 0},
+            "Dog": {True: 1, False: 0},
+            "Glass": {True: 1, False: 0},
         },
         "Light": {"ON": True, "OFF": False},
         "Sensor": {"OPEN": True, "CLOSED": False, True: "Online", False: "Offline"},
@@ -33,7 +33,7 @@ class Data:
     }
     HIVE_TYPES = {
         "Hub": ["hub", "sense"],
-        "Thermo": ["thermostatui"],
+        "Thermo": ["thermostatui", "trv"],
         "Heating": ["heating", "trvcontrol"],
         "Hotwater": ["hotwater"],
         "Plug": ["activeplug"],
@@ -41,21 +41,21 @@ class Data:
         "Sensor": ["motionsensor", "contactsensor"],
     }
     sensor_commands = {
-        "hub_OnlineStatus": "self.online(device)",
-        "sense_SMOKE_CO": "self.hub.hub_smoke(device)",
-        "sense_DOG_BARK": "self.hub.hub_dog_bark(device)",
-        "sense_GLASS_BREAK": "self.hub.hub_glass(device)",
-        "heating_CurrentTemperature": "self.heating.current_temperature(device)",
-        "heating_TargetTemperature": "self.heating.target_temperature(device)",
-        "heating_State": "self.heating.get_state(device)",
-        "heating_Mode": "self.heating.get_mode(device)",
-        "heating_Boost": "self.heating.boost(device)",
-        "hotwater_State": "self.hotwater.get_state(device)",
-        "hotwater_Mode": "self.hotwater.get_mode(device)",
-        "hotwater_Boost": "self.hotwater.get_boost(device)",
+        "SMOKE_CO": "self.hub.hub_smoke(device)",
+        "DOG_BARK": "self.hub.hub_dog_bark(device)",
+        "GLASS_BREAK": "self.hub.hub_glass(device)",
+        "CurrentTemperature": "self.heating.current_temperature(device)",
+        "TargetTemperature": "self.heating.target_temperature(device)",
+        "Heating_State": "self.heating.get_state(device)",
+        "Heating_Mode": "self.heating.get_mode(device)",
+        "Heating_Boost": "self.heating.boost(device)",
+        "Hotwater_State": "self.hotwater.get_state(device)",
+        "Hotwater_Mode": "self.hotwater.get_mode(device)",
+        "Hotwater_Boost": "self.hotwater.get_boost(device)",
         "Battery": 'self.attributes.battery(device["device_id"])',
         "Mode": 'self.attributes.get_mode(device["device_id"])',
         "Availability": 'self.online(device)',
+        "Connectivity": "self.online(device)",
         "Weather_OutsideTemperature": "self.weather.temperature(device)"}
 
     # Session Data

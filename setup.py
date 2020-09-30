@@ -24,5 +24,5 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     entry_points={"console_scripts": [
         "pyhiveapi=pyhiveapi.pyhiveapi:Pyhiveapi"]},
-    install_requires=["aiohttp==3.6.1", "requests"],
+    install_requires=["aiohttp", "requests"],
 )

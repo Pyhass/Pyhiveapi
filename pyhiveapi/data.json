@@ -264,7 +264,7 @@
             "start": 946684800000,
             "end": 946684800000
           },
-          "zone": "d57c9de7-b1f6-4360-b918-20d1edc89591",
+          "zone": "zone2-0000-0000-0000-000000000000",
           "pmz": "OK"
         },
         "state": {
@@ -403,6 +403,238 @@
           "status": true
         },
         "error": ""
+      },
+      {
+        "id": "trv-0000-0000-0000-000000000001",
+        "type": "trvcontrol",
+        "sortOrder": 1,
+        "created": 1570649136328,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+          "online": true,
+          "version": "00000000",
+          "upgrade": {
+            "available": false,
+            "upgrading": false
+          },
+          "parent": "parent-0000-0000-0000-000000000003",
+          "capabilities": [
+            "HOLIDAY_MODE",
+            "BOOST",
+            "TRV_AUTO_BOOST",
+            "TRV_AUTO_BOOST_READY"
+          ],
+          "maxEvents": 6,
+          "pmz": "OK",
+          "temperature": 21,
+          "working": false,
+          "trvs": ["heating-0000-0000-0000-000000000003"],
+          "previous": {
+            "mode": "MANUAL",
+            "target": 20.5
+          },
+          "scheduleOverride": false,
+          "zoneName": "TRV 1",
+          "autoBoost": {
+            "active": false,
+            "target": 22,
+            "duration": 30,
+            "trvs": []
+          }
+        },
+        "state": {
+          "name": "TRV 1",
+          "mode": "OFF",
+          "target": 7,
+          "frostProtection": 7,
+          "schedule": {
+            "monday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "tuesday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "wednesday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "thursday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "friday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "saturday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ],
+            "sunday": [
+              {
+                "start": 420,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1080,
+                "value": {
+                  "target": 7
+                }
+              },
+              {
+                "start": 1260,
+                "value": {
+                  "target": 20
+                }
+              },
+              {
+                "start": 1380,
+                "value": {
+                  "target": 7
+                }
+              }
+            ]
+          },
+          "autoBoost": "DISABLED",
+          "autoBoostTarget": 22,
+          "zone": "parent-0000-0000-0000-000000000002"
+        }
       },
       {
         "id": "camera-0000-0000-0000-000000000001",
@@ -3212,6 +3444,47 @@
         },
         "state": { "name": "US Thermostat" },
         "error": ""
+      },
+      {
+        "id": "trv-0000-0000-0000-000000000001",
+        "type": "trv",
+        "sortOrder": 1,
+        "created": 1570646884115,
+        "parent": "parent-0000-0000-0000-000000000001",
+        "props": {
+          "online": true,
+          "presenceLastChanged": 1591459318822,
+          "model": "TRV001",
+          "version": "00000113",
+          "manufacturer": "Danfoss",
+          "upgrade": {
+            "available": false,
+            "version": "00000113",
+            "upgrading": false,
+            "status": "COMPLETE"
+          },
+          "power": "battery",
+          "signal": 100,
+          "battery": 60,
+          "eui64": "14B457FFFEBEF30D",
+          "calibration": {
+            "start": "2019-10-16T09: 56: 37.685+0000",
+            "end": "2019-10-16T10: 31: 35.292+0000",
+            "failureReason": "FAILED"
+          },
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "TRV_CALIBRATION"]
+        },
+        "state": {
+          "name": "TRV 1",
+          "control": "trv-0000-0000-0000-000000000001",
+          "zone": "parent-0000-0000-0000-000000000003",
+          "zoneName": "Thermostat 2",
+          "childLock": false,
+          "mountingMode": "VERTICAL",
+          "mountingModeActive": false,
+          "viewingAngle": "ANGLE_180",
+          "calibrationStatus": "CALIBRATED"
+        }
       },
       {
         "id": "camera-0000-0000-0000-000000000001",

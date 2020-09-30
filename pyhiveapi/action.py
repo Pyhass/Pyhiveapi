@@ -45,7 +45,7 @@ class Action:
 
     async def get_state(self, device):
         """Get action state."""
-        await self.log.log(device["hive_id"], self.type, "Getting state")
+        await self.log.log(device["hive_id"], "Extra", "Getting state")
         state = None
         final = None
 

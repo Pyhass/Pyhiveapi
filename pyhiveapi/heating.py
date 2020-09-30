@@ -248,7 +248,7 @@ class Heating:
             if online:
                 data = Data.products[device["hive_id"]]
                 state = Data.HIVETOHA["Boost"].get(
-                    data["state"]["boost"], "ON")
+                    data["state"].get("boost", False), "ON")
                 await self.log.log(device["hive_id"], "Extra",
                                    "Boost state is {0}", info=str(state))
             await self.log.error_check(device["hive_id"], "Extra", online)
