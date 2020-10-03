@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyhiveapi",
-    version="2020.1_b2",
+    version="0.3_b2",
     description="A Python library to interface with the Hive API",
     long_description="A Python library to interface with the Hive API",
     url="https://github.com/Rendili/pyhiveapi",
