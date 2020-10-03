@@ -56,7 +56,7 @@ class Data:
         "Mode": 'self.attributes.get_mode(device["device_id"])',
         "Availability": 'self.online(device)',
         "Connectivity": "self.online(device)",
-        "Weather_OutsideTemperature": "self.weather.temperature(device)"}
+        "Weather": "self.weather.temperature(device)"}
 
     # Session Data
     sess_id = None
