@@ -179,13 +179,13 @@ class Hotwater:
         final = False
 
         if device["hive_id"] in Data.products:
-            self.session.hive_api_logon()
+            await self.session.hive_api_logon()
             data = Data.products[device["hive_id"]]
-            resp = self.hive.set_state(Data.sess_id, data["type"],
-                                       device["hive_id"], mode=new_mode)
+            resp = await self.hive.set_state(Data.sess_id, data["type"],
+                                             device["hive_id"], mode=new_mode)
             if resp["original"] == 200:
                 final = True
-                self.session.get_devices(device["hive_id"])
+                await self.session.get_devices(device["hive_id"])
                 await self.log.log(
                     device["hive_id"], "API", "Mode set to {0} - API response 200", info=new_mode
                 )
@@ -201,14 +201,14 @@ class Hotwater:
         final = False
 
         if mins > 0 and device["hive_id"] in Data.products:
-            self.session.hive_api_logon()
+            await self.session.hive_api_logon()
             data = Data.products[device["hive_id"]]
-            resp = self.hive.set_state(Data.sess_id, data["type"],
-                                       device["hive_id"], mode="BOOST",
-                                       boost=mins)
+            resp = await self.hive.set_state(Data.sess_id, data["type"],
+                                             device["hive_id"], mode="BOOST",
+                                             boost=mins)
             if resp["original"] == 200:
                 final = True
-                self.session.get_devices(device["hive_id"])
+                await self.session.get_devices(device["hive_id"])
                 await self.log.log(device["hive_id"], "API", "Boost on - API response 200")
             else:
                 await self.log.error_check(
@@ -222,13 +222,13 @@ class Hotwater:
         final = False
 
         if device["hive_id"] in Data.products and await self.get_boost(device["hive_id"]) == "ON":
-            self.session.hive_api_logon()
+            await self.session.hive_api_logon()
             data = Data.products[device["hive_id"]]
             prev_mode = data["props"]["previous"]["mode"]
-            resp = self.hive.set_state(Data.sess_id, data["type"],
-                                       device["hive_id"], mode=prev_mode)
+            resp = await self.hive.set_state(Data.sess_id, data["type"],
+                                             device["hive_id"], mode=prev_mode)
             if resp["original"] == 200:
-                self.session.get_devices(device["hive_id"])
+                await self.session.get_devices(device["hive_id"])
                 final = True
                 await self.log.log(device["hive_id"], "API", "Boost off - API response 200")
             else:
