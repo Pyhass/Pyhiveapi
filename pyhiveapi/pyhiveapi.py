@@ -2594,23 +2594,6 @@ class Pyhiveapi:
                         if nodedevicetype == "tuneablelight":
                             json_string_content = '{"colourTemperature": ' + str(new_color_temp) + '}'
                         else:
-                            json_string_content = '{"colourMode": "COLOUR", ' \
-                                                  '"hue": "48", ' \
-                                                  '"saturation": "70", ' \
-                                                  '"value": "96"}'
-                            hive_api_url = (HIVE_API.urls.nodes
-                                            + '/' +
-                                            HSC.products.light[node_index][
-                                                "type"]
-                                            + '/' +
-                                            HSC.products.light[node_index][
-                                                "id"])
-                            api_resp_d = Pyhiveapi.hive_api_json_call(self,
-                                                                      "POST",
-                                                                      hive_api_url,
-                                                                      json_string_content,
-                                                                      False)
-
                             json_string_content = '{"colourMode": "WHITE", "colourTemperature": ' + str(
                                 new_color_temp) + '}'
                         hive_api_url = (HIVE_API.urls.nodes
