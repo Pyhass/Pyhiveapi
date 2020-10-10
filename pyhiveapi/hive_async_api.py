@@ -41,9 +41,9 @@ class Hive_Async:
         data = kwargs.get('data', None)
         async with self.websession.request(method, url, headers=self.headers, data=data) as resp:
             if method != "delete":
-                await resp.json()
+                await resp.json(content_type=None)
                 self.json_return.update({"original": resp.status})
-                self.json_return.update({"parsed": await resp.json()})
+                self.json_return.update({"parsed": await resp.json(content_type=None)})
 
     async def login(self, username, password):
         """Login to the Hive API."""
