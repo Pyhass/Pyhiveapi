@@ -1,5 +1,7 @@
 """__init__.py"""
+from .const import *
 from .hive_session import Session
+from .hive2fa import Hive2fa
 from .action import Action
 from .client import Client
 from .custom_logging import Logger
@@ -14,3 +16,21 @@ from .light import Light
 from .plug import Plug
 from .sensor import Sensor
 from .weather import Weather
+
+
+from cryptography.fernet import Fernet
+import os
+import json
+
+
+def get_message(message, type):
+    """
+    Gets a message
+    """
+    key = open(os.getcwd() + PACKAGE_DIR + ".info.key", "rb").read()
+    f = Fernet(key)
+    result = f.decrypt(message).decode()
+
+    if type == "JSON":
+        result = json.loads(result)
+    return result

@@ -1,4 +1,15 @@
+import os
+import re
+
 from setuptools import setup, find_packages
+
+
+def requirements_from_file(filename='requirements.txt'):
+    with open(os.path.join(os.path.dirname(__file__), filename)) as r:
+        reqs = r.read().strip().split('\n')
+    # Return non emtpy lines and non comments
+    return [r for r in reqs if re.match(r"^\w+", r)]
+
 
 setup(
     name="pyhiveapi",
@@ -24,5 +35,8 @@ setup(
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     entry_points={"console_scripts": [
         "pyhiveapi=pyhiveapi.pyhiveapi:Pyhiveapi"]},
-    install_requires=["aiohttp", "requests"],
+    install_requires=requirements_from_file(),
+    extras_require={
+        'dev': requirements_from_file('requirements_test.txt')
+    },
 )
