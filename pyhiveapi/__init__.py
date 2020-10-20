@@ -1,7 +1,7 @@
 """__init__.py"""
 from .const import *
 from .hive_session import Session
-from .hive2fa import Hive2fa
+from .hiveauth import HiveAuth
 from .action import Action
 from .client import Client
 from .custom_logging import Logger

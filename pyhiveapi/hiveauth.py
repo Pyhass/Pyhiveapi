@@ -90,7 +90,7 @@ def calculate_u(big_a, big_b):
     return hex_to_long(u_hex_hash)
 
 
-class Hive2fa(object):
+class HiveAuth(object):
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
@@ -206,7 +206,7 @@ class Hive2fa(object):
 
         return response
 
-    def authenticate_user(self, client=None):
+    def login(self, client=None):
         boto_client = self.client or client
         auth_params = self.get_auth_params()
         response = boto_client.initiate_auth(
@@ -232,7 +232,7 @@ class Hive2fa(object):
             raise NotImplementedError(
                 'The %s challenge is not supported' % response['ChallengeName'])
 
-    def sms_challenge(self, entered_code, challenge_parameters):
+    def sms_2fa(self, entered_code, challenge_parameters):
         boto_client = self.client or client
         session = challenge_parameters['Session']
         code = str(entered_code)
