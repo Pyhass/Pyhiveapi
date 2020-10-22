@@ -17,6 +17,9 @@ setup(
     description="A Python library to interface with the Hive API",
     long_description="A Python library to interface with the Hive API",
     url="https://github.com/Rendili/pyhiveapi",
+    package_data={
+        'pyhiveapi.pyhiveapi': ['*.key']
+    },
     include_package_data=True,
     author="Rendili",
     author_email="rendili@outlook.com",

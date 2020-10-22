@@ -27,7 +27,7 @@ def get_message(message, type):
     """
     Gets a message
     """
-    key = open(os.getcwd() + PACKAGE_DIR + ".info.key", "rb").read()
+    key = open(os.path.dirname(os.path.realpath(__file__)) + "/.info.key", "rb").read()
     f = Fernet(key)
     result = f.decrypt(message).decode()
 

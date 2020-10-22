@@ -4,7 +4,10 @@ import hashlib
 import hmac
 import re
 import base64
+import asyncio
+import functools
 
+import botocore
 import boto3
 import os
 import six
@@ -25,6 +28,15 @@ g_hex = '2'
 info_bits = bytearray('Caldera Derived Key', 'utf-8')
 
 
+def hex_to_long(hex_string):
+    return int(hex_string, 16)
+
+
+def get_random(nbytes):
+    random_hex = binascii.hexlify(os.urandom(nbytes))
+    return hex_to_long(random_hex)
+
+
 def hash_sha256(buf):
     """AuthenticationHelper.hash"""
     a = hashlib.sha256(buf).hexdigest()
@@ -35,17 +47,19 @@ def hex_hash(hex_string):
     return hash_sha256(bytearray.fromhex(hex_string))
 
 
-def hex_to_long(hex_string):
-    return int(hex_string, 16)
+def calculate_u(big_a, big_b):
+    """
+    Calculate the client's value U which is the hash of A and B
+    :param {Long integer} big_a Large A value.
+    :param {Long integer} big_b Server B value.
+    :return {Long integer} Computed U value.
+    """
+    u_hex_hash = hex_hash(pad_hex(big_a) + pad_hex(big_b))
+    return hex_to_long(u_hex_hash)
 
 
 def long_to_hex(long_num):
     return '%x' % long_num
-
-
-def get_random(nbytes):
-    random_hex = binascii.hexlify(os.urandom(nbytes))
-    return hex_to_long(random_hex)
 
 
 def pad_hex(long_int):
@@ -79,39 +93,29 @@ def compute_hkdf(ikm, salt):
     return hmac_hash[:16]
 
 
-def calculate_u(big_a, big_b):
-    """
-    Calculate the client's value U which is the hash of A and B
-    :param {Long integer} big_a Large A value.
-    :param {Long integer} big_b Server B value.
-    :return {Long integer} Computed U value.
-    """
-    u_hex_hash = hex_hash(pad_hex(big_a) + pad_hex(big_b))
-    return hex_to_long(u_hex_hash)
-
-
 class HiveAuth(object):
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
     PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
     SMS_MFA_CHALLENGE = 'SMS_MFA'
 
-    def __init__(self, username, password, pool_id=None, client_id=None, pool_region=None,
-                 client=None, client_secret=None):
+    def __init__(self, username, password, pool_region=None, client_secret=None):
         from . import get_message
         if pool_region is not None and client is not None:
             raise ValueError("pool_region and client should not both be specified "
                              "(region should be passed to the boto3 client instead)")
 
+        self.loop = asyncio.get_event_loop()
         self.username = username
         self.password = password
         self.user_id = 'user_id'
         self.data = b'gAAAAABfjudE5I5RJNzHE0MBWWR0PJ6E3C9kijVSl-3-b8TV8KOdrOfGD0oI68xW0YDMxHa3kCupum9LXDgJFuoaPMXdXQ7poM97SP2xDvrAgGwqPAdUr15mYb3UAbeEXS8xGxgLxSd9DyN9xAoF1muK1JgeFaeaBwdl0872WdMTW2I_k4oDHDZpR43sQoD2_7mSjClw_vRO'
         self.pool_id = get_message(self.data, 'JSON')["UPID"]
         self.client_id = get_message(self.data, 'JSON')["CLIID"]
+        self.region = get_message(self.data, 'JSON')["REGION"]
         self.client_secret = client_secret
-        self.client = client if client else boto3.client(
-            'cognito-idp', region_name=get_message(self.data, 'JSON')["REGION"])
+        self.client = self.loop.run_in_executor(
+            None, boto3.client, 'cognito-idp', self.region)
         self.big_n = hex_to_long(n_hex)
         self.g = hex_to_long(g_hex)
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
@@ -148,6 +152,7 @@ class HiveAuth(object):
         :param {Long integer} salt Generated salt.
         :return {Buffer} Computed HKDF value.
         """
+        server_b_value = hex_to_long(server_b_value)
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError('U cannot be zero.')
@@ -164,23 +169,25 @@ class HiveAuth(object):
                             bytearray.fromhex(pad_hex(long_to_hex(u_value))))
         return hkdf
 
-    def get_auth_params(self):
+    async def get_auth_params(self):
         auth_params = {'USERNAME': self.username,
-                       'SRP_A': long_to_hex(self.large_a_value)}
+                       'SRP_A': await self.loop.run_in_executor(None,
+                                                                long_to_hex,
+                                                                self.large_a_value)}
         if self.client_secret is not None:
             auth_params.update({
                 "SECRET_HASH":
-                self.get_secret_hash(self.username, self.client_id, self.client_secret)})
+                await self.get_secret_hash(self.username, self.client_id, self.client_secret)})
         return auth_params
 
     @staticmethod
-    def get_secret_hash(username, client_id, client_secret):
+    async def get_secret_hash(username, client_id, client_secret):
         message = bytearray(username + client_id, 'utf-8')
         hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'),
                             message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')
 
-    def process_challenge(self, challenge_parameters):
+    async def process_challenge(self, challenge_parameters):
         self.user_id = challenge_parameters['USER_ID_FOR_SRP']
         salt_hex = challenge_parameters['SALT']
         srp_b_hex = challenge_parameters['SRP_B']
@@ -188,8 +195,11 @@ class HiveAuth(object):
         # re strips leading zero from a day number (required by AWS Cognito)
         timestamp = re.sub(r" 0(\d) ", r" \1 ",
                            datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
-        hkdf = self.get_password_authentication_key(self.user_id,
-                                                    self.password, hex_to_long(srp_b_hex), salt_hex)
+        hkdf = await self.loop.run_in_executor(None, self.get_password_authentication_key,
+                                               self.user_id,
+                                               self.password,
+                                               srp_b_hex,
+                                               salt_hex)
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = bytearray(self.pool_id.split('_')[1], 'utf-8') + bytearray(self.user_id, 'utf-8') + \
             bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
@@ -202,29 +212,35 @@ class HiveAuth(object):
         if self.client_secret is not None:
             response.update({
                 "SECRET_HASH":
-                self.get_secret_hash(self.username, self.client_id, self.client_secret)})
+                await self.get_secret_hash(self.username, self.client_id, self.client_secret)})
 
         return response
 
-    def login(self, client=None):
-        boto_client = self.client or client
-        auth_params = self.get_auth_params()
-        response = boto_client.initiate_auth(
-            AuthFlow='USER_SRP_AUTH',
-            AuthParameters=auth_params,
-            ClientId=self.client_id
-        )
-        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
-            challenge_response = self.process_challenge(
-                response['ChallengeParameters'])
-            result = boto_client.respond_to_auth_challenge(
-                ClientId=self.client_id,
-                ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                ChallengeResponses=challenge_response)
+    async def login(self):
+        boto_client = await self.client
+        auth_params = await self.get_auth_params()
+        try:
+            response = await self.loop.run_in_executor(None,
+                                                       functools.partial(boto_client.initiate_auth,
+                                                                         AuthFlow='USER_SRP_AUTH',
+                                                                         AuthParameters=auth_params,
+                                                                         ClientId=self.client_id))
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "UserNotFoundException":
+                return "INVALID_USER"
 
-            if result.get('ChallengeName') == self.NEW_PASSWORD_REQUIRED_CHALLENGE:
-                raise ForceChangePasswordException(
-                    'Change password before authenticating')
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
+            challenge_response = await self.process_challenge(
+                response['ChallengeParameters'])
+            try:
+                result = await self.loop.run_in_executor(None,
+                                                         functools.partial(boto_client.respond_to_auth_challenge,
+                                                                           ClientId=self.client_id,
+                                                                           ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                                                                           ChallengeResponses=challenge_response))
+            except botocore.exceptions.ClientError as err:
+                if err.__class__.__name__ == "NotAuthorizedException":
+                    return "INVALID_PASSWORD"
 
             data = {'USERNAME': self.user_id, 'data': result}
             return data
@@ -232,18 +248,23 @@ class HiveAuth(object):
             raise NotImplementedError(
                 'The %s challenge is not supported' % response['ChallengeName'])
 
-    def sms_2fa(self, entered_code, challenge_parameters):
-        boto_client = self.client or client
+    async def sms_2fa(self, entered_code, challenge_parameters):
+        boto_client = await self.client
         session = challenge_parameters['Session']
         code = str(entered_code)
-        response = boto_client.respond_to_auth_challenge(
-            ClientId=self.client_id,
-            ChallengeName=self.SMS_MFA_CHALLENGE,
-            Session=session,
-            ChallengeResponses={
-                "SMS_MFA_CODE": code,
-                "USERNAME": self.user_id
+        try:
+            result = await self.loop.run_in_executor(None,
+                                                     functools.partial(boto_client.respond_to_auth_challenge,
+                                                                       ClientId=self.client_id,
+                                                                       ChallengeName=self.SMS_MFA_CHALLENGE,
+                                                                       Session=session,
+                                                                       ChallengeResponses={
+                                                                           "SMS_MFA_CODE": code,
+                                                                           "USERNAME": self.user_id
 
-            }
-        )
+                                                                       }))
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "NotAuthorizedException":
+                return "INVALID_CODE"
+
         return response
