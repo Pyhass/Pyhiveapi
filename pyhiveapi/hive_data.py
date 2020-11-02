@@ -61,10 +61,14 @@ class Data:
     # Session Data
     sess_id = None
     s_token = False
-    s_logon_datetime = datetime.datetime.now()
+    s_token_update = datetime.datetime.now()
+    s_tokens = {}
+    s_entity_update_flag = False
     s_username = ""
     s_password = ""
+    s_tokens = {}
     s_interval_seconds = NODE_INTERVAL_DEFAULT
+    s_sensors = False
     s_last_update = datetime.datetime(2017, 1, 1, 12, 0, 0)
     s_file = False
 
@@ -80,22 +84,8 @@ class Data:
     # Platform data
     p_minmax = {}
 
-    # Logging data
-    l_o_folder = ""
-    l_o_file = ""
-    l_files = {
-        "All": "log.all",
-        "Action": "log.aciton",
-        "Attribute": "log.attribute",
-        "API": "log.api",
-        "API_CORE": "log.api_core",
-        "ERROR": "log.error",
-        "Extra": "log.extra",
-        "Heating": "log.heating",
-        "Hotwater": "log.hotwater",
-        "Light": "log.light",
-        "Sensor": "log.sensor",
-        "Session": "log.session",
-        "Switch": "log.switch",
-    }
-    l_values = {}
+    # Debugging data
+    d_o_folder = ""
+    d_o_file = ""
+    d_enabled = False
+    d_list = []

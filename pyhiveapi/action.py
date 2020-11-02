@@ -66,15 +66,15 @@ class Action:
         final = False
 
         if device["hive_id"] in Data.actions:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.actions[device["hive_id"]]
             data.update({"enabled": True})
             send = json.dumps(data)
-            resp = await self.hive.set_action(Data.sess_id, device["hive_id"], send)
+            resp = await self.hive.set_action(device["hive_id"], send)
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Enabled action - API response 200")
+                await self.log.log(device["hive_id"], "API", "Enabled action - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -88,15 +88,15 @@ class Action:
         final = False
 
         if device["hive_id"] in Data.actions:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.actions[device["hive_id"]]
             data.update({"enabled": False})
             send = json.dumps(data)
-            resp = await self.hive.set_action(Data.sess_id, device["hive_id"], send)
+            resp = await self.hive.set_action(device["hive_id"], send)
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Disabled action - API response 200")
+                await self.log.log(device["hive_id"], "API", "Disabled action - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])

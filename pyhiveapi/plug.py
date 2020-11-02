@@ -99,16 +99,15 @@ class Plug():
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
-            resp = await self.hive.set_state(Data.sess_id,
-                                             data["type"],
+            resp = await self.hive.set_state(data["type"],
                                              data["id"],
                                              status="ON")
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Switched on - API response 200")
+                await self.log.log(device["hive_id"], "API", "Switched on - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -121,17 +120,16 @@ class Plug():
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
             resp = await self.hive.set_state(
-                Data.sess_id,
                 data["type"],
                 data["id"],
                 status="OFF")
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Switch off - API response 200")
+                await self.log.log(device["hive_id"], "API", "Switch off - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])

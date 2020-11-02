@@ -1,2 +1,0 @@
-"""Test Import."""
-import pyhiveapi

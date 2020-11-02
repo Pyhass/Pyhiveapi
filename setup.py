@@ -13,12 +13,12 @@ def requirements_from_file(filename='requirements.txt'):
 
 setup(
     name="pyhiveapi",
-    version="0.3_b4",
+    version="0.3_b6",
     description="A Python library to interface with the Hive API",
     long_description="A Python library to interface with the Hive API",
-    url="https://github.com/Rendili/pyhiveapi",
+    url="https://github.com/Pyhive/pyhiveapi",
     package_data={
-        'pyhiveapi.pyhiveapi': ['*.key']
+        'pyhiveapi.pyhiveapi': ['*.key', '*.json']
     },
     include_package_data=True,
     author="Rendili",
@@ -37,7 +37,7 @@ setup(
     keywords="Hive API Library",
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     entry_points={"console_scripts": [
-        "pyhiveapi=pyhiveapi.pyhiveapi:Pyhiveapi"]},
+        "pyhiveapi=pyhiveapi.hive_session:Session"]},
     install_requires=requirements_from_file(),
     extras_require={
         'dev': requirements_from_file('requirements_test.txt')

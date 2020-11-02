@@ -101,7 +101,7 @@ class HiveAuth(object):
 
     def __init__(self, username, password, pool_region=None, client_secret=None):
         from . import get_message
-        if pool_region is not None and client is not None:
+        if pool_region is not None:
             raise ValueError("pool_region and client should not both be specified "
                              "(region should be passed to the boto3 client instead)")
 
@@ -121,6 +121,8 @@ class HiveAuth(object):
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
+        self.use_file = True if self.username == "use@file.com" else False
+        self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
 
     def generate_random_small_a(self):
         """
@@ -217,8 +219,14 @@ class HiveAuth(object):
         return response
 
     async def login(self):
+        """Login into a Hive account."""
+        if self.use_file:
+            return self.file_response
+
         boto_client = await self.client
         auth_params = await self.get_auth_params()
+        response = None
+        result = None
         try:
             response = await self.loop.run_in_executor(None,
                                                        functools.partial(boto_client.initiate_auth,
@@ -228,6 +236,9 @@ class HiveAuth(object):
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
                 return "INVALID_USER"
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                return "CONNECTION_ERROR"
 
         if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = await self.process_challenge(
@@ -241,17 +252,20 @@ class HiveAuth(object):
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
                     return "INVALID_PASSWORD"
+            except botocore.exceptions.EndpointConnectionError as err:
+                if err.__class__.__name__ == "EndpointConnectionError":
+                    return "CONNECTION_ERROR"
 
-            data = {'USERNAME': self.user_id, 'data': result}
-            return data
+            return result
         else:
             raise NotImplementedError(
                 'The %s challenge is not supported' % response['ChallengeName'])
 
     async def sms_2fa(self, entered_code, challenge_parameters):
         boto_client = await self.client
-        session = challenge_parameters['Session']
+        session = challenge_parameters.get('Session')
         code = str(entered_code)
+        result = None
         try:
             result = await self.loop.run_in_executor(None,
                                                      functools.partial(boto_client.respond_to_auth_challenge,
@@ -264,7 +278,11 @@ class HiveAuth(object):
 
                                                                        }))
         except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "NotAuthorizedException":
+            if err.__class__.__name__ == "NotAuthorizedException" or \
+                    err.__class__.__name__ == "CodeMismatchException":
                 return "INVALID_CODE"
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                return "CONNECTION_ERROR"
 
-        return response
+        return result

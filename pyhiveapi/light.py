@@ -193,15 +193,15 @@ class Light:
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
-            resp = await self.hive.set_state(Data.sess_id, data["type"],
+            resp = await self.hive.set_state(data["type"],
                                              device["hive_id"], status="OFF")
 
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Light off - API response 200")
+                await self.log.log(device["hive_id"], "API", "Light off - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -214,7 +214,7 @@ class Light:
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
 
             if brightness is not None:
@@ -224,12 +224,12 @@ class Light:
             if color is not None:
                 return await self.set_color(device, color)
 
-            resp = await self.hive.set_state(Data.sess_id, data["type"],
+            resp = await self.hive.set_state(data["type"],
                                              device["hive_id"], status="ON")
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Light on - API response 200")
+                await self.log.log(device["hive_id"], "API", "Light on - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -242,15 +242,15 @@ class Light:
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
-            resp = await self.hive.set_state(Data.sess_id, data["type"],
+            resp = await self.hive.set_state(data["type"],
                                              device["hive_id"], status="ON",
                                              brightness=n_brightness)
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Brightness set - API response 200")
+                await self.log.log(device["hive_id"], "API", "Brightness set to:  " + str(n_brightness))
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -263,18 +263,18 @@ class Light:
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
 
             if data["type"] == "tuneablelight":
-                resp = await self.hive.set_state(Data.sess_id, data["type"],
+                resp = await self.hive.set_state(data["type"],
                                                  device["hive_id"],
                                                  colourTemperature=color_temp)
             else:
-                await self.hive.set_state(Data.sess_id, data["type"], device["hive_id"],
+                await self.hive.set_state(data["type"], device["hive_id"],
                                           colourMode="COLOUR", hue="48", saturation="70",
                                           value="96")
-                resp = await self.hive.set_state(Data.sess_id, data["type"],
+                resp = await self.hive.set_state(data["type"],
                                                  device["hive_id"],
                                                  colourMode="WHITE",
                                                  colourTemperature=color_temp)
@@ -282,7 +282,7 @@ class Light:
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Colour temp set - API response 200")
+                await self.log.log(device["hive_id"], "API", "Colour temp set - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
@@ -295,17 +295,17 @@ class Light:
         final = False
 
         if device["hive_id"] in Data.products:
-            await self.session.hive_api_logon()
+            await self.session.hive_refresh_tokens()
             data = Data.products[device["hive_id"]]
 
-            resp = await self.hive.set_state(Data.sess_id, data["type"],
+            resp = await self.hive.set_state(data["type"],
                                              device["hive_id"], colourMode="COLOUR",
                                              hue=str(new_color[0]), saturation=str(new_color[1]),
                                              value=str(new_color[2]))
             if resp["original"] == 200:
                 final = True
                 await self.session.get_devices(device["hive_id"])
-                await self.log.log(device["hive_id"], "API", "Colour set - API response 200")
+                await self.log.log(device["hive_id"], "API", "Colour set - " + device["hive_name"])
             else:
                 await self.log.error_check(
                     device["hive_id"], "ERROR", "Failed_API", resp=resp["original"])
