@@ -332,8 +332,6 @@ class Pyhiveapi:
 
                 if 'postcode' in api_resp_p['user']:
                     HSC.postcode = api_resp_p['user']['postcode']
-                else:
-                    login_details_found = False
 
                 if 'temperatureUnit' in api_resp_p['user']:
                     HSC.temperature_unit = api_resp_p['user']['temperatureUnit']
@@ -379,7 +377,7 @@ class Pyhiveapi:
                 nodes_updated = Pyhiveapi.hive_api_get_nodes(self, node_id)
 
             weather_last_update_secs = (current_time - HSC.weather.last_update).total_seconds()
-            if weather_last_update_secs >= HSC.update_weather_interval_seconds:
+            if HSC.postcode is not "" and weather_last_update_secs >= HSC.update_weather_interval_seconds:
                 nodes_updated = Pyhiveapi.hive_api_get_weather(self)
         finally:
             self.lock.release()
@@ -852,7 +850,8 @@ class Pyhiveapi:
             if HSC.session_id is not None:
                 HSC.update_node_interval_seconds = hive_node_update_interval
                 Pyhiveapi.hive_api_get_nodes_nl(self)
-                Pyhiveapi.hive_api_get_weather(self)
+                if HSC.postcode is not "":
+                    Pyhiveapi.hive_api_get_weather(self)
 
         device_list_all = {}
         device_list_sensor = []
