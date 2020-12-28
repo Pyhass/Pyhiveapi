@@ -2,21 +2,20 @@
 import requests
 import json
 from pyquery import PyQuery
-from .hive_data import Data
-from .custom_logging import Logger
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 class HiveApi:
     """Hive API Code."""
 
     def __init__(self):
         """Hive API initialisation."""
-        self.log = Logger()
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
+            "refresh": "https://beekeeper.hivehome.com/1.0/cognito/refresh-token",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "base": "https://beekeeper-uk.hivehome.com/1.0",
             "weather": "https://weather.prod.bgchprod.info/weather",
@@ -38,8 +37,27 @@ class HiveApi:
             "parsed": "No response to Hive API request",
         }
 
-    def refreshTokens(self):
+    def refreshTokens(self, tokens):
         """Get new session tokens"""
+        url = self.urls["refresh"]
+        jsc = (
+            "{"
+            + ",".join(
+                ('"' + str(i) + '": ' '"' + str(t) +
+                 '" ' for i, t in tokens.items())
+            )
+            + "}"
+        )
+        try:
+            response = requests.post(
+                url=url, headers=self.headers, data=jsc, timeout=self.timeout
+            )
+            self.json_return.update({"original": response.status_code})
+            self.json_return.update({"parsed": response.json()})
+        except (IOError, RuntimeError, ZeroDivisionError):
+            self.error()
+
+        return self.json_return
 
     def getLoginInfo(self):
         """Get login properties to make the login request."""
@@ -53,16 +71,17 @@ class HiveApi:
                                                                                 ', "').replace('=',
                                                                                                '":').replace('window.', '') + '}')
 
-            Data.loginData.update({'UPID': json_data['HiveSSOPoolId']})
-            Data.loginData.update(
+            loginData = {}
+            loginData.update({'UPID': json_data['HiveSSOPoolId']})
+            loginData.update(
                 {'CLIID': json_data['HiveSSOPublicCognitoClientId']})
-            Data.loginData.update(
+            loginData.update(
                 {'REGION': json_data['HiveSSOPoolId']})
-            return Data.loginData
+            return loginData
         except (IOError, RuntimeError, ZeroDivisionError):
             self.error()
 
-    def getAll(self, session_id):
+    def getAllData(self, session_id):
         """Build and query all endpoint."""
         self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["all"]
@@ -226,4 +245,3 @@ class HiveApi:
         """An error has occured iteracting wth the Hive API."""
         self.json_return.update({"original": "Error making API call"})
         self.json_return.update({"parsed": "Error making API call"})
-        self.log.log("API_ERROR", "ERROR", "Error attempting API call")

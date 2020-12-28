@@ -4,8 +4,7 @@ import hashlib
 import hmac
 import re
 import base64
-import asyncio
-import functools
+from .hive_api import HiveApi
 
 import botocore
 import boto3
@@ -26,6 +25,182 @@ n_hex = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1' + '29024E088A67CC7402
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
 g_hex = '2'
 info_bits = bytearray('Caldera Derived Key', 'utf-8')
+
+
+class HiveAuth(object):
+
+    NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
+    PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
+    SMS_MFA_CHALLENGE = 'SMS_MFA'
+
+    def __init__(self, username, password, pool_region=None, client_secret=None):
+        if pool_region is not None:
+            raise ValueError("pool_region and client should not both be specified "
+                             "(region should be passed to the boto3 client instead)")
+
+        self.username = username
+        self.password = password
+        self.user_id = 'user_id'
+        self.client_secret = client_secret
+        self.big_n = hex_to_long(n_hex)
+        self.g = hex_to_long(g_hex)
+        self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
+        self.small_a_value = self.generate_random_small_a()
+        self.large_a_value = self.calculate_a()
+        self.useFile = True if self.username == "use@file.com" else False
+        self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
+        self.api = HiveApi()
+        self.data = self.api.getLoginInfo()
+        self.__pool_id = self.data.get("UPID")
+        self.__client_id = self.data.get("CLIID")
+        self.__region = self.data.get("REGION").split('_')[0]
+        self.client = boto3.client('cognito-idp', self.__region)
+
+    def generate_random_small_a(self):
+        """
+        helper function to generate a random big integer
+        :return {Long integer} a random value.
+        """
+        random_long_int = get_random(128)
+        return random_long_int % self.big_n
+
+    def calculate_a(self):
+        """
+        Calculate the client's public value A = g^a%N
+        with the generated random number a
+        :param {Long integer} a Randomly generated small A.
+        :return {Long integer} Computed large A.
+        """
+        big_a = pow(self.g, self.small_a_value, self.big_n)
+        # safety check
+        if (big_a % self.big_n) == 0:
+            raise ValueError('Safety check for A failed')
+        return big_a
+
+    def get_password_authentication_key(self, username, password, server_b_value, salt):
+        """
+        Calculates the final hkdf based on computed S value, and computed U value and the key
+        :param {String} username Username.
+        :param {String} password Password.
+        :param {Long integer} server_b_value Server B value.
+        :param {Long integer} salt Generated salt.
+        :return {Buffer} Computed HKDF value.
+        """
+        server_b_value = hex_to_long(server_b_value)
+        u_value = calculate_u(self.large_a_value, server_b_value)
+        if u_value == 0:
+            raise ValueError('U cannot be zero.')
+        username_password = '%s%s:%s' % (
+            self.__pool_id.split('_')[1], username, password)
+        username_password_hash = hash_sha256(username_password.encode('utf-8'))
+
+        x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
+        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        int_value2 = server_b_value - self.k * g_mod_pow_xn
+        s_value = pow(int_value2, self.small_a_value +
+                      u_value * x_value, self.big_n)
+        hkdf = compute_hkdf(bytearray.fromhex(pad_hex(s_value)),
+                            bytearray.fromhex(pad_hex(long_to_hex(u_value))))
+        return hkdf
+
+    def get_auth_params(self):
+        auth_params = {'USERNAME': self.username,
+                       'SRP_A': long_to_hex(self.large_a_value)}
+        if self.client_secret is not None:
+            auth_params.update({
+                "SECRET_HASH":
+                self.get_secret_hash(self.username, self.__client_id, self.client_secret)})
+        return auth_params
+
+    @staticmethod
+    def get_secret_hash(username, client_id, client_secret):
+        message = bytearray(username + client_id, 'utf-8')
+        hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'),
+                            message, hashlib.sha256)
+        return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')
+
+    def process_challenge(self, challenge_parameters):
+        self.user_id = challenge_parameters['USER_ID_FOR_SRP']
+        salt_hex = challenge_parameters['SALT']
+        srp_b_hex = challenge_parameters['SRP_B']
+        secret_block_b64 = challenge_parameters['SECRET_BLOCK']
+        # re strips leading zero from a day number (required by AWS Cognito)
+        timestamp = re.sub(r" 0(\d) ", r" \1 ",
+                           datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
+        hkdf = self.get_password_authentication_key(
+            self.user_id, self.password, srp_b_hex, salt_hex)
+        secret_block_bytes = base64.standard_b64decode(secret_block_b64)
+        msg = bytearray(self.__pool_id.split('_')[1], 'utf-8') + bytearray(self.user_id, 'utf-8') + \
+            bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
+        hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
+        signature_string = base64.standard_b64encode(hmac_obj.digest())
+        response = {'TIMESTAMP': timestamp,
+                    'USERNAME': self.user_id,
+                    'PASSWORD_CLAIM_SECRET_BLOCK': secret_block_b64,
+                    'PASSWORD_CLAIM_SIGNATURE': signature_string.decode('utf-8')}
+        if self.client_secret is not None:
+            response.update({"SECRET_HASH": self.get_secret_hash(
+                self.username, self.__client_id, self.client_secret)})
+
+        return response
+
+    def login(self):
+        """Login into a Hive account."""
+        if self.useFile:
+            return self.file_response
+
+        auth_params = self.get_auth_params()
+        response = None
+        result = None
+        try:
+            response = self.client.initiate_auth(AuthFlow='USER_SRP_AUTH', AuthParameters=auth_params,
+                                                 ClientId=self.__client_id)
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "UserNotFoundException":
+                return "INVALID_USER"
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                return "CONNECTION_ERROR"
+
+        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
+            challenge_response = self.process_challenge(
+                response['ChallengeParameters'])
+            try:
+                result = self.client.respond_to_auth_challenge(ClientId=self.__client_id,
+                                                               ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                                                               ChallengeResponses=challenge_response)
+            except botocore.exceptions.ClientError as err:
+                if err.__class__.__name__ == "NotAuthorizedException":
+                    return "INVALID_PASSWORD"
+            except botocore.exceptions.EndpointConnectionError as err:
+                if err.__class__.__name__ == "EndpointConnectionError":
+                    return "CONNECTION_ERROR"
+
+            return result
+        else:
+            raise NotImplementedError(
+                'The %s challenge is not supported' % response['ChallengeName'])
+
+    def sms_2fa(self, entered_code, challenge_parameters):
+        session = challenge_parameters.get('Session')
+        code = str(entered_code)
+        result = None
+        try:
+            result = self.client.respond_to_auth_challenge(ClientId=self.__client_id,
+                                                           ChallengeName=self.SMS_MFA_CHALLENGE,
+                                                           Session=session,
+                                                           ChallengeResponses={
+                                                               "SMS_MFA_CODE": code,
+                                                               "USERNAME": self.user_id})
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "NotAuthorizedException" or \
+                    err.__class__.__name__ == "CodeMismatchException":
+                return "INVALID_CODE"
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                return "CONNECTION_ERROR"
+
+        return result
 
 
 def hex_to_long(hex_string):
@@ -91,198 +266,3 @@ def compute_hkdf(ikm, salt):
     info_bits_update = info_bits + bytearray(chr(1), 'utf-8')
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]
-
-
-class HiveAuth(object):
-
-    NEW_PASSWORD_REQUIRED_CHALLENGE = 'NEW_PASSWORD_REQUIRED'
-    PASSWORD_VERIFIER_CHALLENGE = 'PASSWORD_VERIFIER'
-    SMS_MFA_CHALLENGE = 'SMS_MFA'
-
-    def __init__(self, username, password, pool_region=None, client_secret=None):
-        from . import get_message
-        if pool_region is not None:
-            raise ValueError("pool_region and client should not both be specified "
-                             "(region should be passed to the boto3 client instead)")
-
-        self.loop = asyncio.get_event_loop()
-        self.username = username
-        self.password = password
-        self.user_id = 'user_id'
-        self.data = b'gAAAAABfjudE5I5RJNzHE0MBWWR0PJ6E3C9kijVSl-3-b8TV8KOdrOfGD0oI68xW0YDMxHa3kCupum9LXDgJFuoaPMXdXQ7poM97SP2xDvrAgGwqPAdUr15mYb3UAbeEXS8xGxgLxSd9DyN9xAoF1muK1JgeFaeaBwdl0872WdMTW2I_k4oDHDZpR43sQoD2_7mSjClw_vRO'
-        self.__pool_id = get_message(self.data, 'JSON')["UPID"]
-        self.__client_id = get_message(self.data, 'JSON')["CLIID"]
-        self.__region = get_message(self.data, 'JSON')["REGION"]
-        self.client_secret = client_secret
-        self.client = self.loop.run_in_executor(
-            None, boto3.client, 'cognito-idp', self.__region)
-        self.big_n = hex_to_long(n_hex)
-        self.g = hex_to_long(g_hex)
-        self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
-        self.small_a_value = self.generate_random_small_a()
-        self.large_a_value = self.calculate_a()
-        self.useFile = True if self.username == "use@file.com" else False
-        self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
-
-    def generate_random_small_a(self):
-        """
-        helper function to generate a random big integer
-        :return {Long integer} a random value.
-        """
-        random_long_int = get_random(128)
-        return random_long_int % self.big_n
-
-    def calculate_a(self):
-        """
-        Calculate the client's public value A = g^a%N
-        with the generated random number a
-        :param {Long integer} a Randomly generated small A.
-        :return {Long integer} Computed large A.
-        """
-        big_a = pow(self.g, self.small_a_value, self.big_n)
-        # safety check
-        if (big_a % self.big_n) == 0:
-            raise ValueError('Safety check for A failed')
-        return big_a
-
-    def get_password_authentication_key(self, username, password, server_b_value, salt):
-        """
-        Calculates the final hkdf based on computed S value, and computed U value and the key
-        :param {String} username Username.
-        :param {String} password Password.
-        :param {Long integer} server_b_value Server B value.
-        :param {Long integer} salt Generated salt.
-        :return {Buffer} Computed HKDF value.
-        """
-        server_b_value = hex_to_long(server_b_value)
-        u_value = calculate_u(self.large_a_value, server_b_value)
-        if u_value == 0:
-            raise ValueError('U cannot be zero.')
-        username_password = '%s%s:%s' % (
-            self.__pool_id.split('_')[1], username, password)
-        username_password_hash = hash_sha256(username_password.encode('utf-8'))
-
-        x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
-        int_value2 = server_b_value - self.k * g_mod_pow_xn
-        s_value = pow(int_value2, self.small_a_value +
-                      u_value * x_value, self.big_n)
-        hkdf = compute_hkdf(bytearray.fromhex(pad_hex(s_value)),
-                            bytearray.fromhex(pad_hex(long_to_hex(u_value))))
-        return hkdf
-
-    async def get_auth_params(self):
-        auth_params = {'USERNAME': self.username,
-                       'SRP_A': await self.loop.run_in_executor(None,
-                                                                long_to_hex,
-                                                                self.large_a_value)}
-        if self.client_secret is not None:
-            auth_params.update({
-                "SECRET_HASH":
-                await self.get_secret_hash(self.username, self.__client_id, self.client_secret)})
-        return auth_params
-
-    @staticmethod
-    async def get_secret_hash(username, client_id, client_secret):
-        message = bytearray(username + client_id, 'utf-8')
-        hmac_obj = hmac.new(bytearray(client_secret, 'utf-8'),
-                            message, hashlib.sha256)
-        return base64.standard_b64encode(hmac_obj.digest()).decode('utf-8')
-
-    async def process_challenge(self, challenge_parameters):
-        self.user_id = challenge_parameters['USER_ID_FOR_SRP']
-        salt_hex = challenge_parameters['SALT']
-        srp_b_hex = challenge_parameters['SRP_B']
-        secret_block_b64 = challenge_parameters['SECRET_BLOCK']
-        # re strips leading zero from a day number (required by AWS Cognito)
-        timestamp = re.sub(r" 0(\d) ", r" \1 ",
-                           datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"))
-        hkdf = await self.loop.run_in_executor(None, self.get_password_authentication_key,
-                                               self.user_id,
-                                               self.password,
-                                               srp_b_hex,
-                                               salt_hex)
-        secret_block_bytes = base64.standard_b64decode(secret_block_b64)
-        msg = bytearray(self.__pool_id.split('_')[1], 'utf-8') + bytearray(self.user_id, 'utf-8') + \
-            bytearray(secret_block_bytes) + bytearray(timestamp, 'utf-8')
-        hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
-        signature_string = base64.standard_b64encode(hmac_obj.digest())
-        response = {'TIMESTAMP': timestamp,
-                    'USERNAME': self.user_id,
-                    'PASSWORD_CLAIM_SECRET_BLOCK': secret_block_b64,
-                    'PASSWORD_CLAIM_SIGNATURE': signature_string.decode('utf-8')}
-        if self.client_secret is not None:
-            response.update({
-                "SECRET_HASH":
-                await self.get_secret_hash(self.username, self.__client_id, self.client_secret)})
-
-        return response
-
-    async def login(self):
-        """Login into a Hive account."""
-        if self.useFile:
-            return self.file_response
-
-        boto_client = await self.client
-        auth_params = await self.get_auth_params()
-        response = None
-        result = None
-        try:
-            response = await self.loop.run_in_executor(None,
-                                                       functools.partial(boto_client.initiate_auth,
-                                                                         AuthFlow='USER_SRP_AUTH',
-                                                                         AuthParameters=auth_params,
-                                                                         ClientId=self.__client_id))
-        except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "UserNotFoundException":
-                return "INVALID_USER"
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
-
-        if response['ChallengeName'] == self.PASSWORD_VERIFIER_CHALLENGE:
-            challenge_response = await self.process_challenge(
-                response['ChallengeParameters'])
-            try:
-                result = await self.loop.run_in_executor(None,
-                                                         functools.partial(boto_client.respond_to_auth_challenge,
-                                                                           ClientId=self.__client_id,
-                                                                           ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                                                                           ChallengeResponses=challenge_response))
-            except botocore.exceptions.ClientError as err:
-                if err.__class__.__name__ == "NotAuthorizedException":
-                    return "INVALID_PASSWORD"
-            except botocore.exceptions.EndpointConnectionError as err:
-                if err.__class__.__name__ == "EndpointConnectionError":
-                    return "CONNECTION_ERROR"
-
-            return result
-        else:
-            raise NotImplementedError(
-                'The %s challenge is not supported' % response['ChallengeName'])
-
-    async def sms_2fa(self, entered_code, challenge_parameters):
-        boto_client = await self.client
-        session = challenge_parameters.get('Session')
-        code = str(entered_code)
-        result = None
-        try:
-            result = await self.loop.run_in_executor(None,
-                                                     functools.partial(boto_client.respond_to_auth_challenge,
-                                                                       ClientId=self.__client_id,
-                                                                       ChallengeName=self.SMS_MFA_CHALLENGE,
-                                                                       Session=session,
-                                                                       ChallengeResponses={
-                                                                           "SMS_MFA_CODE": code,
-                                                                           "USERNAME": self.user_id
-
-                                                                       }))
-        except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "NotAuthorizedException" or \
-                    err.__class__.__name__ == "CodeMismatchException":
-                return "INVALID_CODE"
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
-
-        return result
