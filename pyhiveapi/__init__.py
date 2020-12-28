@@ -1,21 +1,12 @@
 """__init__.py"""
-from .const import *
-from .helper import Hive_Helper
-from .custom_logging import Logger
+from .hive import Hive
 from .hive_session import Session
-from .hive_auth_async import HiveAuthAsync
-from .action import Action
+from .const import *
+from .helper import HiveHelper
 from .client import Client
-from .hive_api import Hive
-from .device_attributes import Attributes
-from .heating import Heating
-from .hive_async_api import Hive_Async
-from .hive_data import Data
-from .hotwater import Hotwater
-from .hub import Hub
-from .light import Light
-from .plug import Plug
-from .sensor import Sensor
+from .hive_api import HiveApi
+from .hive_async_api import HiveAsync
+from .hive_auth_async import HiveAuthAsync
 
 
 def getMessage(__message, __type):

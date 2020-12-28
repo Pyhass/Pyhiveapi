@@ -1,4 +1,5 @@
 """Hive API Module."""
+import json
 from .hive_exceptions import FileInUse, NoApiToken
 
 from aiohttp import ClientSession, ClientResponse
@@ -11,8 +12,11 @@ from .hive_data import Data
 
 import operator
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-class Hive_Async:
+
+class HiveAsync:
     """Hive API Code."""
 
     def __init__(self, websession: Optional[ClientSession] = None):
@@ -41,25 +45,29 @@ class Hive_Async:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        self.websession = ClientSession = websession
+        websession = Data.haWebsession if websession is None else websession
+        self.websession = ClientSession() if websession is None else websession
 
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
         data = kwargs.get('data', None)
         api_sucessful = False
-        count = 0
+        sslcontext = False if 'sso' in url else True
         await self.log.log(
             'API', 'API', "Request is - {0}:{1}  Body is {2}", info=[method, url, data])
 
         while not api_sucessful:
             try:
                 self.headers.update(
-                    {"authorization": Data.s_tokens["token"]})
+                    {"authorization": Data.tokens["token"]})
             except KeyError:
-                self.log.log('API', 'API', 'ERROR - NO API TOKEN')
-                raise NoApiToken
+                if 'sso' in url:
+                    pass
+                else:
+                    self.log.log('API', 'API', 'ERROR - NO API TOKEN')
+                    raise NoApiToken
 
-            async with self.websession.request(method, url, headers=self.headers, data=data) as resp:
+            async with self.websession.request(method, url, headers=self.headers, data=data, ssl=sslcontext) as resp:
                 if method != "delete":
                     await resp.json(content_type=None)
                     self.json_return.update({"original": resp.status})
@@ -68,9 +76,10 @@ class Hive_Async:
 
             if operator.contains(str(resp.status), '20'):
                 api_sucessful = True
-            elif resp.status == 401 and count < 2:
+                Data.HttpCount = 0
+            elif resp.status == 401 and Data.HttpCount < 2:
+                Data.HttpCount += 1
                 await self.refreshTokens()
-                count += 1
             else:
                 raise HTTPBadRequest
 
@@ -81,7 +90,7 @@ class Hive_Async:
             "{"
             + ",".join(
                 ('"' + str(i) + '": ' '"' + str(t) +
-                 '" ' for i, t in Data.s_tokens.items())
+                 '" ' for i, t in Data.tokens.items())
             )
             + "}"
         )
@@ -91,18 +100,16 @@ class Hive_Async:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    Data.s_tokens.update({"token": info["token"]})
-                    Data.s_tokens.update(
+                    Data.tokens.update({"token": info["token"]})
+                    Data.tokens.update(
                         {"refreshToken": info["refreshToken"]})
-                    Data.s_tokens.update(
+                    Data.tokens.update(
                         {"accessToken": info["accessToken"]})
 
                     self.urls.update({"base": info["platform"]["endpoint"]})
                     self.urls.update(
                         {"camera": info["platform"]["cameraPlatform"]})
-
-                    Data.s_token_update = datetime.now()
-                    Data.s_entity_update_flag = "N"
+                    Data.tokenCreated = datetime.now()
                 return True
         except (ConnectionError, IOError, RuntimeError, ZeroDivisionError):
             await self.error()
@@ -113,12 +120,17 @@ class Hive_Async:
         """Get login properties to make the login request."""
         url = self.urls['properties']
         try:
-            html = await self.request('get', url)
-            pq = PyQuery(html)
-            poolID = ''
-            clientID = ''
-            region = ''
-            return poolID, clientID, region
+            data = await self.request('get', url)
+            html = PyQuery(data.content)
+            json_data = json.loads('{"' + (html('script:first').text()).replace(",",
+                                                                    ', "').replace('=', 
+                                                                    '":').replace('window.', '') + '}')
+            
+            Data.loginData.update({'UPID': json_data['HiveSSOPoolId']})
+            Data.loginData.update({'CLIID': json_data['HiveSSOPublicCognitoClientId']})
+            Data.loginData.update(
+                {'REGION': json_data['HiveSSOPoolId']})
+            return Data.loginData
         except (IOError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -132,7 +144,7 @@ class Hive_Async:
 
         return self.json_return
 
-    async def get_devices(self):
+    async def getDevices(self):
         """Call the get devices endpoint."""
         url = self.urls["base"] + self.urls["devices"]
         try:
@@ -240,5 +252,5 @@ class Hive_Async:
 
     async def is_file_being_used(self):
         """Check if running in file mode."""
-        if Data.s_file:
+        if Data.file:
             raise FileInUse()

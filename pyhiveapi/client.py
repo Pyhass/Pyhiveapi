@@ -3,7 +3,7 @@ import logging
 from typing import Optional
 
 from aiohttp import ClientSession
-from .hive_async_api import Hive_Async
+from .hive_async_api import HiveAsync
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,4 +15,4 @@ class Client:  # pylint: disable=too-few-public-methods
 
     def __init__(self, session: Optional[ClientSession] = None,):
         """Initialize."""
-        client = Hive_Async(session)
+        client = HiveAsync(session)

@@ -38,38 +38,40 @@ class Data:
         "Switch": ["activeplug"],
     }
     sensor_commands = {
-        "SMOKE_CO": "self.hub.hub_smoke(device)",
-        "DOG_BARK": "self.hub.hub_dog_bark(device)",
-        "GLASS_BREAK": "self.hub.hub_glass(device)",
-        "CurrentTemperature": "self.heating.current_temperature(device)",
-        "TargetTemperature": "self.heating.target_temperature(device)",
-        "Heating_State": "self.heating.get_state(device)",
-        "Heating_Mode": "self.heating.get_mode(device)",
-        "Heating_Boost": "self.heating.boost(device)",
-        "Hotwater_State": "self.hotwater.get_state(device)",
-        "Hotwater_Mode": "self.hotwater.get_mode(device)",
-        "Hotwater_Boost": "self.hotwater.get_boost(device)",
-        "Battery": 'self.attributes.battery(device["device_id"])',
-        "Mode": 'self.attributes.get_mode(device["device_id"])',
+        "SMOKE_CO": "Hub.hub_smoke(Hub(), device)",
+        "DOG_BARK": "Hub.hub_dog_bark(Hub(), device)",
+        "GLASS_BREAK": "Hub.hub_glass(Hub(), device)",
+        "CurrentTemperature": "Heating.current_temperature(Heating(), device)",
+        "TargetTemperature": "Heating.target_temperature(Heating(), device)",
+        "Heating_State": "Heating.get_state(Heating(), device)",
+        "Heating_Mode": "Heating.get_mode(Heating(), device)",
+        "Heating_Boost": "Heating.boost(Heating(), device)",
+        "Hotwater_State": "Hotwater.get_state(Hotwater(), device)",
+        "Hotwater_Mode": "Hotwater.get_mode(Hotwater(), device)",
+        "Hotwater_Boost": "Hotwater.get_boost(Hotwater(), device)",
+        "Battery": 'self.attr.battery(device["device_id"])',
+        "Mode": 'self.attr.get_mode(device["device_id"])',
         "Availability": 'self.online(device)',
         "Connectivity": "self.online(device)"}
 
     # Session Data
-    s_tokens = {}
-    s_token_update = datetime.datetime.now()
-    s_last_update = datetime.datetime.now()
-    s_interval_seconds = datetime.timedelta(seconds=120)
-    s_entity_update_flag = False
-    s_sensors = False
-    s_file = False
-    s_error_list = {}
-    s_token_expiry = datetime.timedelta(seconds=3450)
+    tokens = {}
+    tokenCreated = datetime.datetime.now() - datetime.timedelta(seconds=4000)
+    tokenExpiry = datetime.timedelta(seconds=1800)
+    lastUpdate = datetime.datetime.now()
+    intervalSeconds = datetime.timedelta(seconds=120)
+    sensors = False
+    file = False
+    errorList = {}
+    HttpCount = 0
+    haWebsession = None
+    loginData = {}
 
     # Platform data
-    p_minmax = {}
+    minMax = {}
 
     # Debugging data
-    d_o_folder = ""
-    d_o_file = ""
-    d_enabled = False
-    d_list = []
+    debugOutFolder = ""
+    debugOutFile = ""
+    debugEnabled = False
+    debugList = []

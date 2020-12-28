@@ -1,15 +1,21 @@
 """Hive API Module."""
 import requests
+import json
+from pyquery import PyQuery
+from .hive_data import Data
 from .custom_logging import Logger
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-class Hive:
+class HiveApi:
     """Hive API Code."""
 
     def __init__(self):
         """Hive API initialisation."""
         self.log = Logger()
         self.urls = {
+            "properties": "https://sso.hivehome.com/",
             "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "base": "https://beekeeper-uk.hivehome.com/1.0",
@@ -35,6 +41,27 @@ class Hive:
     def refreshTokens(self):
         """Get new session tokens"""
 
+    def getLoginInfo(self):
+        """Get login properties to make the login request."""
+        url = self.urls['properties']
+        try:
+            data = requests.get(
+                url=url, verify=False, timeout=self.timeout
+            )
+            html = PyQuery(data.content)
+            json_data = json.loads('{"' + (html('script:first').text()).replace(",",
+                                                                                ', "').replace('=',
+                                                                                               '":').replace('window.', '') + '}')
+
+            Data.loginData.update({'UPID': json_data['HiveSSOPoolId']})
+            Data.loginData.update(
+                {'CLIID': json_data['HiveSSOPublicCognitoClientId']})
+            Data.loginData.update(
+                {'REGION': json_data['HiveSSOPoolId']})
+            return Data.loginData
+        except (IOError, RuntimeError, ZeroDivisionError):
+            self.error()
+
     def getAll(self, session_id):
         """Build and query all endpoint."""
         self.headers.update({"authorization": session_id})
@@ -51,7 +78,7 @@ class Hive:
 
         return self.json_return
 
-    def get_devices(self, session_id):
+    def getDevices(self, session_id):
         """Call the get devices endpoint."""
         self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["devices"]

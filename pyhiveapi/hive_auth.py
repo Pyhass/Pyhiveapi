@@ -121,7 +121,7 @@ class HiveAuth(object):
         self.k = hex_to_long(hex_hash('00' + n_hex + '0' + g_hex))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
-        self.use_file = True if self.username == "use@file.com" else False
+        self.useFile = True if self.username == "use@file.com" else False
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
 
     def generate_random_small_a(self):
@@ -220,7 +220,7 @@ class HiveAuth(object):
 
     async def login(self):
         """Login into a Hive account."""
-        if self.use_file:
+        if self.useFile:
             return self.file_response
 
         boto_client = await self.client
