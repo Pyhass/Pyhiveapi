@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Optional
 from .custom_logging import Logger
 from .hive_data import Data
-
 import operator
 
 import urllib3
@@ -52,7 +51,6 @@ class HiveAsync:
         """Make a request."""
         data = kwargs.get('data', None)
         api_sucessful = False
-        sslcontext = False if 'sso' in url else True
         await self.log.log(
             'API', 'API', "Request is - {0}:{1}  Body is {2}", info=[method, url, data])
 
@@ -67,7 +65,7 @@ class HiveAsync:
                     self.log.log('API', 'API', 'ERROR - NO API TOKEN')
                     raise NoApiToken
 
-            async with self.websession.request(method, url, headers=self.headers, data=data, ssl=sslcontext) as resp:
+            async with self.websession.request(method, url, headers=self.headers, data=data) as resp:
                 if method != "delete":
                     await resp.json(content_type=None)
                     self.json_return.update({"original": resp.status})
