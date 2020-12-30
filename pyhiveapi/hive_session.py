@@ -178,7 +178,6 @@ class Session:
 
         return get_nodes_successful
 
-
     async def startSession(self, config):
         """Setup the Hive platform."""
         Data.sensors = config.get("add_sensors", False)
@@ -235,7 +234,7 @@ class Session:
 
             if Data.products[aProduct]["type"] in Data.HIVE_TYPES["Heating"]:
                 device_id = p["props"].get("zone", p["id"])
-                device_name = p["state"].get("name", "Heating")
+                device_name = 'Heating' if p["state"]["name"] == 'Receiver' else p["state"]["name"]
                 for device in Data.devices:
                     try:
                         if Data.devices[device]["type"] in Data.HIVE_TYPES["Thermo"]:
@@ -322,7 +321,7 @@ class Session:
                                     custom=True)
 
             if Data.devices[aDevice]["type"] in Data.HIVE_TYPES["Hub"]:
-                await self.add_list("binary_sensor", d, haName=" Online Status",
+                await self.add_list("binary_sensor", d, haName="Hive Hub Status",
                                     hiveType="Connectivity", device_id=d["id"], device_name=d["state"]["name"])
 
         if "action" in Data.HIVE_TYPES["Switch"]:

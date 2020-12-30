@@ -149,8 +149,8 @@ class Hotwater(Session):
         if device["hiveID"] in Data.products:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.hive.set_state(data["type"],
-                                             device["hiveID"], mode=new_mode)
+            resp = await self.api.set_state(data["type"],
+                                            device["hiveID"], mode=new_mode)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
@@ -171,9 +171,9 @@ class Hotwater(Session):
         if mins > 0 and device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.hive.set_state(data["type"],
-                                             device["hiveID"], mode="BOOST",
-                                             boost=mins)
+            resp = await self.api.set_state(data["type"],
+                                            device["hiveID"], mode="BOOST",
+                                            boost=mins)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
