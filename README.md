@@ -1,4 +1,5 @@
 
+![CodeQL](https://github.com/Pyhive/Pyhiveapi/workflows/CodeQL/badge.svg)
 
 # Introduction
 This is a libary which intefaces with the Hive smart home platform. 
