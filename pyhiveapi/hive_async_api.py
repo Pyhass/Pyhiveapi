@@ -29,7 +29,8 @@ class HiveAsync:
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
-            "all": "/nodes/all?products=true&devices=true&actions=true",
+            "all": self.baseUrl
+            + "/nodes/all?products=true&devices=true&actions=true",
             "devices": self.baseUrl + "/devices",
             "products": self.baseUrl + "/products",
             "actions": self.baseUrl + "/actions",
@@ -144,7 +145,7 @@ class HiveAsync:
 
     async def getAll(self):
         """Build and query all endpoint."""
-        url = self.urls["base"] + self.urls["all"]
+        url = self.urls["all"]
         try:
             await self.request("get", url)
         except (IOError, RuntimeError, ZeroDivisionError):
