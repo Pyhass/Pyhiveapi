@@ -8,4 +8,3 @@ from .hive_auth_async import HiveAuthAsync
 from .const import *
 from .helper import HiveHelper
 from .hive_exceptions import *
-from .client import Client
