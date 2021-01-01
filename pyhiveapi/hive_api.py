@@ -4,6 +4,7 @@ import json
 from pyquery import PyQuery
 
 import urllib3
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -43,8 +44,10 @@ class HiveApi:
         jsc = (
             "{"
             + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) +
-                 '" ' for i, t in tokens.items())
+                (
+                    '"' + str(i) + '": ' '"' + str(t) + '" '
+                    for i, t in tokens.items()
+                )
             )
             + "}"
         )
@@ -61,22 +64,25 @@ class HiveApi:
 
     def getLoginInfo(self):
         """Get login properties to make the login request."""
-        url = self.urls['properties']
+        url = self.urls["properties"]
         try:
-            data = requests.get(
-                url=url, verify=False, timeout=self.timeout
-            )
+            data = requests.get(url=url, verify=False, timeout=self.timeout)
             html = PyQuery(data.content)
-            json_data = json.loads('{"' + (html('script:first').text()).replace(",",
-                                                                                ', "').replace('=',
-                                                                                               '":').replace('window.', '') + '}')
+            json_data = json.loads(
+                '{"'
+                + (html("script:first").text())
+                .replace(",", ', "')
+                .replace("=", '":')
+                .replace("window.", "")
+                + "}"
+            )
 
             loginData = {}
-            loginData.update({'UPID': json_data['HiveSSOPoolId']})
+            loginData.update({"UPID": json_data["HiveSSOPoolId"]})
             loginData.update(
-                {'CLIID': json_data['HiveSSOPublicCognitoClientId']})
-            loginData.update(
-                {'REGION': json_data['HiveSSOPoolId']})
+                {"CLIID": json_data["HiveSSOPublicCognitoClientId"]}
+            )
+            loginData.update({"REGION": json_data["HiveSSOPoolId"]})
             return loginData
         except (IOError, RuntimeError, ZeroDivisionError):
             self.error()
@@ -194,8 +200,10 @@ class HiveApi:
         jsc = (
             "{"
             + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) +
-                 '" ' for i, t in kwargs.items())
+                (
+                    '"' + str(i) + '": ' '"' + str(t) + '" '
+                    for i, t in kwargs.items()
+                )
             )
             + "}"
         )

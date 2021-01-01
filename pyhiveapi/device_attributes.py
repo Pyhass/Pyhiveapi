@@ -13,7 +13,10 @@ class Attributes:
     async def state_attributes(self, n_id, _type):
         """Get HA State Attributes"""
         from .hive_session import Session
-        await self.log.log(n_id, self.type + "_Extra", "Getting Attribute data")
+
+        await self.log.log(
+            n_id, self.type + "_Extra", "Getting Attribute data"
+        )
         attr = {}
 
         if n_id in Data.products or n_id in Data.devices:
@@ -31,10 +34,13 @@ class Attributes:
                 if rec:
                     trim = "{:10.10}".format(str(rec))
                     time = await Session.epochtime(
-                        trim, "%d-%m-%Y %H:%M:%S", "from_epoch")
+                        trim, "%d-%m-%Y %H:%M:%S", "from_epoch"
+                    )
                     attr.update({"state_changed": time})
 
-        await self.log.log(n_id, self.type + "_Extra", "Attribute data {0}", info=[attr])
+        await self.log.log(
+            n_id, self.type + "_Extra", "Attribute data {0}", info=[attr]
+        )
         return attr
 
     async def online_offline(self, n_id):
@@ -46,7 +52,12 @@ class Attributes:
             data = Data.devices[n_id]
             state = data["props"]["online"]
             final = state
-            await self.log.log(n_id, self.type + "_Extra", "Is the device online -  {0}", info=[final])
+            await self.log.log(
+                n_id,
+                self.type + "_Extra",
+                "Is the device online -  {0}",
+                info=[final],
+            )
         else:
             await self.log.error_check(n_id, "ERROR", "Failed")
 

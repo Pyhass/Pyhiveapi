@@ -26,7 +26,7 @@ class Logger:
     @staticmethod
     async def log(n_id, l_type, new_message, **kwargs):
         """Output new log entry if logging is turned on."""
-        name = HiveHelper.get_device_name(n_id) + ' - '
+        name = HiveHelper.get_device_name(n_id) + " - "
         data = kwargs.get("info", [])
         if "_" in l_type:
             nxt = l_type.split("_")
@@ -36,7 +36,11 @@ class Logger:
                         l_type = i
                         break
 
-        if Data.debugEnabled and new_message is not None and any(elem in Data.debugList for elem in [l_type, 'All']):
+        if (
+            Data.debugEnabled
+            and new_message is not None
+            and any(elem in Data.debugList for elem in [l_type, "All"])
+        ):
             if l_type != "ERROR":
                 logging_data = name + new_message.format(*data)
                 _LOGGER.debug(logging_data)
@@ -44,8 +48,7 @@ class Logger:
             try:
                 l_file = open(Data.debugOutFile, "a")
                 l_file.write(
-                    datetime.now().strftime(
-                        "%d-%b-%Y %H:%M:%S")
+                    datetime.now().strftime("%d-%b-%Y %H:%M:%S")
                     + " - "
                     + l_type
                     + " - "
@@ -67,7 +70,7 @@ class Logger:
         result = False
         name = HiveHelper.get_device_name(n_id)
 
-        if error_type == False:
+        if error_type is False:
             message = "Device offline could not update entity - " + name
             result = True
             if n_id not in Data.errorList:

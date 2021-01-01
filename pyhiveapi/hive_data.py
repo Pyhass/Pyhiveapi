@@ -25,7 +25,12 @@ class Data:
             "Glass": {True: 1, False: 0},
         },
         "Light": {"ON": True, "OFF": False},
-        "Sensor": {"OPEN": True, "CLOSED": False, True: "Online", False: "Offline"},
+        "Sensor": {
+            "OPEN": True,
+            "CLOSED": False,
+            True: "Online",
+            False: "Offline",
+        },
         "Switch": {"ON": True, "OFF": False},
     }
     HIVE_TYPES = {
@@ -51,8 +56,9 @@ class Data:
         "Hotwater_Boost": "Hotwater.get_boost(Hotwater(), device)",
         "Battery": 'self.attr.battery(device["device_id"])',
         "Mode": 'self.attr.get_mode(device["device_id"])',
-        "Availability": 'self.online(device)',
-        "Connectivity": "self.online(device)"}
+        "Availability": "self.online(device)",
+        "Connectivity": "self.online(device)",
+    }
 
     # Session Data
     tokens = {}
