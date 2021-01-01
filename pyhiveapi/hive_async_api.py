@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Optional
 from .custom_logging import Logger
 from .hive_data import Data
-
 import operator
 
 import urllib3
@@ -70,12 +69,11 @@ class HiveAsync:
         async with self.websession.request(
             method, url, headers=self.headers, data=data
         ) as resp:
-            if method != "delete":
-                await resp.json(content_type=None)
-                self.json_return.update({"original": resp.status})
-                self.json_return.update(
-                    {"parsed": await resp.json(content_type=None)}
-                )
+            await resp.json(content_type=None)
+            self.json_return.update({"original": resp.status})
+            self.json_return.update(
+                {"parsed": await resp.json(content_type=None)}
+            )
 
         if operator.contains(str(resp.status), "20"):
             await self.log.log(
