@@ -348,6 +348,15 @@ class Light(Session):
                     colourTemperature=color_temp,
                 )
             else:
+                await self.api.set_state(
+                    data["type"],
+                    device["hiveID"],
+                    colourMode="COLOUR",
+                    hue="48",
+                    saturation="70",
+                    value="96",
+                )
+
                 resp = await self.api.set_state(
                     data["type"],
                     device["hiveID"],

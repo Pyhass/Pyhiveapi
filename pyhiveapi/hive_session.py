@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
 
-from .custom_logging import Logger
 from .device_attributes import Attributes
 from .helper import HiveHelper
 from .hive_async_api import HiveAsync
 from .hive_data import Data
 from .hive_exceptions import HiveApiError
+from .logger import Logger
 
 
 class Session:

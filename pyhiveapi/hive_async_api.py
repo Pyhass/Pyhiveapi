@@ -8,9 +8,9 @@ import urllib3
 from aiohttp import ClientResponse, ClientSession
 from pyquery import PyQuery
 
-from .custom_logging import Logger
 from .hive_data import Data
 from .hive_exceptions import FileInUse, NoApiToken
+from .logger import Logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
