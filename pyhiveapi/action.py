@@ -1,6 +1,6 @@
 """Hive Action Module."""
-from .hive_session import Session
 from .hive_data import Data
+from .hive_session import Session
 
 
 class Action(Session):

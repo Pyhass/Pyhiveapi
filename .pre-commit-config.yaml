@@ -11,4 +11,5 @@ repos:
     rev: stable
     hooks:
       - id: black
-        language_version: python3.6
+        args: [--line-length=79]
+        language_version: python3.8

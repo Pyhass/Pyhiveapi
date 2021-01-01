@@ -1,9 +1,9 @@
 """Hive Sensor Module."""
-from .hive_session import Session
-from .hive_data import Data
-from .hub import Hub  # noqa: F401
 from .heating import Heating  # noqa: F401
+from .hive_data import Data
+from .hive_session import Session
 from .hotwater import Hotwater  # noqa: F401
+from .hub import Hub  # noqa: F401
 
 
 class Sensor(Session):

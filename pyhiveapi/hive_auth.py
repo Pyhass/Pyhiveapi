@@ -1,16 +1,16 @@
+import base64
 import binascii
 import datetime
 import hashlib
 import hmac
-import re
-import base64
-from .hive_api import HiveApi
-
-import botocore
-import boto3
 import os
+import re
+
+import boto3
+import botocore
 import six
 
+from .hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = (

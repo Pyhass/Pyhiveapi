@@ -1,20 +1,19 @@
+import asyncio
+import base64
 import binascii
+import concurrent.futures
 import datetime
+import functools
 import hashlib
 import hmac
-import re
-import base64
-import asyncio
-import concurrent.futures
-import functools
-
-import botocore
-import boto3
 import os
+import re
+
+import boto3
+import botocore
 import six
 
 from .hive_api import HiveApi
-
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = (

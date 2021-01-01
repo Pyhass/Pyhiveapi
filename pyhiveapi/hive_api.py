@@ -1,9 +1,9 @@
 """Hive API Module."""
-import requests
 import json
-from pyquery import PyQuery
 
+import requests
 import urllib3
+from pyquery import PyQuery
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
