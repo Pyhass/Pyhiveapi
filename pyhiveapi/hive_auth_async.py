@@ -106,7 +106,8 @@ class HiveAuthAsync(object):
         self, username, password, server_b_value, salt
     ):
         """
-        Calculates the final hkdf based on computed S value, and computed U value and the key
+        Calculates the final hkdf based on computed S value, \
+            and computed U value and the key
         :param {String} username Username.
         :param {String} password Password.
         :param {Long integer} server_b_value Server B value.
@@ -328,7 +329,8 @@ def long_to_hex(long_num):
 
 def pad_hex(long_int):
     """
-    Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
+    Converts a Long integer (or hex string) \
+        to hex format padded with zeroes for hashing
     :param {Long integer|String} long_int Number or string to pad.
     :return {String} Padded hex string.
     """

@@ -210,12 +210,6 @@ class HiveApi:
 
         url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
 
-        self.log.log(
-            n_id,
-            "api_core",
-            "Headers >\n{0}\nURL >\n{1}\n"
-            + "Payload\n{2}\n".format(self.headers, url, jsc),
-        )
         try:
             response = requests.post(
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
@@ -232,12 +226,6 @@ class HiveApi:
         self.headers.update({"authorization": session_id})
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id
-        self.log.log(
-            n_id,
-            "api_core",
-            "Headers >\n{0}\nURL >\n{1}\n"
-            + "Payload\n{2}\n".format(self.headers, url, jsc),
-        )
         try:
             response = requests.put(
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
