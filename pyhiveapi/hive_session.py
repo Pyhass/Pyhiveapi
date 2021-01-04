@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
 
+from .api.hive_async_api import HiveAsync
 from .device_attributes import Attributes
-from .helper import HiveHelper
-from .hive_async_api import HiveAsync
-from .hive_data import Data
-from .hive_exceptions import HiveApiError
-from .logger import Logger
+from .helper.hive_data import Data
+from .helper.hive_exceptions import HiveApiError
+from .helper.hive_helper import HiveHelper
+from .helper.logger import Logger
 
 
 class Session:
@@ -311,8 +311,14 @@ class Session:
                                 break
                         elif p["type"] == "trvcontrol":
                             device_id = p["props"]["trvs"][0]
+                            break
                     except KeyError:
-                        self.logger._LOGGER.error("Something has gone wrong")
+                        self.logger.error_check(
+                            "API",
+                            p["type"],
+                            "API",
+                            info="Something has gone wrong.",
+                        )
 
                 Data.MODE.append(p["id"])
                 await self.add_list(

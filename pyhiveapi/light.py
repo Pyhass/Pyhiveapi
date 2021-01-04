@@ -1,7 +1,7 @@
 """Hive Light Module."""
 import colorsys
 
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -80,7 +80,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["status"]
             await self.logger.log(
@@ -90,7 +90,7 @@ class Light(Session):
                 info=state,
             )
             final = Data.HIVETOHA[self.lightType].get(state, state)
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -103,7 +103,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["brightness"]
             final = (state / 100) * 255
@@ -113,7 +113,7 @@ class Light(Session):
                 "Brightness is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -128,7 +128,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["colourTemperature"]["max"]
             final = round((1 / state) * 1000000)
@@ -138,7 +138,7 @@ class Light(Session):
                 "Min colour temp is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -153,7 +153,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["colourTemperature"]["min"]
             final = round((1 / state) * 1000000)
@@ -163,7 +163,7 @@ class Light(Session):
                 "Max colour temp is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -178,7 +178,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["colourTemperature"]
             final = round((1 / state) * 1000000)
@@ -188,7 +188,7 @@ class Light(Session):
                 "Colour temp is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -201,7 +201,7 @@ class Light(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = [
                 (data["state"]["hue"]) / 360,
@@ -212,7 +212,7 @@ class Light(Session):
                 int(i * 255)
                 for i in colorsys.hsv_to_rgb(state[0], state[1], state[2])
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

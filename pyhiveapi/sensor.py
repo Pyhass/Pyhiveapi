@@ -1,6 +1,6 @@
 """Hive Sensor Module."""
 from .heating import Heating  # noqa: F401
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 from .hotwater import Hotwater  # noqa: F401
 from .hub import Hub  # noqa: F401
@@ -95,7 +95,7 @@ class Sensor(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             if data["type"] == "contactsensor":
                 state = data["props"]["status"]
@@ -108,7 +108,7 @@ class Sensor(Session):
                 "Status is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -121,7 +121,7 @@ class Sensor(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.devices:
+        try:
             data = Data.devices[device["hiveID"]]
             state = data["props"]["online"]
             final = Data.HIVETOHA[self.sensorType].get(state, state)
@@ -131,7 +131,7 @@ class Sensor(Session):
                 "Status is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

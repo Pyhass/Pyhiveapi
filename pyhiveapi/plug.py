@@ -1,5 +1,5 @@
 """Hive Switch Module."""
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -65,7 +65,7 @@ class Plug(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["status"]
             await self.logger.log(
@@ -75,7 +75,7 @@ class Plug(Session):
                 info=[state],
             )
             final = Data.HIVETOHA["Switch"].get(state, state)
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -90,7 +90,7 @@ class Plug(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["powerConsumption"]
             await self.logger.log(
@@ -100,7 +100,7 @@ class Plug(Session):
                 info=[state],
             )
             final = state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

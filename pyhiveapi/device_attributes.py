@@ -1,6 +1,6 @@
 """Hive Device Attribute Module."""
-from .hive_data import Data
-from .logger import Logger
+from .helper.hive_data import Data
+from .helper.logger import Logger
 
 
 class Attributes:
@@ -12,7 +12,6 @@ class Attributes:
 
     async def state_attributes(self, n_id, _type):
         """Get HA State Attributes"""
-        from .hive_session import Session
 
         await self.log.log(
             n_id, self.type + "_Extra", "Getting Attribute data"
@@ -28,16 +27,6 @@ class Attributes:
             if n_id in Data.MODE:
                 attr.update({"mode": (await self.get_mode(n_id))})
 
-            if _type in Data.HIVE_TYPES["Sensor"]:
-                data = Data.products[n_id]
-                rec = data["props"].get("presenceLastChanged", False)
-                if rec:
-                    trim = "{:10.10}".format(str(rec))
-                    time = await Session.epochtime(
-                        trim, "%d-%m-%Y %H:%M:%S", "from_epoch"
-                    )
-                    attr.update({"state_changed": time})
-
         await self.log.log(
             n_id, self.type + "_Extra", "Attribute data {0}", info=[attr]
         )
@@ -48,7 +37,7 @@ class Attributes:
         state = None
         final = None
 
-        if n_id in Data.devices:
+        try:
             data = Data.devices[n_id]
             state = data["props"]["online"]
             final = state
@@ -58,7 +47,7 @@ class Attributes:
                 "Is the device online -  {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.log.error_check(n_id, "ERROR", "Failed")
 
         return final

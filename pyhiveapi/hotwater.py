@@ -1,5 +1,5 @@
 """"Hive Hotwater Module. """
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -61,7 +61,7 @@ class Hotwater(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["mode"]
             if state == "BOOST":
@@ -73,7 +73,7 @@ class Hotwater(Session):
                 "Mode is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -91,7 +91,7 @@ class Hotwater(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["boost"]
             final = Data.HIVETOHA["Boost"].get(state, "ON")
@@ -101,7 +101,7 @@ class Hotwater(Session):
                 "Boost is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -116,7 +116,7 @@ class Hotwater(Session):
                 self.hotwaterType + "_Extra",
                 "Getting boost time",
             )
-            if device["hiveID"] in Data.products:
+            try:
                 data = Data.products[device["hiveID"]]
                 state = data["state"]["boost"]
                 await self.logger.log(
@@ -126,7 +126,7 @@ class Hotwater(Session):
                     info=[state],
                 )
                 final = state
-            else:
+            except KeyError:
                 await self.logger.error_check(
                     device["hiveID"], "ERROR", "Failed"
                 )
@@ -141,7 +141,7 @@ class Hotwater(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["status"]
             mode_current = await self.get_mode(device)
@@ -155,7 +155,7 @@ class Hotwater(Session):
                     state = snan["now"]["value"]["status"]
 
             final = Data.HIVETOHA[self.hotwaterType].get(state, state)
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

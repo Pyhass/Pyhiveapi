@@ -1,5 +1,5 @@
 """Hive Hub Module."""
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -19,7 +19,7 @@ class Hub(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
             final = Data.HIVETOHA[self.hubType]["Smoke"].get(state, state)
@@ -29,7 +29,7 @@ class Hub(Session):
                 "Status is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -44,7 +44,7 @@ class Hub(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
             final = Data.HIVETOHA[self.hubType]["Dog"].get(state, state)
@@ -54,7 +54,7 @@ class Hub(Session):
                 "Status is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -69,7 +69,7 @@ class Hub(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
             final = Data.HIVETOHA[self.hubType]["Glass"].get(state, state)
@@ -79,7 +79,7 @@ class Hub(Session):
                 "Status is {0}",
                 info=[final],
             )
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

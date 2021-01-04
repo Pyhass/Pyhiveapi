@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 
 from .action import Action
 from .heating import Heating
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 from .hotwater import Hotwater
 from .hub import Hub

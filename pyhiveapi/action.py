@@ -1,5 +1,5 @@
 """Hive Action Module."""
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -49,7 +49,7 @@ class Action(Session):
         )
         final = None
 
-        if device["hiveID"] in Data.actions:
+        try:
             data = Data.actions[device["hiveID"]]
             final = data["enabled"]
             await self.logger.log(
@@ -60,7 +60,7 @@ class Action(Session):
             )
             if device["hiveID"] in Data.errorList:
                 Data.errorList.pop(device["hiveID"])
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

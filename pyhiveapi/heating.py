@@ -1,5 +1,5 @@
 """"Hive Heating Module. """
-from .hive_data import Data
+from .helper.hive_data import Data
 from .hive_session import Session
 
 
@@ -90,7 +90,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["temperature"]
 
@@ -133,7 +133,7 @@ class Heating(Session):
             )
 
             final = f_state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -172,7 +172,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = float(data["state"].get("target", None))
             state = float(data["state"].get("heat", state))
@@ -183,7 +183,7 @@ class Heating(Session):
                 info=[str(state)],
             )
             final = state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -196,7 +196,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["mode"]
             if state == "BOOST":
@@ -208,7 +208,7 @@ class Heating(Session):
                 info=[str(state)],
             )
             final = Data.HIVETOHA[self.heatingType].get(state, state)
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -221,7 +221,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             current_temp = await self.current_temperature(device)
             target_temp = await self.target_temperature(device)
             if current_temp < target_temp:
@@ -235,7 +235,7 @@ class Heating(Session):
                 info=[str(state)],
             )
             final = Data.HIVETOHA[self.heatingType].get(state, state)
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -250,7 +250,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["working"]
             await self.logger.log(
@@ -260,7 +260,7 @@ class Heating(Session):
                 info=[str(state)],
             )
             final = state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -275,7 +275,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             data = Data.products[device["hiveID"]]
             state = Data.HIVETOHA["Boost"].get(
                 data["state"].get("boost", False), "ON"
@@ -287,7 +287,7 @@ class Heating(Session):
                 info=[str(state)],
             )
             final = state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final
@@ -303,7 +303,7 @@ class Heating(Session):
             state = None
             final = None
 
-            if device["hiveID"] in Data.products:
+            try:
                 data = Data.products[device["hiveID"]]
                 state = data["state"]["boost"]
                 await self.logger.log(
@@ -315,7 +315,7 @@ class Heating(Session):
                 if device["hiveID"] in Data.errorList:
                     Data.errorList.pop(device["hiveID"])
                 final = state
-            else:
+            except KeyError:
                 await self.logger.error_check(
                     device["hiveID"], "ERROR", "Failed"
                 )
@@ -338,7 +338,7 @@ class Heating(Session):
         state = None
         final = None
 
-        if device["hiveID"] in Data.products:
+        try:
             if state != "Offline" and current_mode == "SCHEDULE":
                 data = Data.products[device["hiveID"]]
                 state = await self.p_get_schedule_nnl(
@@ -354,7 +354,7 @@ class Heating(Session):
                 device["hiveID"], self.heatingType + "_Extra", state
             )
             final = state
-        else:
+        except KeyError:
             await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
 
         return final

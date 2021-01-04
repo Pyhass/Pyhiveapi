@@ -5,12 +5,14 @@ from datetime import datetime
 from typing import Optional
 
 import urllib3
-from aiohttp import ClientResponse, ClientSession
+from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
-from .hive_data import Data
-from .hive_exceptions import FileInUse, NoApiToken
-from .logger import Logger
+from pyhiveapi.helper.const import HTTP_UNAUTHORIZED
+
+from ..helper.hive_data import Data
+from ..helper.hive_exceptions import FileInUse, NoApiToken
+from ..helper.logger import Logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -80,6 +82,11 @@ class HiveAsync:
             await self.log.log(
                 "API", "API", "Response is - {0}", info=[str(resp.status)]
             )
+        elif resp.status == HTTP_UNAUTHORIZED:
+            await self.logger.error_check(
+                "No_ID", "ERROR", "Failed_API", resp=resp["original"]
+            )
+
         else:
             await self.logger.error_check(
                 "No_ID", "ERROR", "Failed_API", resp=resp["original"]
@@ -257,9 +264,8 @@ class HiveAsync:
 
     async def error(self):
         """An error has occured iteracting wth the Hive API."""
-        self.json_return.update({"original": "Error making API call"})
-        self.json_return.update({"parsed": "Error making API call"})
         await self.log.log("API_ERROR", "ERROR", "Error attempting API call")
+        raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):
         """Check if running in file mode."""

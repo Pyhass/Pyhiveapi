@@ -2,8 +2,8 @@
 import logging
 from datetime import datetime
 
-from .helper import HiveHelper
 from .hive_data import Data
+from .hive_helper import HiveHelper
 
 _LOGGER = logging.getLogger(__name__)
 
