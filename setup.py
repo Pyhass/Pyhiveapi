@@ -32,7 +32,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    python_requires=">=3.5.*",
+    python_requires=">=3.6.*",
     keywords="Hive API Library",
     packages=find_packages(exclude=["contrib", "docs", "tests"]),
     entry_points={"console_scripts": ["hive=pyhiveapi.hive:Hive"]},
