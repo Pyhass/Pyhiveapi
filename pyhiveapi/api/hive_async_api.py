@@ -83,13 +83,14 @@ class HiveAsync:
                 "API", "API", "Response is - {0}", info=[str(resp.status)]
             )
         elif resp.status == HTTP_UNAUTHORIZED:
-            await self.logger.error_check(
+            await self.log.error_check(
                 "No_ID", "ERROR", "Failed_API", resp=resp["original"]
             )
 
         else:
-            await self.logger.error_check(
-                "No_ID", "ERROR", "Failed_API", resp=resp["original"]
+            self.log.LOGGER.error(
+                f"Something has gone wrong calling {url} - "
+                f"HTTP status is - {resp.status}"
             )
 
     async def refreshTokens(self):

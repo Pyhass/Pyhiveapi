@@ -1,6 +1,6 @@
 """"Hive Hotwater Module. """
 from .helper.hive_data import Data
-from .hive_session import Session
+from .session import Session
 
 
 class Hotwater(Session):
@@ -20,7 +20,7 @@ class Hotwater(Session):
         if device["deviceData"]["online"]:
 
             dev_data = {}
-            self.helper.device_recovered(device["device_id"])
+            self.helper.deviceRecovered(device["device_id"])
             data = Data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -55,9 +55,6 @@ class Hotwater(Session):
 
     async def get_mode(self, device):
         """Get hotwater current mode."""
-        await self.logger.log(
-            device["hiveID"], self.hotwaterType + "_Extra", "Getting mode"
-        )
         state = None
         final = None
 
@@ -67,14 +64,8 @@ class Hotwater(Session):
             if state == "BOOST":
                 state = data["props"]["previous"]["mode"]
             final = Data.HIVETOHA[self.hotwaterType].get(state, state)
-            await self.logger.log(
-                device["hiveID"],
-                self.hotwaterType + "_Extra",
-                "Mode is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
@@ -85,9 +76,6 @@ class Hotwater(Session):
 
     async def get_boost(self, device):
         """Get hot water current boost status."""
-        await self.logger.log(
-            device["hiveID"], self.hotwaterType + "_Extra", "Getting boost"
-        )
         state = None
         final = None
 
@@ -95,49 +83,25 @@ class Hotwater(Session):
             data = Data.products[device["hiveID"]]
             state = data["state"]["boost"]
             final = Data.HIVETOHA["Boost"].get(state, "ON")
-            await self.logger.log(
-                device["hiveID"],
-                self.hotwaterType + "_Extra",
-                "Boost is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_boost_time(self, device):
         """Get hotwater boost time remaining."""
         state = None
-        final = None
         if await self.get_boost(device) == "ON":
-            await self.logger.log(
-                device["hiveID"],
-                self.hotwaterType + "_Extra",
-                "Getting boost time",
-            )
             try:
                 data = Data.products[device["hiveID"]]
                 state = data["state"]["boost"]
-                await self.logger.log(
-                    device["hiveID"],
-                    self.hotwaterType + "_Extra",
-                    "Boost time is {0}",
-                    info=[state],
-                )
-                final = state
-            except KeyError:
-                await self.logger.error_check(
-                    device["hiveID"], "ERROR", "Failed"
-                )
+            except KeyError as e:
+                await self.logger.error(e)
 
-        return final
+        return state
 
     async def get_state(self, device):
         """Get hot water current state."""
-        await self.logger.log(
-            device["hiveID"], self.hotwaterType + "_Extra", "Getting state"
-        )
         state = None
         final = None
 
@@ -149,55 +113,35 @@ class Hotwater(Session):
                 if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
-                    snan = await self.p_get_schedule_nnl(
+                    snan = await self.helper.getScheduleNNL(
                         data["state"]["schedule"]
                     )
                     state = snan["now"]["value"]["status"]
 
             final = Data.HIVETOHA[self.hotwaterType].get(state, state)
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_schedule_now_next_later(self, device):
         """Hive get hotwater schedule now, next and later."""
-        await self.logger.log(
-            device["hiveID"],
-            self.hotwaterType + "_Extra",
-            "Getting schedule info.",
-        )
         state = None
-        final = None
 
-        if device["hiveID"] in Data.products:
-            await self.hiveRefreshTokens()
+        try:
             mode_current = await self.get_mode(device)
             if mode_current == "SCHEDULE":
                 data = Data.products[device["hiveID"]]
-                state = await self.p_get_schedule_nnl(
+                state = await self.helper.getScheduleNNL(
                     data["state"]["schedule"]
                 )
-            final = state
-            await self.logger.log(
-                device["hiveID"],
-                self.hotwaterType + "_Extra",
-                "Schedule is {0}",
-                info=[final],
-            )
-        else:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
-        return final
+        return state
 
     async def set_mode(self, device, new_mode):
         """Set hot water mode."""
-        await self.logger.log(
-            device["hiveID"],
-            self.hotwaterType + "_Extra",
-            "Setting Mode to {0}",
-            info=[new_mode],
-        )
         final = False
 
         if device["hiveID"] in Data.products:
@@ -209,27 +153,11 @@ class Hotwater(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Mode set to {0} - " + device["hiveName"],
-                    info=[new_mode],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
-            return final
+        return final
 
     async def turn_boost_on(self, device, mins):
         """Turn hot water boost on."""
-        await self.logger.log(
-            device["hiveID"], self.hotwaterType + "_Extra", "Turning on boost"
-        )
         final = False
 
         if (
@@ -245,24 +173,11 @@ class Hotwater(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"], "API", "Boost on - " + device["hiveName"]
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def turn_boost_off(self, device):
         """Turn hot water boost off."""
-        await self.logger.log(
-            device["hiveID"], self.hotwaterType + "_Extra", "Turning off boost"
-        )
         final = False
 
         if (
@@ -279,17 +194,5 @@ class Hotwater(Session):
             if resp["original"] == 200:
                 await self.getDevices(device["hiveID"])
                 final = True
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Boost off - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final

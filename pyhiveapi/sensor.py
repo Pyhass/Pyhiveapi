@@ -1,9 +1,9 @@
 """Hive Sensor Module."""
 from .heating import Heating  # noqa: F401
 from .helper.hive_data import Data
-from .hive_session import Session
 from .hotwater import Hotwater  # noqa: F401
 from .hub import Hub  # noqa: F401
+from .session import Session
 
 
 class Sensor(Session):
@@ -25,7 +25,7 @@ class Sensor(Session):
             "Connectivity",
         ):
             if device["hiveType"] not in ("Availability", "Connectivity"):
-                self.helper.device_recovered(device["device_id"])
+                self.helper.deviceRecovered(device["device_id"])
 
             dev_data = {}
             dev_data = {
@@ -89,9 +89,6 @@ class Sensor(Session):
 
     async def get_state(self, device):
         """Get sensor state."""
-        await self.logger.log(
-            device["hiveID"], self.sensorType + "_Extra", "Getting state"
-        )
         state = None
         final = None
 
@@ -102,22 +99,13 @@ class Sensor(Session):
                 final = Data.HIVETOHA[self.sensorType].get(state, state)
             elif data["type"] == "motionsensor":
                 final = data["props"]["motion"]["status"]
-            await self.logger.log(
-                device["hiveID"],
-                self.sensorType + "_Extra",
-                "Status is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def online(self, device):
         """Get the online status of the Hive hub."""
-        await self.logger.log(
-            device["hiveID"], self.sensorType + "_Extra", "Getting status"
-        )
         state = None
         final = None
 
@@ -125,13 +113,7 @@ class Sensor(Session):
             data = Data.devices[device["hiveID"]]
             state = data["props"]["online"]
             final = Data.HIVETOHA[self.sensorType].get(state, state)
-            await self.logger.log(
-                device["hiveID"],
-                self.sensorType + "_Extra",
-                "Status is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final

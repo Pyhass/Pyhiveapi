@@ -139,10 +139,7 @@ class Session:
         api_resp_d = None
 
         if self.api_lock.locked():
-            while self.api_lock.locked():
-                await asyncio.sleep(1)
-            else:
-                return True
+            return True
 
         try:
             await self.api_lock.acquire()
@@ -188,8 +185,10 @@ class Session:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
 
-            Data.products = tmpProducts
-            Data.devices = tmpDevices
+            if len(tmpProducts) > 1:
+                Data.products = tmpProducts
+            if len(tmpDevices) > 1:
+                Data.devices = tmpDevices
             Data.actions = tmpActions
             Data.lastUpdate = datetime.now()
             get_nodes_successful = True

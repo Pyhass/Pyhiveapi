@@ -1,15 +1,16 @@
 """Custom Logging Module."""
+import inspect
 import logging
 from datetime import datetime
 
 from .hive_data import Data
 from .hive_helper import HiveHelper
 
-_LOGGER = logging.getLogger(__name__)
-
 
 class Logger:
     """Custom Logging Code."""
+
+    LOGGER = logging.getLogger(__name__)
 
     @staticmethod
     async def checkDebugging(enable_debug: list):
@@ -23,10 +24,9 @@ class Logger:
         Data.debugList = enable_debug
         return Data.debugEnabled
 
-    @staticmethod
-    async def log(n_id, l_type, new_message, **kwargs):
+    async def log(self, n_id, l_type, new_message, **kwargs):
         """Output new log entry if logging is turned on."""
-        name = HiveHelper.get_device_name(n_id) + " - "
+        name = HiveHelper.getDeviceName(n_id) + " - "
         data = kwargs.get("info", [])
         if "_" in l_type:
             nxt = l_type.split("_")
@@ -43,7 +43,7 @@ class Logger:
         ):
             if l_type != "ERROR":
                 logging_data = name + new_message.format(*data)
-                _LOGGER.debug(logging_data)
+                self.LOGGER.debug(logging_data)
 
             try:
                 l_file = open(Data.debugOutFile, "a")
@@ -63,30 +63,37 @@ class Logger:
         else:
             pass
 
+    async def error(self, e):
+        """An unexpected error has occured"""
+        self.LOGGER.error(
+            f"An unexpected error has occured whilst {inspect.stack()[1][3]}"
+            f" with exception {e}"
+        )
+
     async def error_check(self, n_id, n_type, error_type, **kwargs):
         """Error has occurred."""
         message = None
         new_data = None
         result = False
-        name = HiveHelper.get_device_name(n_id)
+        name = HiveHelper.getDeviceName(n_id)
 
         if error_type is False:
             message = "Device offline could not update entity - " + name
             result = True
             if n_id not in Data.errorList:
-                _LOGGER.warning(message)
+                self.LOGGER.warning(message)
                 Data.errorList.update({n_id: datetime.now()})
         elif error_type == "Failed":
             message = "ERROR - No data found for device - " + name
             result = True
             if n_id not in Data.errorList:
-                _LOGGER.error(message)
+                self.LOGGER.error(message)
                 Data.errorList.update({n_id: datetime.now()})
         elif error_type == "Failed_API":
             new_data = str(kwargs.get("resp"))
             message = "ERROR - Received {0} response from API."
             result = True
-            _LOGGER.error(message.format(new_data))
+            self.LOGGER.error(message.format(new_data))
 
         await self.log(n_id, n_type, message, info=[new_data])
         return result

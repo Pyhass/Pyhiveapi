@@ -5,12 +5,12 @@ from aiohttp import ClientSession
 from .action import Action
 from .heating import Heating
 from .helper.hive_data import Data
-from .hive_session import Session
 from .hotwater import Hotwater
 from .hub import Hub
 from .light import Light
 from .plug import Plug
 from .sensor import Sensor
+from .session import Session
 
 
 class Hive:

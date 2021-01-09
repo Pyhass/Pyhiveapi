@@ -1,6 +1,6 @@
 """Hive Action Module."""
 from .helper.hive_data import Data
-from .hive_session import Session
+from .session import Session
 
 
 class Action(Session):
@@ -44,24 +44,13 @@ class Action(Session):
 
     async def get_state(self, device):
         """Get action state."""
-        await self.logger.log(
-            device["hiveID"], self.actionType + "_Extra", "Getting state"
-        )
         final = None
 
         try:
             data = Data.actions[device["hiveID"]]
             final = data["enabled"]
-            await self.logger.log(
-                device["hiveID"],
-                self.actionType + "_Extra",
-                "Status is {0}",
-                info=[final],
-            )
-            if device["hiveID"] in Data.errorList:
-                Data.errorList.pop(device["hiveID"])
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
@@ -69,9 +58,6 @@ class Action(Session):
         """Set action turn on."""
         import json
 
-        await self.logger.log(
-            device["hiveID"], self.actionType + "_Extra", "Enabling action"
-        )
         final = False
 
         if device["hiveID"] in Data.actions:
@@ -83,18 +69,6 @@ class Action(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Enabled action - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
@@ -102,9 +76,6 @@ class Action(Session):
         """Set action to turn off."""
         import json
 
-        await self.logger.log(
-            device["hiveID"], self.actionType + "_Extra", "Disabling action"
-        )
         final = False
 
         if device["hiveID"] in Data.actions:
@@ -116,17 +87,5 @@ class Action(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Disabled action - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final

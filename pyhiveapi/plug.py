@@ -1,6 +1,6 @@
 """Hive Switch Module."""
 from .helper.hive_data import Data
-from .hive_session import Session
+from .session import Session
 
 
 class Plug(Session):
@@ -19,7 +19,7 @@ class Plug(Session):
         dev_data = {}
 
         if device["deviceData"]["online"]:
-            self.helper.device_recovered(device["device_id"])
+            self.helper.deviceRecovered(device["device_id"])
             data = Data.devices[device["hiveID"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -57,59 +57,32 @@ class Plug(Session):
 
     async def get_state(self, device):
         """Get plug current state."""
-        await self.logger.log(
-            device["hiveID"],
-            self.plugType + "_Extra",
-            "Getting state of switch",
-        )
         state = None
         final = None
 
         try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["status"]
-            await self.logger.log(
-                device["hiveID"],
-                self.plugType + "_Extra",
-                "Status is {0}",
-                info=[state],
-            )
             final = Data.HIVETOHA["Switch"].get(state, state)
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_power_usage(self, device):
         """Get smart plug current power usage."""
-        await self.logger.log(
-            device["hiveID"],
-            self.plugType + "_Extra",
-            "Getting power consumption.",
-        )
         state = None
-        final = None
 
         try:
             data = Data.products[device["hiveID"]]
             state = data["props"]["powerConsumption"]
-            await self.logger.log(
-                device["hiveID"],
-                self.plugType + "_Extra",
-                "Power consumption is {0}",
-                info=[state],
-            )
-            final = state
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
-        return final
+        return state
 
     async def turn_on(self, device):
         """Set smart plug to turn on."""
-        await self.logger.log(
-            device["hiveID"], self.plugType + "_Extra", "Powering switch"
-        )
         final = False
 
         if (
@@ -124,26 +97,11 @@ class Plug(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Switched on - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def turn_off(self, device):
         """Set smart plug to turn off."""
-        await self.logger.log(
-            device["hiveID"], self.plugType + "_Extra", "Turning off switch."
-        )
         final = False
 
         if (
@@ -158,17 +116,5 @@ class Plug(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Switch off - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final

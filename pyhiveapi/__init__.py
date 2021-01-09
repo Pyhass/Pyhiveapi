@@ -7,4 +7,4 @@ from .helper.const import *
 from .helper.hive_exceptions import *
 from .helper.hive_helper import HiveHelper
 from .hive import Hive
-from .hive_session import Session
+from .session import Session

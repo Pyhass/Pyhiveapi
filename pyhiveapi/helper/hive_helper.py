@@ -8,7 +8,7 @@ class HiveHelper:
     def __init__(self):
         """Hive Helper."""
 
-    def get_device_name(n_id):
+    def getDeviceName(n_id):
         """Resolve a id into a name"""
         try:
             product_name = Data.products[n_id]["state"]["name"]
@@ -29,13 +29,13 @@ class HiveHelper:
         else:
             return n_id
 
-    def device_recovered(self, n_id):
+    def deviceRecovered(self, n_id):
         """"Register that a device has recovered from being offline."""
-        # name = HiveHelper.get_device_name(n_id)
+        # name = HiveHelper.getDeviceName(n_id)
         if n_id in Data.errorList:
             Data.errorList.pop(n_id)
 
-    def get_device_from_id(self, n_id):
+    def getDeviceFromID(self, n_id):
         """Get product/device data from ID"""
         data = False
         try:
@@ -45,7 +45,7 @@ class HiveHelper:
 
         return data
 
-    def p_minutes_to_time(self, minutes_to_convert):
+    def convertMinutesToTime(self, minutes_to_convert):
         """Convert minutes string to datetime."""
         hours_converted, minutes_converted = divmod(minutes_to_convert, 60)
         converted_time = datetime.strptime(
@@ -54,7 +54,7 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def p_get_schedule_nnl(self, hive_api_schedule):
+    def getScheduleNNL(self, hive_api_schedule):
         """Get the schedule now, next and later of a given nodes schedule."""
         schedule_now_and_next = {}
         date_time_now = datetime.now()
@@ -88,7 +88,7 @@ class HiveHelper:
                 current_slot_custom = current_day_schedule_sorted[current_slot]
 
                 slot_date = datetime.now() + datetime.timedelta(days=day_index)
-                slot_time = self.p_minutes_to_time(
+                slot_time = self.convertMinutesToTime(
                     current_slot_custom["start"]
                 )
                 slot_time_date_s = (

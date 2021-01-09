@@ -2,7 +2,7 @@
 import colorsys
 
 from .helper.hive_data import Data
-from .hive_session import Session
+from .session import Session
 
 
 class Light(Session):
@@ -21,7 +21,7 @@ class Light(Session):
         dev_data = {}
 
         if device["deviceData"]["online"]:
-            self.helper.device_recovered(device["device_id"])
+            self.helper.deviceRecovered(device["device_id"])
             data = Data.devices[device["hiveID"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -55,7 +55,10 @@ class Light(Session):
                 )
             if device["hiveType"] == "colourtuneablelight":
                 dev_data["status"].update(
-                    {"hs_color": await self.get_color(device)}
+                    {
+                        "hs_color": await self.get_color(device),
+                        "mode": await self.getColourMode(device),
+                    }
                 )
 
             await self.logger.log(
@@ -74,32 +77,20 @@ class Light(Session):
 
     async def get_state(self, device):
         """Get light current state."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Getting state"
-        )
         state = None
         final = None
 
         try:
             data = Data.products[device["hiveID"]]
             state = data["state"]["status"]
-            await self.logger.log(
-                device["hiveID"],
-                self.lightType + "_Extra",
-                "Status is {0}",
-                info=state,
-            )
             final = Data.HIVETOHA[self.lightType].get(state, state)
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_brightness(self, device):
         """Get light current brightness."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Getting brightness"
-        )
         state = None
         final = None
 
@@ -107,24 +98,13 @@ class Light(Session):
             data = Data.products[device["hiveID"]]
             state = data["state"]["brightness"]
             final = (state / 100) * 255
-            await self.logger.log(
-                device["hiveID"],
-                self.lightType + "_Extra",
-                "Brightness is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_min_color_temp(self, device):
         """Get light minimum color temperature."""
-        await self.logger.log(
-            device["hiveID"],
-            self.lightType + "_Extra",
-            "Getting min colour temperature",
-        )
         state = None
         final = None
 
@@ -132,24 +112,13 @@ class Light(Session):
             data = Data.products[device["hiveID"]]
             state = data["props"]["colourTemperature"]["max"]
             final = round((1 / state) * 1000000)
-            await self.logger.log(
-                device["hiveID"],
-                self.lightType + "_Extra",
-                "Min colour temp is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_max_color_temp(self, device):
         """Get light maximum color temperature."""
-        await self.logger.log(
-            device["hiveID"],
-            self.lightType + "_Extra",
-            "Getting max colour temperature",
-        )
         state = None
         final = None
 
@@ -157,24 +126,13 @@ class Light(Session):
             data = Data.products[device["hiveID"]]
             state = data["props"]["colourTemperature"]["min"]
             final = round((1 / state) * 1000000)
-            await self.logger.log(
-                device["hiveID"],
-                self.lightType + "_Extra",
-                "Max colour temp is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_color_temp(self, device):
         """Get light current color temperature."""
-        await self.logger.log(
-            device["hiveID"],
-            self.lightType + "_Extra",
-            "Getting colour temperature",
-        )
         state = None
         final = None
 
@@ -182,22 +140,13 @@ class Light(Session):
             data = Data.products[device["hiveID"]]
             state = data["state"]["colourTemperature"]
             final = round((1 / state) * 1000000)
-            await self.logger.log(
-                device["hiveID"],
-                self.lightType + "_Extra",
-                "Colour temp is {0}",
-                info=[final],
-            )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
     async def get_color(self, device):
         """Get light current colour"""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Getting colour info"
-        )
         state = None
         final = None
 
@@ -212,16 +161,25 @@ class Light(Session):
                 int(i * 255)
                 for i in colorsys.hsv_to_rgb(state[0], state[1], state[2])
             )
-        except KeyError:
-            await self.logger.error_check(device["hiveID"], "ERROR", "Failed")
+        except KeyError as e:
+            await self.logger.error(e)
 
         return final
 
+    async def getColourMode(self, device):
+        """Get Colour Mode."""
+        state = None
+
+        try:
+            data = Data.products[device["hiveID"]]
+            state = data["state"]["colourMode"]
+        except KeyError as e:
+            await self.logger.error(e)
+
+        return state
+
     async def turn_off(self, device):
         """Set light to turn off."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Turning off light"
-        )
         final = False
 
         if (
@@ -237,24 +195,11 @@ class Light(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"], "Extra", "Turned light off"
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def turn_on(self, device, brightness, color_temp, color):
         """Set light to turn on."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Turning on light"
-        )
         final = False
 
         if (
@@ -277,24 +222,11 @@ class Light(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"], "Extra", "Light turned on"
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def set_brightness(self, device, n_brightness):
         """Set brightness of the light."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Setting brightness"
-        )
         final = False
 
         if (
@@ -312,26 +244,11 @@ class Light(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Brightness set to:  " + str(n_brightness),
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def set_color_temp(self, device, color_temp):
         """Set light to turn on."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Setting color temp"
-        )
         final = False
 
         if (
@@ -348,15 +265,6 @@ class Light(Session):
                     colourTemperature=color_temp,
                 )
             else:
-                await self.api.set_state(
-                    data["type"],
-                    device["hiveID"],
-                    colourMode="COLOUR",
-                    hue="48",
-                    saturation="70",
-                    value="96",
-                )
-
                 resp = await self.api.set_state(
                     data["type"],
                     device["hiveID"],
@@ -367,26 +275,11 @@ class Light(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Colour temp set - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
 
     async def set_color(self, device, new_color):
         """Set light to turn on."""
-        await self.logger.log(
-            device["hiveID"], self.lightType + "_Extra", "Setting color"
-        )
         final = False
 
         if (
@@ -407,17 +300,5 @@ class Light(Session):
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
-                await self.logger.log(
-                    device["hiveID"],
-                    "API",
-                    "Colour set - " + device["hiveName"],
-                )
-            else:
-                await self.logger.error_check(
-                    device["hiveID"],
-                    "ERROR",
-                    "Failed_API",
-                    resp=resp["original"],
-                )
 
         return final
