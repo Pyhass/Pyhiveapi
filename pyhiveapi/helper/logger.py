@@ -54,7 +54,7 @@ class Logger:
                     + " - "
                     + name
                     + " : "
-                    + new_message.format(data)
+                    + new_message.format(*data)
                     + "\n"
                 )
                 l_file.close()
