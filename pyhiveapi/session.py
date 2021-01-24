@@ -185,9 +185,9 @@ class Session:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
 
-            if len(tmpProducts) > 1:
+            if len(tmpProducts) > 0:
                 Data.products = tmpProducts
-            if len(tmpDevices) > 1:
+            if len(tmpDevices) > 0:
                 Data.devices = tmpDevices
             Data.actions = tmpActions
             Data.lastUpdate = datetime.now()
