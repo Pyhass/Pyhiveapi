@@ -68,7 +68,7 @@ class Sensor(Session):
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                         "attributes": await self.attr.state_attributes(
-                            device["hiveID"], device["hiveType"]
+                            device["device_id"], device["hiveType"]
                         ),
                     }
                 )

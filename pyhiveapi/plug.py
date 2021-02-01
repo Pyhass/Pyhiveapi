@@ -20,7 +20,7 @@ class Plug(Session):
 
         if device["deviceData"]["online"]:
             self.helper.deviceRecovered(device["device_id"])
-            data = Data.devices[device["hiveID"]]
+            data = Data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
                 "hiveName": device["hiveName"],
@@ -37,7 +37,7 @@ class Plug(Session):
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.attr.state_attributes(
-                    device["hiveID"], device["hiveType"]
+                    device["device_id"], device["hiveType"]
                 ),
             }
 

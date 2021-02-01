@@ -63,11 +63,11 @@ class Logger:
         else:
             pass
 
-    async def error(self, e):
+    async def error(self, e='UNKNOWN'):
         """An unexpected error has occured"""
         self.LOGGER.error(
-            f"An unexpected error has occured whilst {inspect.stack()[1][3]}"
-            f" with exception {e}"
+            f"An unexpected error has occured whilst executing {inspect.stack()[1][3]}"
+            f" with exception {e.__class__} {e}"
         )
 
     async def error_check(self, n_id, n_type, error_type, **kwargs):
@@ -89,11 +89,6 @@ class Logger:
             if n_id not in Data.errorList:
                 self.LOGGER.error(message)
                 Data.errorList.update({n_id: datetime.now()})
-        elif error_type == "Failed_API":
-            new_data = str(kwargs.get("resp"))
-            message = "ERROR - Received {0} response from API."
-            result = True
-            self.LOGGER.error(message.format(new_data))
 
         await self.log(n_id, n_type, message, info=[new_data])
         return result

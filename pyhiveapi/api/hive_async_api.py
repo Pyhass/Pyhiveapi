@@ -22,7 +22,7 @@ class HiveAsync:
 
     def __init__(self, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
-        self.log = Logger()
+        self.logger = Logger()
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
@@ -53,7 +53,7 @@ class HiveAsync:
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
         data = kwargs.get("data", None)
-        await self.log.log(
+        await self.logger.log(
             "No_ID",
             "API",
             "Request is - {0}:{1}  Body is {2}",
@@ -66,7 +66,7 @@ class HiveAsync:
             if "sso" in url:
                 pass
             else:
-                self.log.log("No_ID", "API", "ERROR - NO API TOKEN")
+                self.logger.log("No_ID", "API", "ERROR - NO API TOKEN")
                 raise NoApiToken
 
         async with self.websession.request(
@@ -79,16 +79,16 @@ class HiveAsync:
             )
 
         if operator.contains(str(resp.status), "20"):
-            await self.log.log(
+            await self.logger.log(
                 "API", "API", "Response is - {0}", info=[str(resp.status)]
             )
         elif resp.status == HTTP_UNAUTHORIZED:
-            await self.log.error_check(
-                "No_ID", "ERROR", "Failed_API", resp=resp["original"]
+            await self.logger.LOGGER.error(
+                f"Hive token as expired when calling {url} - "
+                f"HTTP status is - {resp.status}"
             )
-
         else:
-            self.log.LOGGER.error(
+            await self.logger.LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
@@ -265,7 +265,7 @@ class HiveAsync:
 
     async def error(self):
         """An error has occured iteracting wth the Hive API."""
-        await self.log.log("API_ERROR", "ERROR", "Error attempting API call")
+        await self.logger.log("API_ERROR", "ERROR", "Error attempting API call")
         raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):

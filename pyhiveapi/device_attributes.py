@@ -8,7 +8,7 @@ class Attributes:
     """Device Attributes Code."""
 
     def __init__(self):
-        self.log = Logger()
+        self.logger = Logger()
         self.type = "Attribute"
 
     async def state_attributes(self, n_id, _type):
@@ -33,7 +33,7 @@ class Attributes:
             data = Data.devices[n_id]
             state = data["props"]["online"]
         except KeyError as e:
-            Helper.error(e)
+            await self.logger.error(e)
 
         return state
 
@@ -47,7 +47,7 @@ class Attributes:
             state = data["state"]["mode"]
             final = Data.HIVETOHA[self.type].get(state, state)
         except KeyError as e:
-            Helper.error(e)
+            await self.logger.error(e)
 
         return final
 
@@ -60,8 +60,8 @@ class Attributes:
             data = Data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.log.error_check(n_id, self.type, state)
+            await self.logger.error_check(n_id, self.type, state)
         except KeyError as e:
-            Helper.error(e)
+            await self.logger.error(e)
 
         return final
