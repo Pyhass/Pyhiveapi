@@ -1,21 +1,20 @@
+import logging
 import sys
 
 
 class DebugContext:
     """ Debug context to trace any function calls inside the context """
 
-    def __init__(self, name):
+    def __init__(self, name, enabled):
         self.name = name
+        self.enabled = enabled
+        self.logging = logging.getLogger(__name__)
 
     def __enter__(self):
         print("Entering Debug Decorated func")
         # Set the trace function to the trace_calls function
         # So all events are now traced
-        sys.settrace(self.trace_calls)
-
-    def __exit__(self, *args, **kwargs):
-        # Stop tracing all events
-        sys.settrace = None
+        self.trace_calls
 
     def trace_calls(self, frame, event, arg):
         # We want to only trace our call to the decorated function
@@ -39,19 +38,19 @@ class DebugContext:
         line_no = frame.f_lineno
         filename = co.co_filename
         local_vars = frame.f_locals
-        print(
-            "  {0} {1} {2} locals: {3}".format(
-                func_name, event, line_no, local_vars
-            )
-        )
+        text = f"  {func_name} {event} {line_no} locals: {local_vars}"
+        self.logging.debug(text)
 
 
-def debug_decorator(func):
+def debug_decorator(enabled=False):
     """ Debug decorator to call the function within the debug context """
 
-    def decorated_func(*args, **kwargs):
-        with DebugContext(func.__name__):
-            return_value = func(*args, **kwargs)
-        return return_value
+    def decorated_func(func):
+        def wrapper(*args, **kwargs):
+            with DebugContext(func.__name__, enabled):
+                return_value = func(*args, **kwargs)
+            return return_value
+
+        return wrapper
 
     return decorated_func
