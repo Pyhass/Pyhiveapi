@@ -63,7 +63,7 @@ class Logger:
         else:
             pass
 
-    async def error(self, e='UNKNOWN'):
+    async def error(self, e="UNKNOWN"):
         """An unexpected error has occured"""
         self.LOGGER.error(
             f"An unexpected error has occured whilst executing {inspect.stack()[1][3]}"

@@ -48,25 +48,29 @@ class HiveHelper:
     def getDeviceData(self, product):
         """"Get device Data."""
         device = product
-        type = product['type']
-        if type in ('heating', 'hotwater'):
+        type = product["type"]
+        if type in ("heating", "hotwater"):
             for aDevice in Data.devices:
-                if (Data.devices[aDevice]["type"]
-                    in Data.HIVE_TYPES["Thermo"]
-                    ):
+                if Data.devices[aDevice]["type"] in Data.HIVE_TYPES["Thermo"]:
                     try:
-                        if product["props"]["zone"] == Data.devices[aDevice]['props']['zone']:
+                        if (
+                            product["props"]["zone"]
+                            == Data.devices[aDevice]["props"]["zone"]
+                        ):
                             device = Data.devices[aDevice]
                     except KeyError:
                         pass
-        elif type == 'trvcontrol':
+        elif type == "trvcontrol":
             device = Data.devices[product["props"]["trvs"][0]]
-        elif type == 'warmwhitelight' and product['props']['model'] == 'SIREN001':
-            device = Data.devices[product['parent']]
-        elif type == 'sense':
-            device = Data.devices[product['parent']]
+        elif (
+            type == "warmwhitelight"
+            and product["props"]["model"] == "SIREN001"
+        ):
+            device = Data.devices[product["parent"]]
+        elif type == "sense":
+            device = Data.devices[product["parent"]]
         else:
-            device = Data.devices[product['id']]
+            device = Data.devices[product["id"]]
 
         return device
 
