@@ -63,11 +63,12 @@ class Session:
                     "device_id": device["id"],
                     "device_name": device_name,
                 }
-                formatted_data.update(kwargs)
+
                 if kwargs.get("haName", "FALSE")[0] == " ":
                     kwargs["haName"] = device_name + kwargs["haName"]
                 else:
                     formatted_data["haName"] = device_name
+                formatted_data.update(kwargs)
             except KeyError as e:
                 await self.logger.error(e)
 
@@ -196,7 +197,6 @@ class Session:
 
         return get_nodes_successful
 
-    @debug_decorator
     async def startSession(self, config):
         """Setup the Hive platform."""
         Data.sensors = config.get("add_sensors", False)

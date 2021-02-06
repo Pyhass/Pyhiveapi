@@ -240,11 +240,12 @@ class Heating(Session):
 
     async def get_schedule_now_next_later(self, device):
         """Hive get heating schedule now, next and later."""
-        state = await self.attr.online_offline(device["device_id"])
+        online = await self.attr.online_offline(device["device_id"])
         current_mode = await self.get_mode(device)
+        state = None
 
         try:
-            if state != "Offline" and current_mode == "SCHEDULE":
+            if online and current_mode == "SCHEDULE":
                 data = Data.products[device["hiveID"]]
                 state = await self.helper.getScheduleNNL(
                     data["state"]["schedule"]

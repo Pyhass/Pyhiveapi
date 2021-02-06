@@ -6,8 +6,9 @@ from typing import Optional
 
 import urllib3
 from aiohttp import ClientResponse, ClientSession, web_exceptions
-from pyhiveapi.helper.const import HTTP_UNAUTHORIZED
 from pyquery import PyQuery
+
+from pyhiveapi.helper.const import HTTP_UNAUTHORIZED
 
 from ..helper.hive_data import Data
 from ..helper.hive_exceptions import FileInUse, NoApiToken

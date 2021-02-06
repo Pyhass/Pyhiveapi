@@ -55,7 +55,7 @@ class Data:
         "Hotwater_Mode": "Hotwater.get_mode(Hotwater(), device)",
         "Hotwater_Boost": "Hotwater.get_boost(Hotwater(), device)",
         "Battery": 'self.attr.battery(device["device_id"])',
-        "Mode": 'self.attr.get_mode(device["device_id"])',
+        "Mode": 'self.attr.get_mode(device["hiveID"])',
         "Availability": "self.online(device)",
         "Connectivity": "self.online(device)",
     }

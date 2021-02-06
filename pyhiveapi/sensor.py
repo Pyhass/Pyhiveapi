@@ -110,7 +110,7 @@ class Sensor(Session):
         final = None
 
         try:
-            data = Data.devices[device["hiveID"]]
+            data = Data.devices[device["device_id"]]
             state = data["props"]["online"]
             final = Data.HIVETOHA[self.sensorType].get(state, state)
         except KeyError as e:
