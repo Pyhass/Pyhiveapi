@@ -6,9 +6,8 @@ from typing import Optional
 
 import urllib3
 from aiohttp import ClientResponse, ClientSession, web_exceptions
-from pyquery import PyQuery
-
 from pyhiveapi.helper.const import HTTP_UNAUTHORIZED
+from pyquery import PyQuery
 
 from ..helper.hive_data import Data
 from ..helper.hive_exceptions import FileInUse, NoApiToken
@@ -265,7 +264,9 @@ class HiveAsync:
 
     async def error(self):
         """An error has occured iteracting wth the Hive API."""
-        await self.logger.log("API_ERROR", "ERROR", "Error attempting API call")
+        await self.logger.log(
+            "API_ERROR", "ERROR", "Error attempting API call"
+        )
         raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):
