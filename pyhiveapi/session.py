@@ -15,6 +15,7 @@ from .helper.hive_data import Data
 from .helper.hive_exceptions import HiveApiError
 from .helper.hive_helper import HiveHelper
 from .helper.logger import Logger
+from .helper.debugger import debug_decorator
 
 
 class Session:
@@ -188,6 +189,7 @@ class Session:
 
         return get_nodes_successful
 
+    @debug_decorator
     async def startSession(self, config):
         """Setup the Hive platform."""
         Data.sensors = config.get("add_sensors", False)
