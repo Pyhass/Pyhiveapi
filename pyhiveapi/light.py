@@ -152,6 +152,8 @@ class Light(Session):
 
         try:
             data = Data.products[device["hiveID"]]
+            if data["state"]["hue"] is None:
+                return final
             state = [
                 (data["state"]["hue"]) / 360,
                 (data["state"]["saturation"]) / 100,
