@@ -62,10 +62,7 @@ class HiveHelper:
                         pass
         elif type == "trvcontrol":
             device = Data.devices[product["props"]["trvs"][0]]
-        elif (
-            type == "warmwhitelight"
-            and product["props"]["model"] == "SIREN001"
-        ):
+        elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
             device = Data.devices[product["parent"]]
         elif type == "sense":
             device = Data.devices[product["parent"]]
@@ -86,7 +83,7 @@ class HiveHelper:
     def getScheduleNNL(self, hive_api_schedule):
         """Get the schedule now, next and later of a given nodes schedule."""
         schedule_now_and_next = {}
-        date_time_now = datetime.now()
+        date_time_now = datetime.datetime.now()
         date_time_now_day_int = date_time_now.today().weekday()
 
         days_t = (
@@ -104,9 +101,7 @@ class HiveHelper:
         full_schedule_list = []
 
         for day_index in range(0, len(days_rolling_list)):
-            current_day_schedule = hive_api_schedule[
-                days_rolling_list[day_index]
-            ]
+            current_day_schedule = hive_api_schedule[days_rolling_list[day_index]]
             current_day_schedule_sorted = sorted(
                 current_day_schedule,
                 key=operator.itemgetter("start"),
@@ -116,20 +111,14 @@ class HiveHelper:
             for current_slot in range(0, len(current_day_schedule_sorted)):
                 current_slot_custom = current_day_schedule_sorted[current_slot]
 
-                slot_date = datetime.now() + datetime.timedelta(days=day_index)
-                slot_time = self.convertMinutesToTime(
-                    current_slot_custom["start"]
-                )
-                slot_time_date_s = (
-                    slot_date.strftime("%d-%m-%Y") + " " + slot_time
-                )
+                slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
+                slot_time = self.convertMinutesToTime(current_slot_custom["start"])
+                slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
                 slot_time_date_dt = datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
                 )
                 if slot_time_date_dt <= date_time_now:
-                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(
-                        days=7
-                    )
+                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(days=7)
 
                 current_slot_custom["Start_DateTime"] = slot_time_date_dt
                 full_schedule_list.append(current_slot_custom)
