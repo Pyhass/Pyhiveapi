@@ -129,7 +129,7 @@ class HiveHelper:
             reverse=False,
         )
 
-        schedule_now = fsl_sorted[-1]s
+        schedule_now = fsl_sorted[-1]
         schedule_next = fsl_sorted[0]
         schedule_later = fsl_sorted[1]
 
