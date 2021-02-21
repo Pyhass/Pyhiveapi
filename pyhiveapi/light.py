@@ -12,9 +12,7 @@ class Light(Session):
 
     async def get_light(self, device):
         """Get light data."""
-        await self.logger.log(
-            device["hiveID"], self.lightType, "Getting light data."
-        )
+        await self.logger.log(device["hiveID"], self.lightType, "Getting light data.")
         device["deviceData"].update(
             {"online": await self.attr.online_offline(device["device_id"])}
         )
@@ -55,19 +53,19 @@ class Light(Session):
                 )
             if device["hiveType"] == "colourtuneablelight":
                 mode = await self.getColourMode(device)
-                if mode == 'COLOUR':
+                if mode == "COLOUR":
                     dev_data["status"].update(
                         {
                             "hs_color": await self.get_color(device),
                             "mode": await self.getColourMode(device),
                         }
                     )
-                else: 
+                else:
                     dev_data["status"].update(
                         {
                             "mode": await self.getColourMode(device),
                         }
-
+                    )
 
             await self.logger.log(
                 device["hiveID"],
@@ -166,8 +164,7 @@ class Light(Session):
                 (data["state"]["value"]) / 100,
             ]
             final = tuple(
-                int(i * 255)
-                for i in colorsys.hsv_to_rgb(state[0], state[1], state[2])
+                int(i * 255) for i in colorsys.hsv_to_rgb(state[0], state[1], state[2])
             )
         except KeyError as e:
             await self.logger.error(e)
@@ -190,10 +187,7 @@ class Light(Session):
         """Set light to turn off."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
             resp = await self.api.set_state(
@@ -210,10 +204,7 @@ class Light(Session):
         """Set light to turn on."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
 
@@ -224,9 +215,7 @@ class Light(Session):
             if color is not None:
                 return await self.set_color(device, color)
 
-            resp = await self.api.set_state(
-                data["type"], device["hiveID"], status="ON"
-            )
+            resp = await self.api.set_state(data["type"], device["hiveID"], status="ON")
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
@@ -237,10 +226,7 @@ class Light(Session):
         """Set brightness of the light."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
             resp = await self.api.set_state(
@@ -259,10 +245,7 @@ class Light(Session):
         """Set light to turn on."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
 
@@ -290,10 +273,7 @@ class Light(Session):
         """Set light to turn on."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
 
