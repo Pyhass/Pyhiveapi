@@ -54,12 +54,20 @@ class Light(Session):
                     {"color_temp": await self.get_color_temp(device)}
                 )
             if device["hiveType"] == "colourtuneablelight":
-                dev_data["status"].update(
-                    {
-                        "hs_color": await self.get_color(device),
-                        "mode": await self.getColourMode(device),
-                    }
-                )
+                mode = await self.getColourMode(device)
+                if mode == 'COLOUR':
+                    dev_data["status"].update(
+                        {
+                            "hs_color": await self.get_color(device),
+                            "mode": await self.getColourMode(device),
+                        }
+                    )
+                else: 
+                    dev_data["status"].update(
+                        {
+                            "mode": await self.getColourMode(device),
+                        }
+
 
             await self.logger.log(
                 device["hiveID"],
