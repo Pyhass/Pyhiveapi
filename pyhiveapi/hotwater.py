@@ -113,9 +113,7 @@ class Hotwater(Session):
                 if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
-                    snan = await self.helper.getScheduleNNL(
-                        data["state"]["schedule"]
-                    )
+                    snan = self.helper.getScheduleNNL(data["state"]["schedule"])
                     state = snan["now"]["value"]["status"]
 
             final = Data.HIVETOHA[self.hotwaterType].get(state, state)
@@ -132,9 +130,7 @@ class Hotwater(Session):
             mode_current = await self.get_mode(device)
             if mode_current == "SCHEDULE":
                 data = Data.products[device["hiveID"]]
-                state = await self.helper.getScheduleNNL(
-                    data["state"]["schedule"]
-                )
+                state = self.helper.getScheduleNNL(data["state"]["schedule"])
         except KeyError as e:
             await self.logger.error(e)
 
