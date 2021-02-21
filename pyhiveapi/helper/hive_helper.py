@@ -74,7 +74,7 @@ class HiveHelper:
     def convertMinutesToTime(self, minutes_to_convert):
         """Convert minutes string to datetime."""
         hours_converted, minutes_converted = divmod(minutes_to_convert, 60)
-        converted_time = datetime.strptime(
+        converted_time = datetime.datetime.strptime(
             str(hours_converted) + ":" + str(minutes_converted), "%H:%M"
         )
         converted_time_string = converted_time.strftime("%H:%M")
@@ -114,7 +114,7 @@ class HiveHelper:
                 slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
                 slot_time = self.convertMinutesToTime(current_slot_custom["start"])
                 slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
-                slot_time_date_dt = datetime.strptime(
+                slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
                 )
                 if slot_time_date_dt <= date_time_now:
@@ -129,7 +129,7 @@ class HiveHelper:
             reverse=False,
         )
 
-        schedule_now = fsl_sorted[-1]
+        schedule_now = fsl_sorted[-1]s
         schedule_next = fsl_sorted[0]
         schedule_later = fsl_sorted[1]
 
