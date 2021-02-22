@@ -31,8 +31,7 @@ class HiveAsync:
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
-            "all": self.baseUrl
-            + "/nodes/all?products=true&devices=true&actions=true",
+            "all": self.baseUrl + "/nodes/all?products=true&devices=true&actions=true",
             "devices": self.baseUrl + "/devices",
             "products": self.baseUrl + "/products",
             "actions": self.baseUrl + "/actions",
@@ -74,9 +73,7 @@ class HiveAsync:
         ) as resp:
             await resp.json(content_type=None)
             self.json_return.update({"original": resp.status})
-            self.json_return.update(
-                {"parsed": await resp.json(content_type=None)}
-            )
+            self.json_return.update({"parsed": await resp.json(content_type=None)})
 
         if operator.contains(str(resp.status), "20"):
             await self.logger.log(
@@ -87,7 +84,7 @@ class HiveAsync:
                 f"Hive token as expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
-        else:
+        elif url is not None and resp.status is not None:
             await self.logger.LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
@@ -117,9 +114,7 @@ class HiveAsync:
                     Data.tokens.update({"accessToken": info["accessToken"]})
 
                     self.urls.update({"base": info["platform"]["endpoint"]})
-                    self.urls.update(
-                        {"camera": info["platform"]["cameraPlatform"]}
-                    )
+                    self.urls.update({"camera": info["platform"]["cameraPlatform"]})
                     Data.tokenCreated = datetime.now()
                 return True
         except (ConnectionError, IOError, RuntimeError, ZeroDivisionError):
@@ -143,9 +138,7 @@ class HiveAsync:
             )
 
             Data.loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-            Data.loginData.update(
-                {"CLIID": json_data["HiveSSOPublicCognitoClientId"]}
-            )
+            Data.loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
             Data.loginData.update({"REGION": json_data["HiveSSOPoolId"]})
             return Data.loginData
         except (IOError, RuntimeError, ZeroDivisionError):
@@ -228,10 +221,7 @@ class HiveAsync:
         jsc = (
             "{"
             + ",".join(
-                (
-                    '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in kwargs.items()
-                )
+                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
             )
             + "}"
         )
@@ -265,9 +255,7 @@ class HiveAsync:
 
     async def error(self):
         """An error has occured iteracting wth the Hive API."""
-        await self.logger.log(
-            "API_ERROR", "ERROR", "Error attempting API call"
-        )
+        await self.logger.log("API_ERROR", "ERROR", "Error attempting API call")
         raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):
