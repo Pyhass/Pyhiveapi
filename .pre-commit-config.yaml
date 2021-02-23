@@ -13,3 +13,10 @@ repos:
       - id: black
         args: [--line-length=79]
         language_version: python3.8
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.4
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-docstrings==1.5.0
+          - pydocstyle==5.1.1
