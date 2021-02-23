@@ -40,7 +40,7 @@ info_bits = bytearray("Caldera Derived Key", "utf-8")
 pool = concurrent.futures.ThreadPoolExecutor()
 
 
-class HiveAuthAsync(object):
+class HiveAuthAsync:
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
@@ -90,8 +90,8 @@ class HiveAuthAsync(object):
 
     def calculate_a(self):
         """
-        Calculate the client's public value A = g^a%N
-        with the generated random number a
+        Calculate the client's public value A.
+
         :param {Long integer} a Randomly generated small A.
         :return {Long integer} Computed large A.
         """
@@ -106,7 +106,8 @@ class HiveAuthAsync(object):
     ):
         """
         Calculates the final hkdf based on computed S value, \
-            and computed U value and the key
+            and computed U value and the key.
+
         :param {String} username Username.
         :param {String} password Password.
         :param {Long integer} server_b_value Server B value.
@@ -117,7 +118,7 @@ class HiveAuthAsync(object):
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "%s%s:%s" % (
+        username_password = "{}{}:{}".format(
             self.__pool_id.split("_")[1],
             username,
             password,
@@ -297,23 +298,26 @@ def hex_to_long(hex_string):
 
 
 def get_random(nbytes):
+    """Generate a random hex number."""
     random_hex = binascii.hexlify(os.urandom(nbytes))
     return hex_to_long(random_hex)
 
 
 def hash_sha256(buf):
-    """AuthenticationHelper.hash"""
+    """Authentication helper."""
     a = hashlib.sha256(buf).hexdigest()
     return (64 - len(a)) * "0" + a
 
 
 def hex_hash(hex_string):
+    """Convert hex value to hash."""
     return hash_sha256(bytearray.fromhex(hex_string))
 
 
 def calculate_u(big_a, big_b):
     """
-    Calculate the client's value U which is the hash of A and B
+    Calculate the client's value U which is the hash of A and B.
+
     :param {Long integer} big_a Large A value.
     :param {Long integer} big_b Server B value.
     :return {Long integer} Computed U value.
@@ -323,17 +327,13 @@ def calculate_u(big_a, big_b):
 
 
 def long_to_hex(long_num):
+    """Convert long number to hex."""
     return "%x" % long_num
 
 
 def pad_hex(long_int):
-    """
-    Converts a Long integer (or hex string) \
-        to hex format padded with zeroes for hashing
-    :param {Long integer|String} long_int Number or string to pad.
-    :return {String} Padded hex string.
-    """
-    if not isinstance(long_int, six.string_types):
+    """Convert integer to hex format."""
+    if not isinstance(long_int, str):
         hash_str = long_to_hex(long_int)
     else:
         hash_str = long_int
@@ -345,13 +345,7 @@ def pad_hex(long_int):
 
 
 def compute_hkdf(ikm, salt):
-    """
-    Standard hkdf algorithm
-    :param {Buffer} ikm Input key material.
-    :param {Buffer} salt Salt value.
-    :return {Buffer} Strong key material.
-    @private
-    """
+    """Process the hkdf algorithm."""
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
     info_bits_update = info_bits + bytearray(chr(1), "utf-8")
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()

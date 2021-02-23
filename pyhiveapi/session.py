@@ -34,7 +34,7 @@ class Session:
 
     async def openFile(self, file):
         path = os.path.dirname(os.path.realpath(__file__)) + "/helper/" + file
-        with open(path, "r") as j:
+        with open(path) as j:
             data = json.loads(j.read())
 
         return data
@@ -145,10 +145,15 @@ class Session:
                 await self.logger.log(n_id, "API", "Using file")
                 api_resp_d = await self.openFile("data.json")
             elif Data.tokens is not None:
-                await self.logger.log(n_id, "Session", "Getting hive device info")
+                await self.logger.log(
+                    n_id, "Session", "Getting hive device info"
+                )
                 await self.hiveRefreshTokens()
                 api_resp_d = await self.api.getAll()
-                if operator.contains(str(api_resp_d["original"]), "20") is False:
+                if (
+                    operator.contains(str(api_resp_d["original"]), "20")
+                    is False
+                ):
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
                     raise HiveApiError
@@ -178,14 +183,10 @@ class Session:
             Data.actions = copy.deepcopy(tmpActions)
             Data.lastUpdate = datetime.now()
             get_nodes_successful = True
-        except (
-            IOError,
-            RuntimeError,
-            HiveApiError,
-            ConnectionError,
-            HTTPException,
-        ):
-            await self.logger.log("No_ID", "API", "Api didn't receive any data")
+        except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
+            await self.logger.log(
+                "No_ID", "API", "Api didn't receive any data"
+            )
             get_nodes_successful = False
 
         return get_nodes_successful
@@ -194,15 +195,23 @@ class Session:
         """Setup the Hive platform."""
         Data.sensors = config.get("add_sensors", False)
         await self.logger.checkDebugging(config["options"].get("debug", []))
-        await self.logger.log("No_ID", self.sessionType, "Initialising Hive Component.")
+        await self.logger.log(
+            "No_ID", self.sessionType, "Initialising Hive Component."
+        )
         await self.updateInterval(config["options"]["scan_interval"])
         await self.useFile(config.get("username", False))
 
         if config["tokens"] is not None and not Data.file:
-            await self.logger.log("No_ID", self.sessionType, "Logging into Hive.")
+            await self.logger.log(
+                "No_ID", self.sessionType, "Logging into Hive."
+            )
             Data.tokens.update({"token": config["tokens"]["IdToken"]})
-            Data.tokens.update({"refreshToken": config["tokens"]["RefreshToken"]})
-            Data.tokens.update({"accessToken": config["tokens"]["AccessToken"]})
+            Data.tokens.update(
+                {"refreshToken": config["tokens"]["RefreshToken"]}
+            )
+            Data.tokens.update(
+                {"accessToken": config["tokens"]["AccessToken"]}
+            )
         elif Data.file:
             await self.logger.log(
                 "No_ID",
@@ -218,10 +227,14 @@ class Session:
             return HTTPException
 
         if Data.devices == {} or Data.products == {}:
-            await self.logger.log("No_ID", self.sessionType, "Failed to get data")
+            await self.logger.log(
+                "No_ID", self.sessionType, "Failed to get data"
+            )
             return "INVALID_REAUTH"
 
-        await self.logger.log("No_ID", self.sessionType, "Creating list of devices")
+        await self.logger.log(
+            "No_ID", self.sessionType, "Creating list of devices"
+        )
         self.devices["binary_sensor"] = []
         self.devices["climate"] = []
         self.devices["light"] = []
@@ -409,10 +422,12 @@ class Session:
 
     @staticmethod
     async def epochtime(date_time, pattern, action):
-        """ date/time conversion to epoch"""
+        """ date/time conversion to epoch."""
         if action == "to_epoch":
             pattern = "%d.%m.%Y %H:%M:%S"
-            epochtime = int(time.mktime(time.strptime(str(date_time), pattern)))
+            epochtime = int(
+                time.mktime(time.strptime(str(date_time), pattern))
+            )
             return epochtime
         elif action == "from_epoch":
             date = datetime.fromtimestamp(int(date_time)).strftime(pattern)

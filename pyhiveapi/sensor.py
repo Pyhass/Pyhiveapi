@@ -12,6 +12,7 @@ class Sensor(Session):
     sensorType = "Sensor"
 
     async def get_sensor(self, device):
+        """Gets updated sensor data."""
         await self.logger.log(
             device["hiveID"], self.sensorType, "Getting sensor data."
         )

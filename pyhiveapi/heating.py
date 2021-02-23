@@ -1,4 +1,4 @@
-""""Hive Heating Module. """
+"""Hive Heating Module."""
 from .helper.hive_data import Data
 from .session import Session
 
@@ -9,6 +9,7 @@ class Heating(Session):
     heatingType = "Heating"
 
     async def get_heating(self, device):
+        """Get heating data."""
         await self.logger.log(
             device["hiveID"], self.heatingType, "Getting heating data."
         )
@@ -32,8 +33,12 @@ class Heating(Session):
                 "min_temp": await self.min_temperature(device),
                 "max_temp": await self.max_temperature(device),
                 "status": {
-                    "current_temperature": await self.current_temperature(device),
-                    "target_temperature": await self.target_temperature(device),
+                    "current_temperature": await self.current_temperature(
+                        device
+                    ),
+                    "target_temperature": await self.target_temperature(
+                        device
+                    ),
                     "action": await self.current_operation(device),
                     "mode": await self.get_mode(device),
                     "boost": await self.boost(device),
@@ -130,7 +135,7 @@ class Heating(Session):
         return final
 
     async def minmax_temperatures(self, device):
-        """Min/Max Temp"""
+        """Min/Max Temp."""
         state = None
         final = None
 
@@ -207,7 +212,9 @@ class Heating(Session):
 
         try:
             data = Data.products[device["hiveID"]]
-            state = Data.HIVETOHA["Boost"].get(data["state"].get("boost", False), "ON")
+            state = Data.HIVETOHA["Boost"].get(
+                data["state"].get("boost", False), "ON"
+            )
         except KeyError as e:
             await self.logger.error(e)
 
@@ -252,7 +259,10 @@ class Heating(Session):
         await self.hiveRefreshTokens()
         final = False
 
-        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
+        if (
+            device["hiveID"] in Data.products
+            and device["deviceData"]["online"]
+        ):
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
             resp = await self.api.set_state(
@@ -270,7 +280,10 @@ class Heating(Session):
         await self.hiveRefreshTokens()
         final = False
 
-        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
+        if (
+            device["hiveID"] in Data.products
+            and device["deviceData"]["online"]
+        ):
             data = Data.products[device["hiveID"]]
             resp = await self.api.set_state(
                 data["type"], device["hiveID"], mode=new_mode
@@ -284,13 +297,15 @@ class Heating(Session):
 
     async def turn_boost_on(self, device, mins, temp):
         """Turn heating boost on."""
-
         if mins > 0 and temp >= await self.min_temperature(device):
             if temp <= await self.max_temperature(device):
                 await self.hiveRefreshTokens()
                 final = False
 
-                if device["hiveID"] in Data.products and device["deviceData"]["online"]:
+                if (
+                    device["hiveID"] in Data.products
+                    and device["deviceData"]["online"]
+                ):
                     data = Data.products[device["hiveID"]]
                     resp = await self.api.set_state(
                         data["type"],
@@ -311,7 +326,10 @@ class Heating(Session):
         """Turn heating boost off."""
         final = False
 
-        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
+        if (
+            device["hiveID"] in Data.products
+            and device["deviceData"]["online"]
+        ):
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
             await self.getDevices(device["hiveID"])
