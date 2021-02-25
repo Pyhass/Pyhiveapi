@@ -15,7 +15,7 @@ env:
 jobs:
   # Separate job to pre-populate the base dependency cache
   # This prevent upcoming jobs to do the same individually
-    prepare-base:
+  prepare-base:
     name: Prepare base dependencies
     runs-on: ubuntu-latest
     steps:
@@ -172,7 +172,8 @@ jobs:
             ${{ env.CACHE_VERSION}}-${{ runner.os }}-base-venv-${{
             steps.python.outputs.python-version }}-${{
             hashFiles('requirements.txt') }}-${{
-            hashFiles('requirements_test.txt') }}
+            hashFiles('requirements_test.txt') }}-${{
+            hashFiles('homeassistant/package_constraints.txt') }}
       - name: Fail job if Python cache restore failed
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
