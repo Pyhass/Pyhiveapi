@@ -31,7 +31,8 @@ class HiveAsync:
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
-            "all": self.baseUrl + "/nodes/all?products=true&devices=true&actions=true",
+            "all": self.baseUrl
+            + "/nodes/all?products=true&devices=true&actions=true",
             "devices": self.baseUrl + "/devices",
             "products": self.baseUrl + "/products",
             "actions": self.baseUrl + "/actions",
@@ -73,7 +74,9 @@ class HiveAsync:
         ) as resp:
             await resp.json(content_type=None)
             self.json_return.update({"original": resp.status})
-            self.json_return.update({"parsed": await resp.json(content_type=None)})
+            self.json_return.update(
+                {"parsed": await resp.json(content_type=None)}
+            )
 
         if operator.contains(str(resp.status), "20"):
             await self.logger.log(
@@ -114,10 +117,12 @@ class HiveAsync:
                     Data.tokens.update({"accessToken": info["accessToken"]})
 
                     self.urls.update({"base": info["platform"]["endpoint"]})
-                    self.urls.update({"camera": info["platform"]["cameraPlatform"]})
+                    self.urls.update(
+                        {"camera": info["platform"]["cameraPlatform"]}
+                    )
                     Data.tokenCreated = datetime.now()
                 return True
-        except (ConnectionError, IOError, RuntimeError, ZeroDivisionError):
+        except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -138,10 +143,12 @@ class HiveAsync:
             )
 
             Data.loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-            Data.loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
+            Data.loginData.update(
+                {"CLIID": json_data["HiveSSOPublicCognitoClientId"]}
+            )
             Data.loginData.update({"REGION": json_data["HiveSSOPoolId"]})
             return Data.loginData
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
     async def getAll(self):
@@ -149,7 +156,7 @@ class HiveAsync:
         url = self.urls["all"]
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -159,7 +166,7 @@ class HiveAsync:
         url = self.urls["devices"]
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -169,7 +176,7 @@ class HiveAsync:
         url = self.urls["products"]
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -179,7 +186,7 @@ class HiveAsync:
         url = self.urls["actions"]
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -200,7 +207,7 @@ class HiveAsync:
         )
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
@@ -211,7 +218,7 @@ class HiveAsync:
         url = t_url.replace(" ", "%20")
         try:
             await self.request("get", url)
-        except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
+        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
             await self.error()
 
         return self.json_return
@@ -221,7 +228,10 @@ class HiveAsync:
         jsc = (
             "{"
             + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
+                (
+                    '"' + str(i) + '": ' '"' + str(t) + '" '
+                    for i, t in kwargs.items()
+                )
             )
             + "}"
         )
@@ -230,7 +240,7 @@ class HiveAsync:
         try:
             await self.is_file_being_used()
             await self.request("post", url, data=jsc)
-        except (FileInUse, IOError, RuntimeError, ConnectionError) as e:
+        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
             else:
@@ -245,7 +255,7 @@ class HiveAsync:
         try:
             await self.is_file_being_used()
             await self.request("put", url, data=jsc)
-        except (FileInUse, IOError, RuntimeError, ConnectionError) as e:
+        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
             else:
@@ -254,8 +264,10 @@ class HiveAsync:
         return self.json_return
 
     async def error(self):
-        """An error has occured iteracting wth the Hive API."""
-        await self.logger.log("API_ERROR", "ERROR", "Error attempting API call")
+        """An error has occurred iteracting with the Hive API."""
+        await self.logger.log(
+            "API_ERROR", "ERROR", "Error attempting API call"
+        )
         raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):

@@ -2,13 +2,13 @@
 ![CodeQL](https://github.com/Pyhive/Pyhiveapi/workflows/CodeQL/badge.svg) ![Python Linting](https://github.com/Pyhive/Pyhiveapi/workflows/Python%20package/badge.svg)
 
 # Introduction
-This is a libary which intefaces with the Hive smart home platform. 
-This libary is built for to integrate with the Home Assistant platform,
-but can be used independantly (See examples below.)
+This is a library which intefaces with the Hive smart home platform. 
+This library is built for to integrate with the Home Assistant platform,
+but can be used independently (See examples below.)
 
 
 ## Examples
-Below are examples on how to use the libary independantly.
+Below are examples on how to use the library independently.
 
 ### Login
 Below is an example how to login to Hive with 2FA if needed
@@ -57,7 +57,7 @@ else:
 
 ### Get Hive Data
 Below is an example how to data from the Hive platform 
-using the session token aquired from login.
+using the session token acquired from login.
 
 ```Python
 api = Hive.HiveApi()

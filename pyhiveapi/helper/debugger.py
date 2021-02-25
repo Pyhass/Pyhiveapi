@@ -1,5 +1,4 @@
 import logging
-import sys
 
 
 class DebugContext:

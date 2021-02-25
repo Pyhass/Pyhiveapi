@@ -57,7 +57,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -84,7 +84,7 @@ class HiveApi:
             )
             loginData.update({"REGION": json_data["HiveSSOPoolId"]})
             return loginData
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
     def getAllData(self, session_id):
@@ -98,7 +98,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -114,7 +114,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -130,7 +130,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -146,7 +146,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -173,7 +173,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError):
+        except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return self.json_return
@@ -189,7 +189,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
+        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
             self.error()
 
         return self.json_return
@@ -216,7 +216,7 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
+        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
             self.error()
 
         return self.json_return
@@ -232,12 +232,12 @@ class HiveApi:
             )
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
-        except (IOError, RuntimeError, ZeroDivisionError, ConnectionError):
+        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
             self.error()
 
         return self.json_return
 
     def error(self):
-        """An error has occured iteracting wth the Hive API."""
+        """An error has occurred interacting with the Hive API."""
         self.json_return.update({"original": "Error making API call"})
         self.json_return.update({"parsed": "Error making API call"})

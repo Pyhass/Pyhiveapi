@@ -4,7 +4,7 @@ from .session import Session
 
 
 class Hub(Session):
-    """ Hive Hub Code. """
+    """Hive Hub Code."""
 
     hubType = "Hub"
     logType = "Sensor"

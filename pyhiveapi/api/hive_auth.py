@@ -36,7 +36,7 @@ g_hex = "2"
 info_bits = bytearray("Caldera Derived Key", "utf-8")
 
 
-class HiveAuth(object):
+class HiveAuth:
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
@@ -105,7 +105,7 @@ class HiveAuth(object):
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "%s%s:%s" % (
+        username_password = "{}{}:{}".format(
             self.__pool_id.split("_")[1],
             username,
             password,
@@ -257,6 +257,16 @@ class HiveAuth(object):
 
         return result
 
+    def getDeviceList(self, token):
+        """Get list of devices."""
+        try:
+            result = self.client.list_devices(AccessToken=token)
+
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                return "CONNECTION_ERROR"
+        return result
+
 
 def hex_to_long(hex_string):
     return int(hex_string, 16)
@@ -298,7 +308,7 @@ def pad_hex(long_int):
     :param {Long integer|String} long_int Number or string to pad.
     :return {String} Padded hex string.
     """
-    if not isinstance(long_int, six.string_types):
+    if not isinstance(long_int, str):
         hash_str = long_to_hex(long_int)
     else:
         hash_str = long_int

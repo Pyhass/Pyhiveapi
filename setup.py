@@ -7,13 +7,13 @@ from setuptools import find_packages, setup
 def requirements_from_file(filename="requirements.txt"):
     with open(os.path.join(os.path.dirname(__file__), filename)) as r:
         reqs = r.read().strip().split("\n")
-    # Return non emtpy lines and non comments
+    # Return non empty lines and non comments
     return [r for r in reqs if re.match(r"^\w+", r)]
 
 
 setup(
     name="pyhiveapi",
-    version="0.3.4.11",
+    version="0.3.5",
     description="A Python library to interface with the Hive API",
     long_description="A Python library to interface with the Hive API",
     url="https://github.com/Pyhive/pyhiveapi",

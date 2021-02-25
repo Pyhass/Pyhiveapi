@@ -14,8 +14,7 @@ class Logger:
 
     @staticmethod
     async def checkDebugging(enable_debug: list):
-        """Check Logging Active"""
-
+        """Check Logging Active."""
         if len(enable_debug) > 0:
             Data.debugEnabled = True
         else:
@@ -64,9 +63,10 @@ class Logger:
             pass
 
     async def error(self, e="UNKNOWN"):
-        """An unexpected error has occured"""
+        """Process and unexpected error."""
         self.LOGGER.error(
-            f"An unexpected error has occured whilst executing {inspect.stack()[1][3]}"
+            f"An unexpected error has occurred whilst"
+            f" executing {inspect.stack()[1][3]}"
             f" with exception {e.__class__} {e}"
         )
 
