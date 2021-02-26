@@ -1,6 +1,5 @@
 """Hive Device Attribute Module."""
 from .helper.hive_data import Data
-from .helper.hive_helper import HiveHelper as Helper
 from .helper.logger import Logger
 
 
@@ -8,11 +7,12 @@ class Attributes:
     """Device Attributes Code."""
 
     def __init__(self):
+        """Initialise attributes."""
         self.logger = Logger()
         self.type = "Attribute"
 
     async def state_attributes(self, n_id, _type):
-        """Get HA State Attributes"""
+        """Get HA State Attributes."""
         attr = {}
 
         if n_id in Data.products or n_id in Data.devices:
@@ -26,7 +26,7 @@ class Attributes:
         return attr
 
     async def online_offline(self, n_id):
-        """Check if device is online"""
+        """Check if device is online."""
         state = None
 
         try:

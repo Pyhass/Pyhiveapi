@@ -1,3 +1,4 @@
+"""Start Hive Session."""
 from typing import Optional
 
 from aiohttp import ClientSession
@@ -16,7 +17,8 @@ from .session import Session
 class Hive:
     """Hive Class."""
 
-    def __init__(self, websession: Optional[ClientSession] = None) -> None:
+    def __init__(self, websession: Optional[ClientSession] = None):
+        """Generate Hive Session."""
         Data.haWebsession = websession
         self.session = Session()
         self.action = Action()

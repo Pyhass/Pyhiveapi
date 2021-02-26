@@ -3,7 +3,7 @@ import datetime
 
 
 class Data:
-    """Hive Data"""
+    """Hive Data."""
 
     # API Data
     products = {}

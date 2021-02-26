@@ -113,9 +113,7 @@ class Hotwater(Session):
                 if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
-                    snan = self.helper.getScheduleNNL(
-                        data["state"]["schedule"]
-                    )
+                    snan = self.helper.getScheduleNNL(data["state"]["schedule"])
                     state = snan["now"]["value"]["status"]
 
             final = Data.HIVETOHA[self.hotwaterType].get(state, state)
@@ -145,7 +143,7 @@ class Hotwater(Session):
         if device["hiveID"] in Data.products:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.api.set_state(
+            resp = await self.api.setState(
                 data["type"], device["hiveID"], mode=new_mode
             )
             if resp["original"] == 200:
@@ -165,7 +163,7 @@ class Hotwater(Session):
         ):
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.api.set_state(
+            resp = await self.api.setState(
                 data["type"], device["hiveID"], mode="BOOST", boost=mins
             )
             if resp["original"] == 200:
@@ -186,7 +184,7 @@ class Hotwater(Session):
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
-            resp = await self.api.set_state(
+            resp = await self.api.setState(
                 data["type"], device["hiveID"], mode=prev_mode
             )
             if resp["original"] == 200:

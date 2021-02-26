@@ -1,3 +1,5 @@
+"""Auth file for logging in."""
+
 import asyncio
 import base64
 import binascii
@@ -11,7 +13,6 @@ import re
 
 import boto3
 import botocore
-import six
 
 from .hive_api import HiveApi
 
@@ -41,14 +42,14 @@ pool = concurrent.futures.ThreadPoolExecutor()
 
 
 class HiveAuthAsync:
+    """Async api to interface with hive auth."""
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
 
-    def __init__(
-        self, username, password, pool_region=None, client_secret=None
-    ):
+    def __init__(self, username, password, pool_region=None, client_secret=None):
+        """Initialise async auth."""
         if pool_region is not None:
             raise ValueError(
                 "pool_region and client should not both be specified "
@@ -70,6 +71,7 @@ class HiveAuthAsync:
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
 
     async def async_init(self):
+        """Initialise async variables."""
         self.data = self.loop.run_in_executor(None, self.api.getLoginInfo)
         await self.data
         self.__pool_id = self.data._result.get("UPID")
@@ -82,7 +84,8 @@ class HiveAuthAsync:
 
     def generate_random_small_a(self):
         """
-        helper function to generate a random big integer
+        Helper function to generate a random big integer.
+
         :return {Long integer} a random value.
         """
         random_long_int = get_random(128)
@@ -101,9 +104,7 @@ class HiveAuthAsync:
             raise ValueError("Safety check for A failed")
         return big_a
 
-    def get_password_authentication_key(
-        self, username, password, server_b_value, salt
-    ):
+    def get_password_authentication_key(self, username, password, server_b_value, salt):
         """
         Calculates the final hkdf based on computed S value, \
             and computed U value and the key.
@@ -128,9 +129,7 @@ class HiveAuthAsync:
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
         g_mod_pow_xn = pow(self.g, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
-        s_value = pow(
-            int_value2, self.small_a_value + u_value * x_value, self.big_n
-        )
+        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
             bytearray.fromhex(pad_hex(s_value)),
             bytearray.fromhex(pad_hex(long_to_hex(u_value))),
@@ -138,6 +137,7 @@ class HiveAuthAsync:
         return hkdf
 
     async def get_auth_params(self):
+        """Get auth params."""
         auth_params = {
             "USERNAME": self.username,
             "SRP_A": await self.loop.run_in_executor(
@@ -156,13 +156,13 @@ class HiveAuthAsync:
 
     @staticmethod
     async def get_secret_hash(username, client_id, client_secret):
+        """Get secret hash."""
         message = bytearray(username + client_id, "utf-8")
-        hmac_obj = hmac.new(
-            bytearray(client_secret, "utf-8"), message, hashlib.sha256
-        )
+        hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
     async def process_challenge(self, challenge_parameters):
+        """Process auth challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
         salt_hex = challenge_parameters["SALT"]
         srp_b_hex = challenge_parameters["SRP_B"]
@@ -262,6 +262,7 @@ class HiveAuthAsync:
             )
 
     async def sms_2fa(self, entered_code, challenge_parameters):
+        """Send sms code for auth."""
         boto_client = await self.client
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -294,6 +295,7 @@ class HiveAuthAsync:
 
 
 def hex_to_long(hex_string):
+    """Convert hex to long number."""
     return int(hex_string, 16)
 
 

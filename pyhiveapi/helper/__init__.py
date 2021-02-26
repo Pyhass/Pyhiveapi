@@ -1,3 +1,3 @@
-"""__init__.py"""
-from .hive_helper import HiveHelper
-from .logger import Logger
+"""__init__.py file."""
+from .hive_helper import HiveHelper  # noqa: F401
+from .logger import Logger  # noqa: F401

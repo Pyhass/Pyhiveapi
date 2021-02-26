@@ -10,9 +10,7 @@ class Plug(Session):
 
     async def get_plug(self, device):
         """Get smart plug data."""
-        await self.logger.log(
-            device["hiveID"], self.plugType, "Getting switch data."
-        )
+        await self.logger.log(device["hiveID"], self.plugType, "Getting switch data.")
         device["deviceData"].update(
             {"online": await self.attr.online_offline(device["device_id"])}
         )
@@ -85,15 +83,10 @@ class Plug(Session):
         """Set smart plug to turn on."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.api.set_state(
-                data["type"], data["id"], status="ON"
-            )
+            resp = await self.api.setState(data["type"], data["id"], status="ON")
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
@@ -104,15 +97,10 @@ class Plug(Session):
         """Set smart plug to turn off."""
         final = False
 
-        if (
-            device["hiveID"] in Data.products
-            and device["deviceData"]["online"]
-        ):
+        if device["hiveID"] in Data.products and device["deviceData"]["online"]:
             await self.hiveRefreshTokens()
             data = Data.products[device["hiveID"]]
-            resp = await self.api.set_state(
-                data["type"], data["id"], status="OFF"
-            )
+            resp = await self.api.setState(data["type"], data["id"], status="OFF")
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])

@@ -1,3 +1,4 @@
+"""Helper class for pyhiveapi."""
 import datetime
 import operator
 
@@ -5,11 +6,13 @@ from .hive_data import Data
 
 
 class HiveHelper:
+    """Hive helper class."""
+
     def __init__(self):
         """Hive Helper."""
 
     def getDeviceName(n_id):
-        """Resolve a id into a name"""
+        """Resolve a id into a name."""
         try:
             product_name = Data.products[n_id]["state"]["name"]
         except KeyError:
@@ -30,13 +33,13 @@ class HiveHelper:
             return n_id
 
     def deviceRecovered(self, n_id):
-        """"Register that a device has recovered from being offline."""
+        """Register that a device has recovered from being offline."""
         # name = HiveHelper.getDeviceName(n_id)
         if n_id in Data.errorList:
             Data.errorList.pop(n_id)
 
     def getDeviceFromID(self, n_id):
-        """Get product/device data from ID"""
+        """Get product/device data from ID."""
         data = False
         try:
             data = Data.ha_devices[n_id]
@@ -46,7 +49,7 @@ class HiveHelper:
         return data
 
     def getDeviceData(self, product):
-        """"Get device Data."""
+        """Get device Data."""
         device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
@@ -62,10 +65,7 @@ class HiveHelper:
                         pass
         elif type == "trvcontrol":
             device = Data.devices[product["props"]["trvs"][0]]
-        elif (
-            type == "warmwhitelight"
-            and product["props"]["model"] == "SIREN001"
-        ):
+        elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
             device = Data.devices[product["parent"]]
         elif type == "sense":
             device = Data.devices[product["parent"]]
@@ -104,9 +104,7 @@ class HiveHelper:
         full_schedule_list = []
 
         for day_index in range(0, len(days_rolling_list)):
-            current_day_schedule = hive_api_schedule[
-                days_rolling_list[day_index]
-            ]
+            current_day_schedule = hive_api_schedule[days_rolling_list[day_index]]
             current_day_schedule_sorted = sorted(
                 current_day_schedule,
                 key=operator.itemgetter("start"),
@@ -116,22 +114,14 @@ class HiveHelper:
             for current_slot in range(0, len(current_day_schedule_sorted)):
                 current_slot_custom = current_day_schedule_sorted[current_slot]
 
-                slot_date = datetime.datetime.now() + datetime.timedelta(
-                    days=day_index
-                )
-                slot_time = self.convertMinutesToTime(
-                    current_slot_custom["start"]
-                )
-                slot_time_date_s = (
-                    slot_date.strftime("%d-%m-%Y") + " " + slot_time
-                )
+                slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
+                slot_time = self.convertMinutesToTime(current_slot_custom["start"])
+                slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
                 )
                 if slot_time_date_dt <= date_time_now:
-                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(
-                        days=7
-                    )
+                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(days=7)
 
                 current_slot_custom["Start_DateTime"] = slot_time_date_dt
                 full_schedule_list.append(current_slot_custom)

@@ -1,13 +1,17 @@
-"""Hive exception class"""
+"""Hive exception class."""
 
 
 class FileInUse(Exception):
-    pass
+    """File in use exception."""
 
 
 class NoApiToken(Exception):
-    pass
+    """No API token exception."""
 
 
 class HiveApiError(Exception):
-    pass
+    """Api error."""
+
+
+class HiveReauthRequired(Exception):
+    """Re-Authentication is required."""

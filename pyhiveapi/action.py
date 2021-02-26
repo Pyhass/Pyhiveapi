@@ -10,9 +10,7 @@ class Action(Session):
 
     async def get_action(self, device):
         """Get smart plug current power usage."""
-        await self.logger.log(
-            device["hiveID"], self.actionType, "Getting action data."
-        )
+        await self.logger.log(device["hiveID"], self.actionType, "Getting action data.")
         dev_data = {}
 
         if device["hiveID"] in Data.actions:
@@ -65,7 +63,7 @@ class Action(Session):
             data = Data.actions[device["hiveID"]]
             data.update({"enabled": True})
             send = json.dumps(data)
-            resp = await self.api.set_action(device["hiveID"], send)
+            resp = await self.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
@@ -83,7 +81,7 @@ class Action(Session):
             data = Data.actions[device["hiveID"]]
             data.update({"enabled": False})
             send = json.dumps(data)
-            resp = await self.api.set_action(device["hiveID"], send)
+            resp = await self.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])

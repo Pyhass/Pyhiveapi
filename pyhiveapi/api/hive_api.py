@@ -1,11 +1,9 @@
 """Hive API Module."""
-import json
+import asyncio
 
-import requests
-import urllib3
-from pyquery import PyQuery
+from aiohttp import ClientSession
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from pyhiveapi.api.hive_async_api import HiveAsync
 
 
 class HiveApi:
@@ -13,231 +11,58 @@ class HiveApi:
 
     def __init__(self):
         """Hive API initialisation."""
-        self.urls = {
-            "properties": "https://sso.hivehome.com/",
-            "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
-            "refresh": "https://beekeeper.hivehome.com/1.0/cognito/refresh-token",
-            "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
-            "base": "https://beekeeper-uk.hivehome.com/1.0",
-            "weather": "https://weather.prod.bgchprod.info/weather",
-            "holiday_mode": "/holiday-mode",
-            "all": "/nodes/all?products=true&devices=true&actions=true",
-            "devices": "/devices",
-            "products": "/products",
-            "actions": "/actions",
-            "nodes": "/nodes/{0}/{1}",
-        }
-        self.headers = {
-            "content-type": "application/json",
-            "Accept": "*/*",
-            "authorization": "None",
-        }
-        self.timeout = 10
-        self.json_return = {
-            "original": "No response to Hive API request",
-            "parsed": "No response to Hive API request",
-        }
-
-    def refreshTokens(self, tokens):
-        """Get new session tokens"""
-        url = self.urls["refresh"]
-        jsc = (
-            "{"
-            + ",".join(
-                (
-                    '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in tokens.items()
-                )
-            )
-            + "}"
-        )
-        try:
-            response = requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
+        self.session = ClientSession()
+        self.loop = asyncio.get_event_loop()
+        self.asyncAPI = HiveAsync(self.session)
 
     def getLoginInfo(self):
         """Get login properties to make the login request."""
-        url = self.urls["properties"]
-        try:
-            data = requests.get(url=url, verify=False, timeout=self.timeout)
-            html = PyQuery(data.content)
-            json_data = json.loads(
-                '{"'
-                + (html("script:first").text())
-                .replace(",", ', "')
-                .replace("=", '":')
-                .replace("window.", "")
-                + "}"
-            )
+        result = self.asyncAPI.getLoginInfo()
+        return result
 
-            loginData = {}
-            loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-            loginData.update(
-                {"CLIID": json_data["HiveSSOPublicCognitoClientId"]}
-            )
-            loginData.update({"REGION": json_data["HiveSSOPoolId"]})
-            return loginData
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+    def refreshTokens(self):
+        """Get new session tokens."""
+        result = self.loop.run_until_complete(self.asyncAPI.refreshTokens())
+        return result
 
-    def getAllData(self, session_id):
+    def getAllData(self):
         """Build and query all endpoint."""
-        self.headers.update({"authorization": session_id})
-        url = self.urls["base"] + self.urls["all"]
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+        result = self.loop.run_until_complete(self.asyncAPI.getAll())
+        return result
 
-        return self.json_return
-
-    def getDevices(self, session_id):
+    def getDevices(self):
         """Call the get devices endpoint."""
-        self.headers.update({"authorization": session_id})
-        url = self.urls["base"] + self.urls["devices"]
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+        result = self.loop.run_until_complete(self.asyncAPI.getDevices())
+        return result
 
-        return self.json_return
-
-    def get_products(self, session_id):
+    def getProducts(self):
         """Call the get products endpoint."""
-        self.headers.update({"authorization": session_id})
-        url = self.urls["base"] + self.urls["products"]
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+        result = self.loop.run_until_complete(self.asyncAPI.getProducts())
+        return result
 
-        return self.json_return
-
-    def get_actions(self, session_id):
+    def getActions(self):
         """Call the get actions endpoint."""
-        self.headers.update({"authorization": session_id})
-        url = self.urls["base"] + self.urls["actions"]
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+        result = self.loop.run_until_complete(self.asyncAPI.getActions())
+        return result
 
-        return self.json_return
-
-    def motion_sensor(self, session_id, sensor, fromepoch, toepoch):
+    def motionSensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
-        self.headers.update({"authorization": session_id})
-        url = (
-            self.urls["base"]
-            + self.urls["products"]
-            + "/"
-            + sensor["type"]
-            + "/"
-            + sensor["id"]
-            + "/events?from="
-            + str(fromepoch)
-            + "&to="
-            + str(toepoch)
+        result = self.loop.run_until_complete(
+            self.asyncAPI.motionSensor(sensor, fromepoch, toepoch)
         )
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
+        return result
 
-        return self.json_return
-
-    def get_weather(self, weather_url):
+    def getWeather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
-        t_url = self.urls["weather"] + weather_url
-        url = t_url.replace(" ", "%20")
-        try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            self.error()
+        result = self.loop.run_until_complete(self.asyncAPI.getWeather(weather_url))
+        return result
 
-        return self.json_return
-
-    def set_state(self, session_id, n_type, n_id, **kwargs):
+    def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        self.headers.update({"authorization": session_id})
-        jsc = (
-            "{"
-            + ",".join(
-                (
-                    '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in kwargs.items()
-                )
-            )
-            + "}"
-        )
+        result = self.loop.run_until_complete(self.asyncAPI.setState(n_type, n_id))
+        return result
 
-        url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
-
-        try:
-            response = requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            self.error()
-
-        return self.json_return
-
-    def set_action(self, session_id, n_id, data):
+    def setAction(self, n_id, data):
         """Set the state of a Action."""
-        self.headers.update({"authorization": session_id})
-        jsc = data
-        url = self.urls["base"] + self.urls["actions"] + "/" + n_id
-        try:
-            response = requests.put(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            self.error()
-
-        return self.json_return
-
-    def error(self):
-        """An error has occurred interacting with the Hive API."""
-        self.json_return.update({"original": "Error making API call"})
-        self.json_return.update({"parsed": "Error making API call"})
+        result = self.loop.run_until_complete(self.asyncAPI.setAction(n_id, data))
+        return result

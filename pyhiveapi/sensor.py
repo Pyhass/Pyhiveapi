@@ -1,4 +1,6 @@
 """Hive Sensor Module."""
+import ast
+
 from .heating import Heating  # noqa: F401
 from .helper.hive_data import Data
 from .hotwater import Hotwater  # noqa: F401
@@ -13,9 +15,7 @@ class Sensor(Session):
 
     async def get_sensor(self, device):
         """Gets updated sensor data."""
-        await self.logger.log(
-            device["hiveID"], self.sensorType, "Getting sensor data."
-        )
+        await self.logger.log(device["hiveID"], self.sensorType, "Getting sensor data.")
         device["deviceData"].update(
             {"online": await self.attr.online_offline(device["device_id"])}
         )
@@ -56,7 +56,7 @@ class Sensor(Session):
                 )
                 dev_data.update(
                     {
-                        "status": {"state": await eval(code)},
+                        "status": {"state": await ast.literal_eval(code)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                     }

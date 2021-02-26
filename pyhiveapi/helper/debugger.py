@@ -1,21 +1,25 @@
+"""Debugger file."""
 import logging
 
 
 class DebugContext:
-    """ Debug context to trace any function calls inside the context """
+    """Debug context to trace any function calls inside the context."""
 
     def __init__(self, name, enabled):
+        """Initialise debugger."""
         self.name = name
         self.enabled = enabled
         self.logging = logging.getLogger(__name__)
 
     def __enter__(self):
+        """Set trace calls on entering debugger."""
         print("Entering Debug Decorated func")
         # Set the trace function to the trace_calls function
         # So all events are now traced
         self.trace_calls
 
     def trace_calls(self, frame, event, arg):
+        """Trace calls be made."""
         # We want to only trace our call to the decorated function
         if event != "call":
             return
@@ -26,6 +30,7 @@ class DebugContext:
         return self.trace_lines
 
     def trace_lines(self, frame, event, arg):
+        """Print out lines for function."""
         # If you want to print local variables each line
         # keep the check for the event 'line'
         # If you want to print local variables only on return
@@ -35,14 +40,13 @@ class DebugContext:
         co = frame.f_code
         func_name = co.co_name
         line_no = frame.f_lineno
-        filename = co.co_filename
         local_vars = frame.f_locals
         text = f"  {func_name} {event} {line_no} locals: {local_vars}"
         self.logging.debug(text)
 
 
 def debug_decorator(enabled=False):
-    """ Debug decorator to call the function within the debug context """
+    """Debug decorator to call the function within the debug context."""
 
     def decorated_func(func):
         def wrapper(*args, **kwargs):

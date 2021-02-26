@@ -1,3 +1,5 @@
+"""Setup pyhiveapi package."""
+
 import os
 import re
 
@@ -5,6 +7,7 @@ from setuptools import find_packages, setup
 
 
 def requirements_from_file(filename="requirements.txt"):
+    """Get requirements from file."""
     with open(os.path.join(os.path.dirname(__file__), filename)) as r:
         reqs = r.read().strip().split("\n")
     # Return non empty lines and non comments

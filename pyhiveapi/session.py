@@ -1,4 +1,4 @@
-""" Hive Session Module."""
+"""Hive Session Module."""
 import asyncio
 import copy
 import json
@@ -11,15 +11,14 @@ from aiohttp.web import HTTPException
 
 from .api.hive_async_api import HiveAsync
 from .device_attributes import Attributes
-from .helper.debugger import debug_decorator
 from .helper.hive_data import Data
-from .helper.hive_exceptions import HiveApiError
+from .helper.hive_exceptions import HiveApiError, HiveReauthRequired
 from .helper.hive_helper import HiveHelper
 from .helper.logger import Logger
 
 
 class Session:
-    """Hive Session Code"""
+    """Hive Session Code."""
 
     sessionType = "Session"
 
@@ -33,6 +32,7 @@ class Session:
         self.devices = {}
 
     async def openFile(self, file):
+        """Open a file."""
         path = os.path.dirname(os.path.realpath(__file__)) + "/helper/" + file
         with open(path) as j:
             data = json.loads(j.read())
@@ -40,7 +40,7 @@ class Session:
         return data
 
     async def add_list(self, type, data, **kwargs):
-        """Add entity to the list"""
+        """Add entity to the list."""
         add = False if kwargs.get("custom") and not Data.sensors else True
         device = self.helper.getDeviceData(data)
         device_name = (
@@ -76,7 +76,7 @@ class Session:
         return add
 
     async def updateInterval(self, new_interval):
-        "Update the scan interval."
+        """Update the scan interval."""
         interval = timedelta(seconds=new_interval)
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
@@ -85,7 +85,7 @@ class Session:
         await self.logger.log("No_ID", self.sessionType, text)
 
     async def useFile(self, username=None):
-        "Update to check if file is being used."
+        """Update to check if file is being used."""
         using_file = True if username == "use@file.com" else False
         if using_file:
             Data.file = True
@@ -145,15 +145,10 @@ class Session:
                 await self.logger.log(n_id, "API", "Using file")
                 api_resp_d = await self.openFile("data.json")
             elif Data.tokens is not None:
-                await self.logger.log(
-                    n_id, "Session", "Getting hive device info"
-                )
+                await self.logger.log(n_id, "Session", "Getting hive device info")
                 await self.hiveRefreshTokens()
                 api_resp_d = await self.api.getAll()
-                if (
-                    operator.contains(str(api_resp_d["original"]), "20")
-                    is False
-                ):
+                if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
                     raise HiveApiError
@@ -184,9 +179,7 @@ class Session:
             Data.lastUpdate = datetime.now()
             get_nodes_successful = True
         except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
-            await self.logger.log(
-                "No_ID", "API", "Api didn't receive any data"
-            )
+            await self.logger.log("No_ID", "API", "Api didn't receive any data")
             get_nodes_successful = False
 
         return get_nodes_successful
@@ -195,23 +188,15 @@ class Session:
         """Setup the Hive platform."""
         Data.sensors = config.get("add_sensors", False)
         await self.logger.checkDebugging(config["options"].get("debug", []))
-        await self.logger.log(
-            "No_ID", self.sessionType, "Initialising Hive Component."
-        )
+        await self.logger.log("No_ID", self.sessionType, "Initialising Hive Component.")
         await self.updateInterval(config["options"]["scan_interval"])
         await self.useFile(config.get("username", False))
 
         if config["tokens"] is not None and not Data.file:
-            await self.logger.log(
-                "No_ID", self.sessionType, "Logging into Hive."
-            )
+            await self.logger.log("No_ID", self.sessionType, "Logging into Hive.")
             Data.tokens.update({"token": config["tokens"]["IdToken"]})
-            Data.tokens.update(
-                {"refreshToken": config["tokens"]["RefreshToken"]}
-            )
-            Data.tokens.update(
-                {"accessToken": config["tokens"]["AccessToken"]}
-            )
+            Data.tokens.update({"refreshToken": config["tokens"]["RefreshToken"]})
+            Data.tokens.update({"accessToken": config["tokens"]["AccessToken"]})
         elif Data.file:
             await self.logger.log(
                 "No_ID",
@@ -227,14 +212,10 @@ class Session:
             return HTTPException
 
         if Data.devices == {} or Data.products == {}:
-            await self.logger.log(
-                "No_ID", self.sessionType, "Failed to get data"
-            )
-            return "INVALID_REAUTH"
+            await self.logger.log("No_ID", self.sessionType, "Failed to get data")
+            raise HiveReauthRequired
 
-        await self.logger.log(
-            "No_ID", self.sessionType, "Creating list of devices"
-        )
+        await self.logger.log("No_ID", self.sessionType, "Creating list of devices")
         self.devices["binary_sensor"] = []
         self.devices["climate"] = []
         self.devices["light"] = []
@@ -422,12 +403,10 @@ class Session:
 
     @staticmethod
     async def epochtime(date_time, pattern, action):
-        """ date/time conversion to epoch."""
+        """date/time conversion to epoch."""
         if action == "to_epoch":
             pattern = "%d.%m.%Y %H:%M:%S"
-            epochtime = int(
-                time.mktime(time.strptime(str(date_time), pattern))
-            )
+            epochtime = int(time.mktime(time.strptime(str(date_time), pattern)))
             return epochtime
         elif action == "from_epoch":
             date = datetime.fromtimestamp(int(date_time)).strftime(pattern)
