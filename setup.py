@@ -26,9 +26,12 @@ setup(
         "build_py": unasync.cmdclass_build_py(
             rules=[
                 unasync.Rule(
-                    "/ahive/",
-                    "/hive/",
-                    additional_replacements={"HiveAsync": "Hive"},
+                    "/apyhiveapi/",
+                    "/pyhiveapi/",
+                    additional_replacements={
+                        "HiveAsync": "Hive",
+                        "HiveApiAsync": "HiveApi",
+                    },
                 )
             ]
         )

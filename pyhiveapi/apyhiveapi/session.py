@@ -9,8 +9,13 @@ from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
 
-from .api.hive_async_api import HiveApiAsync
-from .api.hive_auth_async import HiveAuthAsync
+if __name__ == "pyhiveapi.session":
+    from .api.hive_api import HiveApi  # noqa: F401
+    from .api.hive_auth import HiveAuth  # noqa: F401
+else:
+    from .api.hive_async_api import HiveApiAsync
+    from .api.hive_auth_async import HiveAuthAsync
+
 from .device_attributes import Attributes
 from .helper.const import HIVE_TYPES
 from .helper.hive_exceptions import (HiveApiError, HiveReauthRequired,
