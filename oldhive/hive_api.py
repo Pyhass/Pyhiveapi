@@ -3,7 +3,7 @@ import asyncio
 
 from aiohttp import ClientSession
 
-from pyhiveapi.api.hive_async_api import HiveAsync
+from ..ahive.api.hive_async_api import HiveApiAsync
 
 
 class HiveApi:
@@ -13,7 +13,7 @@ class HiveApi:
         """Hive API initialisation."""
         self.session = ClientSession()
         self.loop = asyncio.get_event_loop()
-        self.asyncAPI = HiveAsync(self.session)
+        self.asyncAPI = HiveApiAsync(self.session)
 
     def getLoginInfo(self):
         """Get login properties to make the login request."""

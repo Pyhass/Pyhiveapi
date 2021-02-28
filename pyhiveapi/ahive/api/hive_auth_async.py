@@ -14,7 +14,7 @@ import re
 import boto3
 import botocore
 
-from .hive_api import HiveApi
+from ...hive.hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 n_hex = (

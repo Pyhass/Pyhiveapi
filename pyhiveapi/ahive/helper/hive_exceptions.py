@@ -15,3 +15,7 @@ class HiveApiError(Exception):
 
 class HiveReauthRequired(Exception):
     """Re-Authentication is required."""
+
+
+class HiveUnknownConfiguration(Exception):
+    """Unknown Hive Configuration."""

@@ -3,7 +3,12 @@
 import os
 import re
 
-from setuptools import find_packages, setup
+import unasync
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 
 def requirements_from_file(filename="requirements.txt"):
@@ -15,30 +20,19 @@ def requirements_from_file(filename="requirements.txt"):
 
 
 setup(
-    name="pyhiveapi",
-    version="0.3.5",
-    description="A Python library to interface with the Hive API",
-    long_description="A Python library to interface with the Hive API",
-    url="https://github.com/Pyhive/pyhiveapi",
+    version="0.3.6",
     package_data={"pyhiveapi.pyhiveapi": ["*.json"]},
-    include_package_data=True,
-    author="Rendili",
-    author_email="rendili@outlook.com",
-    license="MIT",
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        # "Topic:: Software Development:: Libraries:: Python Modules",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-    ],
-    python_requires=">=3.6.*",
-    keywords="Hive API Library",
-    packages=find_packages(exclude=["contrib", "docs", "tests"]),
-    entry_points={"console_scripts": ["hive=pyhiveapi.hive:Hive"]},
+    cmdclass={
+        "build_py": unasync.cmdclass_build_py(
+            rules=[
+                unasync.Rule(
+                    "/ahive/",
+                    "/hive/",
+                    additional_replacements={"HiveAsync": "Hive"},
+                )
+            ]
+        )
+    },
     install_requires=requirements_from_file(),
     extras_require={"dev": requirements_from_file("requirements_test.txt")},
 )

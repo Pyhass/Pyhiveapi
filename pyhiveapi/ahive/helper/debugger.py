@@ -10,6 +10,10 @@ class DebugContext:
         self.name = name
         self.enabled = enabled
         self.logging = logging.getLogger(__name__)
+        self.debugOutFolder = ""
+        self.debugOutFile = ""
+        self.debugEnabled = False
+        self.debugList = []
 
     def __enter__(self):
         """Set trace calls on entering debugger."""

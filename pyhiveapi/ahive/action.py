@@ -1,19 +1,20 @@
 """Hive Action Module."""
-from .helper.hive_data import Data
-from .session import Session
 
 
-class Action(Session):
+class Action:
     """Hive Action Code."""
 
     actionType = "Actions"
 
+    def __init__(self, session=None):
+        """Initialise Action."""
+        self.session = session
+
     async def get_action(self, device):
         """Get smart plug current power usage."""
-        await self.logger.log(device["hiveID"], self.actionType, "Getting action data.")
         dev_data = {}
 
-        if device["hiveID"] in Data.actions:
+        if device["hiveID"] in self.data["action"]:
             dev_data = {
                 "hiveID": device["hiveID"],
                 "hiveName": device["hiveName"],
@@ -26,16 +27,10 @@ class Action(Session):
                 "custom": device.get("custom", None),
             }
 
-            await self.logger.log(
-                device["hiveID"],
-                self.actionType,
-                "action update {0}",
-                info=[dev_data["status"]],
-            )
-            Data.ha_devices.update({device["hiveID"]: dev_data})
-            return Data.ha_devices[device["hiveID"]]
+            self.session.ha_devices.update({device["hiveID"]: dev_data})
+            return self.session.ha_devices[device["hiveID"]]
         else:
-            exists = Data.actions.get("hiveID", False)
+            exists = self.session.data.actions.get("hiveID", False)
             if exists is False:
                 return "REMOVE"
             return device
@@ -45,10 +40,10 @@ class Action(Session):
         final = None
 
         try:
-            data = Data.actions[device["hiveID"]]
+            data = self.session.data.actions[device["hiveID"]]
             final = data["enabled"]
         except KeyError as e:
-            await self.logger.error(e)
+            await self.session.log.error(e)
 
         return final
 
@@ -58,12 +53,12 @@ class Action(Session):
 
         final = False
 
-        if device["hiveID"] in Data.actions:
+        if device["hiveID"] in self.session.data.actions:
             await self.hiveRefreshTokens()
-            data = Data.actions[device["hiveID"]]
+            data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": True})
             send = json.dumps(data)
-            resp = await self.api.setAction(device["hiveID"], send)
+            resp = await self.session.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])
@@ -76,12 +71,12 @@ class Action(Session):
 
         final = False
 
-        if device["hiveID"] in Data.actions:
+        if device["hiveID"] in self.session.data.actions:
             await self.hiveRefreshTokens()
-            data = Data.actions[device["hiveID"]]
+            data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": False})
             send = json.dumps(data)
-            resp = await self.api.setAction(device["hiveID"], send)
+            resp = await self.session.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
                 await self.getDevices(device["hiveID"])

@@ -2,24 +2,25 @@
 import datetime
 import operator
 
-from .hive_data import Data
+from .const import HIVE_TYPES
 
 
 class HiveHelper:
     """Hive helper class."""
 
-    def __init__(self):
+    def __init__(self, session=None):
         """Hive Helper."""
+        self.session = session
 
-    def getDeviceName(n_id):
+    def getDeviceName(self, n_id):
         """Resolve a id into a name."""
         try:
-            product_name = Data.products[n_id]["state"]["name"]
+            product_name = self.session.data.products[n_id]["state"]["name"]
         except KeyError:
             product_name = False
 
         try:
-            device_name = Data.devices[n_id]["state"]["name"]
+            device_name = self.session.data.devices[n_id]["state"]["name"]
         except KeyError:
             device_name = False
 
@@ -35,14 +36,14 @@ class HiveHelper:
     def deviceRecovered(self, n_id):
         """Register that a device has recovered from being offline."""
         # name = HiveHelper.getDeviceName(n_id)
-        if n_id in Data.errorList:
-            Data.errorList.pop(n_id)
+        if n_id in self.errorList:
+            self.errorList.pop(n_id)
 
     def getDeviceFromID(self, n_id):
         """Get product/device data from ID."""
         data = False
         try:
-            data = Data.ha_devices[n_id]
+            data = self.session.ha_devices[n_id]
         except KeyError:
             pass
 
@@ -53,24 +54,24 @@ class HiveHelper:
         device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
-            for aDevice in Data.devices:
-                if Data.devices[aDevice]["type"] in Data.HIVE_TYPES["Thermo"]:
+            for aDevice in self.session.data.devices:
+                if self.session.data.devices[aDevice]["type"] in HIVE_TYPES["Thermo"]:
                     try:
                         if (
                             product["props"]["zone"]
-                            == Data.devices[aDevice]["props"]["zone"]
+                            == self.session.data.devices[aDevice]["props"]["zone"]
                         ):
-                            device = Data.devices[aDevice]
+                            device = self.session.data.devices[aDevice]
                     except KeyError:
                         pass
         elif type == "trvcontrol":
-            device = Data.devices[product["props"]["trvs"][0]]
+            device = self.session.data.devices[product["props"]["trvs"][0]]
         elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
-            device = Data.devices[product["parent"]]
+            device = self.session.data.devices[product["parent"]]
         elif type == "sense":
-            device = Data.devices[product["parent"]]
+            device = self.session.data.devices[product["parent"]]
         else:
-            device = Data.devices[product["id"]]
+            device = self.session.data.devices[product["id"]]
 
         return device
 

@@ -15,3 +15,4 @@ pyhiveapi.egg-info
 # due to using tox and pytest
 .tox
 .cache
+test.py

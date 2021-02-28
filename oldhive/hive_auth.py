@@ -2,7 +2,7 @@
 
 import asyncio
 
-from pyhiveapi.api.hive_auth_async import HiveAuthAsync
+from ..ahive.api.hive_auth_async import HiveAuthAsync
 
 
 class HiveAuth:

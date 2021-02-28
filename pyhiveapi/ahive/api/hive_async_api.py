@@ -10,21 +10,19 @@ import urllib3
 from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
-from pyhiveapi.helper.const import HTTP_UNAUTHORIZED
-
-from ..helper.hive_data import Data
+from ..helper.const import HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, NoApiToken
 from ..helper.logger import Logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class HiveAsync:
+class HiveApiAsync:
     """Hive API Code."""
 
-    def __init__(self, websession: Optional[ClientSession] = None):
+    def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
-        self.logger = Logger()
+        self.session.log = Logger()
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
@@ -48,13 +46,13 @@ class HiveAsync:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        websession = Data.haWebsession if websession is None else websession
+        self.session = hiveSession
         self.websession = ClientSession() if websession is None else websession
 
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
         data = kwargs.get("data", None)
-        await self.logger.log(
+        await self.session.log.log(
             "No_ID",
             "API",
             "Request is - {0}:{1}  Body is {2}",
@@ -62,12 +60,12 @@ class HiveAsync:
         )
 
         try:
-            self.headers.update({"authorization": Data.tokens["token"]})
+            self.headers.update({"authorization": self.session.tokens.token})
         except KeyError:
             if "sso" in url:
                 pass
             else:
-                self.logger.log("No_ID", "API", "ERROR - NO API TOKEN")
+                self.session.log.log("No_ID", "API", "ERROR - NO API TOKEN")
                 raise NoApiToken
 
         async with self.websession.request(
@@ -78,16 +76,16 @@ class HiveAsync:
             self.json_return.update({"parsed": await resp.json(content_type=None)})
 
         if operator.contains(str(resp.status), "20"):
-            await self.logger.log(
+            await self.session.log.log(
                 "API", "API", "Response is - {0}", info=[str(resp.status)]
             )
         elif resp.status == HTTP_UNAUTHORIZED:
-            await self.logger.LOGGER.error(
+            await self.session.log.LOGGER.error(
                 f"Hive token as expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
         elif url is not None and resp.status is not None:
-            await self.logger.LOGGER.error(
+            await self.session.log.LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
@@ -121,7 +119,7 @@ class HiveAsync:
             + ",".join(
                 (
                     '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in Data.tokens.items()
+                    for i, t in self.session.tokens.token.items()
                 )
             )
             + "}"
@@ -132,13 +130,17 @@ class HiveAsync:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    Data.tokens.update({"token": info["token"]})
-                    Data.tokens.update({"refreshToken": info["refreshToken"]})
-                    Data.tokens.update({"accessToken": info["accessToken"]})
+                    self.session.tokens.token.update({"token": info["token"]})
+                    self.session.tokens.token.update(
+                        {"refreshToken": info["refreshToken"]}
+                    )
+                    self.session.tokens.token.update(
+                        {"accessToken": info["accessToken"]}
+                    )
 
                     self.urls.update({"base": info["platform"]["endpoint"]})
                     self.urls.update({"camera": info["platform"]["cameraPlatform"]})
-                    Data.tokenCreated = datetime.now()
+                    self.tokens.tokenCreated = datetime.now()
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
@@ -256,10 +258,10 @@ class HiveAsync:
 
     async def error(self):
         """An error has occurred iteracting with the Hive API."""
-        await self.logger.log("API_ERROR", "ERROR", "Error attempting API call")
+        await self.session.log.log("API_ERROR", "ERROR", "Error attempting API call")
         raise web_exceptions.HTTPError
 
     async def isFileBeingUsed(self):
         """Check if running in file mode."""
-        if Data.file:
+        if self.session.config.file:
             raise FileInUse()
