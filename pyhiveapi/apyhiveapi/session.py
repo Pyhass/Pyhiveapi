@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 from aiohttp.web import HTTPException
 
 if __name__ == "pyhiveapi.session":
-    from .api.hive_api import HiveApi  # noqa: F401
-    from .api.hive_auth import HiveAuth  # noqa: F401
+    from ..api.hive_api import HiveApi  # noqa: F401
+    from ..api.hive_auth import HiveAuth  # noqa: F401
 else:
-    from .api.hive_async_api import HiveApiAsync
-    from .api.hive_auth_async import HiveAuthAsync
+    from ..api.hive_async_api import HiveApiAsync
+    from ..api.hive_auth_async import HiveAuthAsync
 
 from .device_attributes import Attributes
 from .helper.const import HIVE_TYPES
@@ -32,13 +32,20 @@ class Session:
 
     def __init__(self, username=None, password=None, websession=None):
         """Initialise the base variable values."""
-        self.api = HiveApiAsync(websession)
+        self.auth = None
+        if __name__ == "pyhiveapi.session":
+            self.api = HiveApi()
+            if None not in (username, password):
+                self.auth = HiveAuth(username=username, password=password)
+        else:
+            self.api = HiveApiAsync(websession=websession)
+            if None not in (username, password):
+                self.auth = HiveAuthAsync(username=username, password=password)
+
         self.helper = HiveHelper()
         self.attr = Attributes(self)
         self.log = Logger()
         self.updateLock = asyncio.Lock()
-        if None not in (username, password):
-            self.auth = HiveAuthAsync(username=username, password=password)
         self.tokens = Map(
             {
                 "tokenCreated": datetime.now() - timedelta(seconds=4000),
@@ -66,7 +73,7 @@ class Session:
         self.devices = {}
         self.ha_devices = {}
 
-    async def openFile(self, file):
+    def openFile(self, file):
         """Open a file."""
         path = os.path.dirname(os.path.realpath(__file__)) + "/helper/" + file
         with open(path) as j:
@@ -74,7 +81,7 @@ class Session:
 
         return data
 
-    async def add_list(self, type, data, **kwargs):
+    def add_list(self, type, data, **kwargs):
         """Add entity to the list."""
         add = False if kwargs.get("custom") and not self.config.sensors else True
         device = self.helper.getDeviceData(data)
@@ -105,25 +112,25 @@ class Session:
                     formatted_data["haName"] = device_name
                 formatted_data.update(kwargs)
             except KeyError as e:
-                await self.logger.error(e)
+                self.logger.error(e)
 
             self.devices[type].append(formatted_data)
         return add
 
-    async def updateInterval(self, new_interval):
+    def updateInterval(self, new_interval):
         """Update the scan interval."""
         interval = timedelta(seconds=new_interval)
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
         self.update.intervalSeconds = interval
 
-    async def useFile(self, username=None):
+    def useFile(self, username=None):
         """Update to check if file is being used."""
         using_file = True if username == "use@file.com" else False
         if using_file:
             self.config.file = True
 
-    async def updateTokens(self, tokens):
+    def updateTokens(self, tokens):
         """Update session tokens."""
         if "AccessToken" in tokens:
             self.tokens.update(
@@ -136,19 +143,22 @@ class Session:
 
         return self.tokens
 
-    async def login(self):
+    def login(self):
         """Login to hive account."""
-        result = await self.auth.login()
+        if not self.auth:
+            raise HiveUnknownConfiguration
+
+        result = self.auth.login()
         self.updateTokens(result)
         return result
 
-    async def sms_2fa(self, code, session):
+    def sms_2fa(self, code, session):
         """Complete 2FA auth."""
-        result = await self.auth.sms_2fa(code, session)
+        result = self.auth.sms_2fa(code, session)
         self.updateTokens(result)
         return result
 
-    async def hiveRefreshTokens(self):
+    def hiveRefreshTokens(self):
         """Refresh Hive tokens."""
         updated = False
 
@@ -157,36 +167,36 @@ class Session:
         else:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
-                updated = await self.api.refreshTokens()
+                updated = self.api.refreshTokens()
 
         return updated
 
-    async def updateData(self, device):
+    def updateData(self, device):
         """Get latest data for Hive nodes - rate limiting."""
-        await self.updateLock.acquire()
+        self.updateLock.acquire()
         updated = False
         try:
             ep = self.update.lastUpdate + self.update.intervalSeconds
             if datetime.now() >= ep:
-                await self.getDevices(device["hiveID"])
+                self.getDevices(device["hiveID"])
                 updated = True
         finally:
             self.updateLock.release()
 
         return updated
 
-    async def getDevices(self, n_id):
+    def getDevices(self, n_id):
         """Get latest data for Hive nodes."""
         get_nodes_successful = False
         api_resp_d = None
 
         try:
-            await asyncio.sleep(1)
+            asyncio.sleep(1)
             if self.config.file:
-                api_resp_d = await self.openFile("data.json")
+                api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
-                await self.hiveRefreshTokens()
-                api_resp_d = await self.api.getAll()
+                self.hiveRefreshTokens()
+                api_resp_d = self.api.getAll()
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
@@ -222,16 +232,16 @@ class Session:
 
         return get_nodes_successful
 
-    async def startSession(self, config=None):
+    def startSession(self, config=None):
         """Setup the Hive platform."""
         self.config.sensors = config.get("add_sensors", False)
-        await self.updateInterval(config["options"]["scan_interval"])
-        await self.useFile(config.get("username", False))
+        self.updateInterval(config["options"]["scan_interval"])
+        self.useFile(config.get("username", False))
 
         if config["tokens"] is not None and not self.config["file"]:
             self.updateTokens(config["tokens"])
         elif self.config.file:
-            await self.logger.log(
+            self.logger.log(
                 "No_ID",
                 self.sessionType,
                 "Loading up a hive session with a preloaded file.",
@@ -240,16 +250,16 @@ class Session:
             raise HiveUnknownConfiguration
 
         try:
-            await self.getDevices("No_ID")
+            self.getDevices("No_ID")
         except HTTPException:
             return HTTPException
 
         if self.data.devices == {} or self.data.products == {}:
             raise HiveReauthRequired
 
-        return await self.createDevices()
+        return self.createDevices()
 
-    async def createDevices(self):
+    def createDevices(self):
         """Create list of devices."""
         self.devices["binary_sensor"] = []
         self.devices["climate"] = []
@@ -264,19 +274,19 @@ class Session:
                 continue
 
             if self.data.products[aProduct]["type"] == "sense":
-                await self.add_list(
+                self.add_list(
                     "binary_sensor",
                     p,
                     haName="Glass Detection",
                     hiveType="GLASS_BREAK",
                 )
-                await self.add_list(
+                self.add_list(
                     "binary_sensor",
                     p,
                     haName="Smoke Detection",
                     hiveType="SMOKE_CO",
                 )
-                await self.add_list(
+                self.add_list(
                     "binary_sensor",
                     p,
                     haName="Dog Bark Detection",
@@ -286,40 +296,40 @@ class Session:
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Heating"]:
 
                 self.config["MODE"].append(p["id"])
-                await self.add_list(
+                self.add_list(
                     "climate",
                     p,
                     temperatureunit=self.data["user"]["temperatureUnit"],
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Current Temperature",
                     hiveType="CurrentTemperature",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Target Temperature",
                     hiveType="TargetTemperature",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" State",
                     hiveType="Heating_State",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Mode",
                     hiveType="Heating_Mode",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Boost",
@@ -328,22 +338,22 @@ class Session:
                 )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Hotwater"]:
-                await self.add_list("water_heater", p)
-                await self.add_list(
+                self.add_list("water_heater", p)
+                self.add_list(
                     "sensor",
                     p,
                     haName="Hotwater State",
                     hiveType="Hotwater_State",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName="Hotwater Mode",
                     hiveType="Hotwater_Mode",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName="Hotwater Boost",
@@ -353,15 +363,15 @@ class Session:
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Switch"]:
                 self.config["MODE"].append(p["id"])
-                await self.add_list("switch", p)
-                await self.add_list(
+                self.add_list("switch", p)
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Mode",
                     hiveType="Mode",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Availability",
@@ -371,15 +381,15 @@ class Session:
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Light"]:
                 self.config["MODE"].append(p["id"])
-                await self.add_list("light", p)
-                await self.add_list(
+                self.add_list("light", p)
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Mode",
                     hiveType="Mode",
                     custom=True,
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     p,
                     haName=" Availability",
@@ -388,7 +398,7 @@ class Session:
                 )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Sensor"]:
-                await self.add_list("binary_sensor", p)
+                self.add_list("binary_sensor", p)
 
         for aDevice in self.data["devices"]:
             d = self.data["devices"][aDevice]
@@ -397,13 +407,13 @@ class Session:
                 or self.data["devices"][aDevice]["type"] in HIVE_TYPES["Sensor"]
             ):
                 self.config["BATTERY"].append(d["id"])
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     d,
                     haName=" Battery Level",
                     hiveType="Battery",
                 )
-                await self.add_list(
+                self.add_list(
                     "sensor",
                     d,
                     haName=" Availability",
@@ -412,7 +422,7 @@ class Session:
                 )
 
             if self.data["devices"][aDevice]["type"] in HIVE_TYPES["Hub"]:
-                await self.add_list(
+                self.add_list(
                     "binary_sensor",
                     d,
                     haName="Hive Hub Status",
@@ -422,7 +432,7 @@ class Session:
         if "action" in HIVE_TYPES["Switch"]:
             for action in self.data["actions"]:
                 a = self.data["actions"][action]
-                await self.add_list(
+                self.add_list(
                     "switch",
                     a,
                     hiveName=a["name"],
@@ -430,14 +440,12 @@ class Session:
                     hiveType="action",
                 )
 
-        await self.logger.log(
-            "No_ID", self.sessionType, "Hive component has initialised"
-        )
+        self.logger.log("No_ID", self.sessionType, "Hive component has initialised")
 
         return self.devices
 
     @staticmethod
-    async def epochtime(date_time, pattern, action):
+    def epochtime(date_time, pattern, action):
         """date/time conversion to epoch."""
         if action == "to_epoch":
             pattern = "%d.%m.%Y %H:%M:%S"

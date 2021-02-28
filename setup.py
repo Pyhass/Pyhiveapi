@@ -20,7 +20,7 @@ def requirements_from_file(filename="requirements.txt"):
 
 
 setup(
-    version="0.3.6",
+    version="0.3.5",
     package_data={"pyhiveapi.pyhiveapi": ["*.json"]},
     cmdclass={
         "build_py": unasync.cmdclass_build_py(
@@ -28,10 +28,7 @@ setup(
                 unasync.Rule(
                     "/apyhiveapi/",
                     "/pyhiveapi/",
-                    additional_replacements={
-                        "HiveAsync": "Hive",
-                        "HiveApiAsync": "HiveApi",
-                    },
+                    additional_replacements={"HiveAsync": "Hive"},
                 )
             ]
         )

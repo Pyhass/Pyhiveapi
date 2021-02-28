@@ -10,9 +10,8 @@ import urllib3
 from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
-from ..helper.const import HTTP_UNAUTHORIZED
-from ..helper.hive_exceptions import FileInUse, NoApiToken
-from ..helper.logger import Logger
+from ..const import HTTP_UNAUTHORIZED
+from ..hive_exceptions import FileInUse, NoApiToken
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -22,7 +21,6 @@ class HiveApiAsync:
 
     def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
-        self.session.log = Logger()
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
