@@ -8,18 +8,15 @@ import time
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
-
-if __name__ == "pyhiveapi.session":
-    from ..api.hive_api import HiveApi  # noqa: F401
-    from ..api.hive_auth import HiveAuth  # noqa: F401
-else:
-    from ..api.hive_async_api import HiveApiAsync
-    from ..api.hive_auth_async import HiveAuthAsync
+from apyhiveapi import API, Auth
 
 from .device_attributes import Attributes
 from .helper.const import HIVE_TYPES
-from .helper.hive_exceptions import (HiveApiError, HiveReauthRequired,
-                                     HiveUnknownConfiguration)
+from .helper.hive_exceptions import (
+    HiveApiError,
+    HiveReauthRequired,
+    HiveUnknownConfiguration,
+)
 from .helper.hive_helper import HiveHelper
 from .helper.logger import Logger
 from .helper.map import Map
@@ -33,14 +30,9 @@ class Session:
     def __init__(self, username=None, password=None, websession=None):
         """Initialise the base variable values."""
         self.auth = None
-        if __name__ == "pyhiveapi.session":
-            self.api = HiveApi()
-            if None not in (username, password):
-                self.auth = HiveAuth(username=username, password=password)
-        else:
-            self.api = HiveApiAsync(websession=websession)
-            if None not in (username, password):
-                self.auth = HiveAuthAsync(username=username, password=password)
+        self.api = API(websession=websession)
+        if None not in (username, password):
+            self.auth = Auth(username=username, password=password)
 
         self.helper = HiveHelper()
         self.attr = Attributes(self)

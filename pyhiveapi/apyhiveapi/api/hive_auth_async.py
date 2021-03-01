@@ -72,15 +72,13 @@ class HiveAuthAsync:
 
     async def async_init(self):
         """Initialise async variables."""
-        self.data = self.loop.run_in_executor(None, self.api.getLoginInfo)
-        await self.data
+        self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
         self.__pool_id = self.data._result.get("UPID")
         self.__client_id = self.data._result.get("CLIID")
         self.__region = self.data._result.get("REGION").split("_")[0]
-        self.client = self.loop.run_in_executor(
+        self.client = await self.loop.run_in_executor(
             None, boto3.client, "cognito-idp", self.__region
         )
-        await self.client
 
     def generate_random_small_a(self):
         """

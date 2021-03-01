@@ -5,4 +5,3 @@ requests
 aiohttp
 pyquery
 unasync
-syncer

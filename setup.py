@@ -1,14 +1,9 @@
 """Setup pyhiveapi package."""
-
 import os
 import re
 
 import unasync
-
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 
 def requirements_from_file(filename="requirements.txt"):
@@ -21,14 +16,17 @@ def requirements_from_file(filename="requirements.txt"):
 
 setup(
     version="0.3.5",
-    package_data={"pyhiveapi.pyhiveapi": ["*.json"]},
+    package_data={"pyhiveapi.pyhiveapi.hive": ["*.json"]},
     cmdclass={
         "build_py": unasync.cmdclass_build_py(
             rules=[
                 unasync.Rule(
                     "/apyhiveapi/",
                     "/pyhiveapi/",
-                    additional_replacements={"HiveAsync": "Hive"},
+                    additional_replacements={
+                        "HiveAsync": "Hive",
+                        "apyhiveapi": "pyhiveapi",
+                    },
                 )
             ]
         )
