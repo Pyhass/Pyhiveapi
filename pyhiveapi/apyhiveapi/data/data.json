@@ -276,127 +276,183 @@
             "monday": [
               {
                 "start": 120,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 270,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1290,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "tuesday": [
               {
                 "start": 120,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 270,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1290,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "wednesday": [
               {
                 "start": 120,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 270,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1290,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "thursday": [
               {
                 "start": 150,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 300,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1140,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "friday": [
               {
                 "start": 150,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 300,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1140,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "saturday": [
               {
                 "start": 150,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 300,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1140,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ],
             "sunday": [
               {
                 "start": 120,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 270,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               },
               {
                 "start": 720,
-                "value": { "heat": 22 }
+                "value": {
+                  "heat": 22
+                }
               },
               {
                 "start": 1290,
-                "value": { "heat": 19.5 }
+                "value": {
+                  "heat": 19.5
+                }
               }
             ]
           },
@@ -428,7 +484,9 @@
           "pmz": "OK",
           "temperature": 21,
           "working": false,
-          "trvs": ["trv-0000-0000-0000-000000000001"],
+          "trvs": [
+            "trv-0000-0000-0000-000000000001"
+          ],
           "previous": {
             "mode": "MANUAL",
             "target": 20.5
@@ -1076,7 +1134,11 @@
           "onSince": 1550266428863,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 1",
@@ -1241,7 +1303,11 @@
           "onSince": 1553134057795,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 2",
@@ -1449,7 +1515,11 @@
           "onSince": 1550266371454,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 3",
@@ -2931,7 +3001,12 @@
           },
           "deviceClass": "UNKNOWN",
           "statusChanged": 1550320252962,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE", "MOTION_SENSOR"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "MOTION_SENSOR"
+          ]
         },
         "state": {
           "name": "Motion Sensor 1"
@@ -2952,7 +3027,12 @@
           "status": "CLOSED",
           "statusChanged": 1550319940352,
           "deviceClass": "UNKNOWN",
-          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "CONTACT_SENSOR"
+          ]
         },
         "state": {
           "name": "Contact Sensor 1"
@@ -2973,7 +3053,12 @@
           "status": "CLOSED",
           "statusChanged": 1550310866196,
           "deviceClass": "UNKNOWN",
-          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "CONTACT_SENSOR"
+          ]
         },
         "state": {
           "name": "Contact Sensor 2"
@@ -2993,7 +3078,12 @@
           "manufacturer": "HiveHome.com",
           "status": "OPEN",
           "statusChanged": 1547488095058,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "CONTACT_SENSOR"
+          ]
         },
         "state": {
           "name": "Contact Sensor 3"
@@ -3017,7 +3107,10 @@
             "start": 1494063000000,
             "end": 1494167400000
           },
-          "capabilities": ["BOOST", "HOLIDAY_MODE"],
+          "capabilities": [
+            "BOOST",
+            "HOLIDAY_MODE"
+          ],
           "previous": {
             "mode": "OFF"
           },
@@ -3381,7 +3474,9 @@
           "zone": "parent-0000-0000-0000-000000000002",
           "tui": "thermostat-0000-0000-0000-000000000001",
           "modelVariant": "SLR1",
-          "capabilities": ["INFORMATION"]
+          "capabilities": [
+            "INFORMATION"
+          ]
         },
         "state": {
           "name": "Thermostat",
@@ -3440,9 +3535,15 @@
           },
           "power": "mains",
           "signal": 100,
-          "capabilities": ["INFORMATION", "RENAME", "GEOLOCATION"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "GEOLOCATION"
+          ]
         },
-        "state": { "name": "US Thermostat" },
+        "state": {
+          "name": "US Thermostat"
+        },
         "error": ""
       },
       {
@@ -3472,7 +3573,12 @@
             "end": "2019-10-16T10: 31: 35.292+0000",
             "failureReason": "FAILED"
           },
-          "capabilities": ["INFORMATION", "RENAME", "DELETE", "TRV_CALIBRATION"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE",
+            "TRV_CALIBRATION"
+          ]
         },
         "state": {
           "name": "TRV 1",
@@ -3927,7 +4033,11 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 99,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 1"
@@ -3946,7 +4056,11 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 100,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 2"
@@ -3966,7 +4080,11 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 100,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Plug 3"
@@ -4149,7 +4267,11 @@
           "power": "battery",
           "signal": 99,
           "battery": 80,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Motion Sensor 1"
@@ -4170,7 +4292,11 @@
           "power": "battery",
           "signal": 100,
           "battery": 100,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Contact Sensor 1"
@@ -4191,7 +4317,11 @@
           "power": "battery",
           "signal": 100,
           "battery": 100,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Contact Sensor 2"
@@ -4212,7 +4342,11 @@
           "power": "battery",
           "signal": 100,
           "battery": 60,
-          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
+          "capabilities": [
+            "INFORMATION",
+            "RENAME",
+            "DELETE"
+          ]
         },
         "state": {
           "name": "Contact Sensor 3"

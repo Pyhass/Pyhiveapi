@@ -1,6 +1,11 @@
+"""Auth file for logging in."""
+
+import asyncio
 import base64
 import binascii
+import concurrent.futures
 import datetime
+import functools
 import hashlib
 import hmac
 import os
@@ -8,7 +13,6 @@ import re
 
 import boto3
 import botocore
-import six
 
 from .hive_api import HiveApi
 
@@ -34,25 +38,28 @@ n_hex = (
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
 g_hex = "2"
 info_bits = bytearray("Caldera Derived Key", "utf-8")
+pool = concurrent.futures.ThreadPoolExecutor()
 
 
-class HiveAuth:
+class HiveAuthAsync:
+    """Async api to interface with hive auth."""
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
 
-    def __init__(
-        self, username, password, pool_region=None, client_secret=None
-    ):
+    def __init__(self, username, password, pool_region=None, client_secret=None):
+        """Initialise async auth."""
         if pool_region is not None:
             raise ValueError(
                 "pool_region and client should not both be specified "
                 "(region should be passed to the boto3 client instead)"
             )
 
+        self.loop = asyncio.get_event_loop()
         self.username = username
         self.password = password
+        self.api = HiveApi()
         self.user_id = "user_id"
         self.client_secret = client_secret
         self.big_n = hex_to_long(n_hex)
@@ -62,16 +69,21 @@ class HiveAuth:
         self.large_a_value = self.calculate_a()
         self.useFile = True if self.username == "use@file.com" else False
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
-        self.api = HiveApi()
-        self.data = self.api.getLoginInfo()
-        self.__pool_id = self.data.get("UPID")
-        self.__client_id = self.data.get("CLIID")
-        self.__region = self.data.get("REGION").split("_")[0]
-        self.client = boto3.client("cognito-idp", self.__region)
+
+    async def async_init(self):
+        """Initialise async variables."""
+        self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
+        self.__pool_id = self.data._result.get("UPID")
+        self.__client_id = self.data._result.get("CLIID")
+        self.__region = self.data._result.get("REGION").split("_")[0]
+        self.client = await self.loop.run_in_executor(
+            None, boto3.client, "cognito-idp", self.__region
+        )
 
     def generate_random_small_a(self):
         """
-        helper function to generate a random big integer
+        Helper function to generate a random big integer.
+
         :return {Long integer} a random value.
         """
         random_long_int = get_random(128)
@@ -79,8 +91,8 @@ class HiveAuth:
 
     def calculate_a(self):
         """
-        Calculate the client's public value A = g^a%N
-        with the generated random number a
+        Calculate the client's public value A.
+
         :param {Long integer} a Randomly generated small A.
         :return {Long integer} Computed large A.
         """
@@ -90,11 +102,11 @@ class HiveAuth:
             raise ValueError("Safety check for A failed")
         return big_a
 
-    def get_password_authentication_key(
-        self, username, password, server_b_value, salt
-    ):
+    def get_password_authentication_key(self, username, password, server_b_value, salt):
         """
-        Calculates the final hkdf based on computed S value, and computed U value and the key
+        Calculates the final hkdf based on computed S value, \
+            and computed U value and the key.
+
         :param {String} username Username.
         :param {String} password Password.
         :param {Long integer} server_b_value Server B value.
@@ -115,24 +127,25 @@ class HiveAuth:
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
         g_mod_pow_xn = pow(self.g, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
-        s_value = pow(
-            int_value2, self.small_a_value + u_value * x_value, self.big_n
-        )
+        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
             bytearray.fromhex(pad_hex(s_value)),
             bytearray.fromhex(pad_hex(long_to_hex(u_value))),
         )
         return hkdf
 
-    def get_auth_params(self):
+    async def get_auth_params(self):
+        """Get auth params."""
         auth_params = {
             "USERNAME": self.username,
-            "SRP_A": long_to_hex(self.large_a_value),
+            "SRP_A": await self.loop.run_in_executor(
+                None, long_to_hex, self.large_a_value
+            ),
         }
         if self.client_secret is not None:
             auth_params.update(
                 {
-                    "SECRET_HASH": self.get_secret_hash(
+                    "SECRET_HASH": await self.get_secret_hash(
                         self.username, self.__client_id, self.client_secret
                     )
                 }
@@ -140,14 +153,14 @@ class HiveAuth:
         return auth_params
 
     @staticmethod
-    def get_secret_hash(username, client_id, client_secret):
+    async def get_secret_hash(username, client_id, client_secret):
+        """Get secret hash."""
         message = bytearray(username + client_id, "utf-8")
-        hmac_obj = hmac.new(
-            bytearray(client_secret, "utf-8"), message, hashlib.sha256
-        )
+        hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
-    def process_challenge(self, challenge_parameters):
+    async def process_challenge(self, challenge_parameters):
+        """Process auth challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
         salt_hex = challenge_parameters["SALT"]
         srp_b_hex = challenge_parameters["SRP_B"]
@@ -158,8 +171,13 @@ class HiveAuth:
             r" \1 ",
             datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
         )
-        hkdf = self.get_password_authentication_key(
-            self.user_id, self.password, srp_b_hex, salt_hex
+        hkdf = await self.loop.run_in_executor(
+            None,
+            self.get_password_authentication_key,
+            self.user_id,
+            self.password,
+            srp_b_hex,
+            salt_hex,
         )
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = (
@@ -179,7 +197,7 @@ class HiveAuth:
         if self.client_secret is not None:
             response.update(
                 {
-                    "SECRET_HASH": self.get_secret_hash(
+                    "SECRET_HASH": await self.get_secret_hash(
                         self.username, self.__client_id, self.client_secret
                     )
                 }
@@ -187,19 +205,25 @@ class HiveAuth:
 
         return response
 
-    def login(self):
+    async def login(self):
         """Login into a Hive account."""
         if self.useFile:
             return self.file_response
 
-        auth_params = self.get_auth_params()
+        await self.async_init()
+        boto_client = await self.client
+        auth_params = await self.get_auth_params()
         response = None
         result = None
         try:
-            response = self.client.initiate_auth(
-                AuthFlow="USER_SRP_AUTH",
-                AuthParameters=auth_params,
-                ClientId=self.__client_id,
+            response = await self.loop.run_in_executor(
+                None,
+                functools.partial(
+                    boto_client.initiate_auth,
+                    AuthFlow="USER_SRP_AUTH",
+                    AuthParameters=auth_params,
+                    ClientId=self.__client_id,
+                ),
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
@@ -209,14 +233,18 @@ class HiveAuth:
                 return "CONNECTION_ERROR"
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
-            challenge_response = self.process_challenge(
+            challenge_response = await self.process_challenge(
                 response["ChallengeParameters"]
             )
             try:
-                result = self.client.respond_to_auth_challenge(
-                    ClientId=self.__client_id,
-                    ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
-                    ChallengeResponses=challenge_response,
+                result = await self.loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        boto_client.respond_to_auth_challenge,
+                        ClientId=self.__client_id,
+                        ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
+                        ChallengeResponses=challenge_response,
+                    ),
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
@@ -231,19 +259,25 @@ class HiveAuth:
                 "The %s challenge is not supported" % response["ChallengeName"]
             )
 
-    def sms_2fa(self, entered_code, challenge_parameters):
+    async def sms_2fa(self, entered_code, challenge_parameters):
+        """Send sms code for auth."""
+        boto_client = await self.client
         session = challenge_parameters.get("Session")
         code = str(entered_code)
         result = None
         try:
-            result = self.client.respond_to_auth_challenge(
-                ClientId=self.__client_id,
-                ChallengeName=self.SMS_MFA_CHALLENGE,
-                Session=session,
-                ChallengeResponses={
-                    "SMS_MFA_CODE": code,
-                    "USERNAME": self.user_id,
-                },
+            result = await self.loop.run_in_executor(
+                None,
+                functools.partial(
+                    boto_client.respond_to_auth_challenge,
+                    ClientId=self.__client_id,
+                    ChallengeName=self.SMS_MFA_CHALLENGE,
+                    Session=session,
+                    ChallengeResponses={
+                        "SMS_MFA_CODE": code,
+                        "USERNAME": self.user_id,
+                    },
+                ),
             )
         except botocore.exceptions.ClientError as err:
             if (
@@ -257,39 +291,33 @@ class HiveAuth:
 
         return result
 
-    def getDeviceList(self, token):
-        """Get list of devices."""
-        try:
-            result = self.client.list_devices(AccessToken=token)
-
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
-        return result
-
 
 def hex_to_long(hex_string):
+    """Convert hex to long number."""
     return int(hex_string, 16)
 
 
 def get_random(nbytes):
+    """Generate a random hex number."""
     random_hex = binascii.hexlify(os.urandom(nbytes))
     return hex_to_long(random_hex)
 
 
 def hash_sha256(buf):
-    """AuthenticationHelper.hash"""
+    """Authentication helper."""
     a = hashlib.sha256(buf).hexdigest()
     return (64 - len(a)) * "0" + a
 
 
 def hex_hash(hex_string):
+    """Convert hex value to hash."""
     return hash_sha256(bytearray.fromhex(hex_string))
 
 
 def calculate_u(big_a, big_b):
     """
-    Calculate the client's value U which is the hash of A and B
+    Calculate the client's value U which is the hash of A and B.
+
     :param {Long integer} big_a Large A value.
     :param {Long integer} big_b Server B value.
     :return {Long integer} Computed U value.
@@ -299,15 +327,12 @@ def calculate_u(big_a, big_b):
 
 
 def long_to_hex(long_num):
+    """Convert long number to hex."""
     return "%x" % long_num
 
 
 def pad_hex(long_int):
-    """
-    Converts a Long integer (or hex string) to hex format padded with zeroes for hashing
-    :param {Long integer|String} long_int Number or string to pad.
-    :return {String} Padded hex string.
-    """
+    """Convert integer to hex format."""
     if not isinstance(long_int, str):
         hash_str = long_to_hex(long_int)
     else:
@@ -320,13 +345,7 @@ def pad_hex(long_int):
 
 
 def compute_hkdf(ikm, salt):
-    """
-    Standard hkdf algorithm
-    :param {Buffer} ikm Input key material.
-    :param {Buffer} salt Salt value.
-    :return {Buffer} Strong key material.
-    @private
-    """
+    """Process the hkdf algorithm."""
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
     info_bits_update = info_bits + bytearray(chr(1), "utf-8")
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()

@@ -1,22 +1,26 @@
+"""Helper class for pyhiveapi."""
 import datetime
 import operator
 
-from .hive_data import Data
+from .const import HIVE_TYPES
 
 
 class HiveHelper:
-    def __init__(self):
-        """Hive Helper."""
+    """Hive helper class."""
 
-    def getDeviceName(n_id):
-        """Resolve a id into a name"""
+    def __init__(self, session=None):
+        """Hive Helper."""
+        self.session = session
+
+    def getDeviceName(self, n_id):
+        """Resolve a id into a name."""
         try:
-            product_name = Data.products[n_id]["state"]["name"]
+            product_name = self.session.data.products[n_id]["state"]["name"]
         except KeyError:
             product_name = False
 
         try:
-            device_name = Data.devices[n_id]["state"]["name"]
+            device_name = self.session.data.devices[n_id]["state"]["name"]
         except KeyError:
             device_name = False
 
@@ -30,47 +34,44 @@ class HiveHelper:
             return n_id
 
     def deviceRecovered(self, n_id):
-        """"Register that a device has recovered from being offline."""
+        """Register that a device has recovered from being offline."""
         # name = HiveHelper.getDeviceName(n_id)
-        if n_id in Data.errorList:
-            Data.errorList.pop(n_id)
+        if n_id in self.session.config.errorList:
+            self.session.config.errorList.pop(n_id)
 
     def getDeviceFromID(self, n_id):
-        """Get product/device data from ID"""
+        """Get product/device data from ID."""
         data = False
         try:
-            data = Data.ha_devices[n_id]
+            data = self.session.devices[n_id]
         except KeyError:
             pass
 
         return data
 
     def getDeviceData(self, product):
-        """"Get device Data."""
+        """Get device Data."""
         device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
-            for aDevice in Data.devices:
-                if Data.devices[aDevice]["type"] in Data.HIVE_TYPES["Thermo"]:
+            for aDevice in self.session.data.devices:
+                if self.session.data.devices[aDevice]["type"] in HIVE_TYPES["Thermo"]:
                     try:
                         if (
                             product["props"]["zone"]
-                            == Data.devices[aDevice]["props"]["zone"]
+                            == self.session.data.devices[aDevice]["props"]["zone"]
                         ):
-                            device = Data.devices[aDevice]
+                            device = self.session.data.devices[aDevice]
                     except KeyError:
                         pass
         elif type == "trvcontrol":
-            device = Data.devices[product["props"]["trvs"][0]]
-        elif (
-            type == "warmwhitelight"
-            and product["props"]["model"] == "SIREN001"
-        ):
-            device = Data.devices[product["parent"]]
+            device = self.session.data.devices[product["props"]["trvs"][0]]
+        elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
+            device = self.session.data.devices[product["parent"]]
         elif type == "sense":
-            device = Data.devices[product["parent"]]
+            device = self.session.data.devices[product["parent"]]
         else:
-            device = Data.devices[product["id"]]
+            device = self.session.data.devices[product["id"]]
 
         return device
 
@@ -104,9 +105,7 @@ class HiveHelper:
         full_schedule_list = []
 
         for day_index in range(0, len(days_rolling_list)):
-            current_day_schedule = hive_api_schedule[
-                days_rolling_list[day_index]
-            ]
+            current_day_schedule = hive_api_schedule[days_rolling_list[day_index]]
             current_day_schedule_sorted = sorted(
                 current_day_schedule,
                 key=operator.itemgetter("start"),
@@ -116,22 +115,14 @@ class HiveHelper:
             for current_slot in range(0, len(current_day_schedule_sorted)):
                 current_slot_custom = current_day_schedule_sorted[current_slot]
 
-                slot_date = datetime.datetime.now() + datetime.timedelta(
-                    days=day_index
-                )
-                slot_time = self.convertMinutesToTime(
-                    current_slot_custom["start"]
-                )
-                slot_time_date_s = (
-                    slot_date.strftime("%d-%m-%Y") + " " + slot_time
-                )
+                slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
+                slot_time = self.convertMinutesToTime(current_slot_custom["start"])
+                slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
                 )
                 if slot_time_date_dt <= date_time_now:
-                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(
-                        days=7
-                    )
+                    slot_time_date_dt = slot_time_date_dt + datetime.timedelta(days=7)
 
                 current_slot_custom["Start_DateTime"] = slot_time_date_dt
                 full_schedule_list.append(current_slot_custom)

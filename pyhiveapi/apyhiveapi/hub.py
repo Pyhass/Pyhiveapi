@@ -1,13 +1,17 @@
 """Hive Hub Module."""
-from .helper.hive_data import Data
-from .session import Session
+
+from .helper.const import HIVETOHA
 
 
-class Hub(Session):
+class Hub:
     """Hive Hub Code."""
 
     hubType = "Hub"
     logType = "Sensor"
+
+    def __init__(self, session=None):
+        """Initialise hub."""
+        self.session = session
 
     async def hub_smoke(self, device):
         """Get the online status of the Hive hub."""
@@ -15,11 +19,11 @@ class Hub(Session):
         final = None
 
         try:
-            data = Data.products[device["hiveID"]]
+            data = self.session.self.session.data.products[device["hiveID"]]
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
-            final = Data.HIVETOHA[self.hubType]["Smoke"].get(state, state)
+            final = HIVETOHA[self.hubType]["Smoke"].get(state, state)
         except KeyError as e:
-            await self.logger.error(e)
+            await self.session.log.error(e)
 
         return final
 
@@ -29,11 +33,11 @@ class Hub(Session):
         final = None
 
         try:
-            data = Data.products[device["hiveID"]]
+            data = self.session.self.session.data.products[device["hiveID"]]
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
-            final = Data.HIVETOHA[self.hubType]["Dog"].get(state, state)
+            final = HIVETOHA[self.hubType]["Dog"].get(state, state)
         except KeyError as e:
-            await self.logger.error(e)
+            await self.session.log.error(e)
 
         return final
 
@@ -43,10 +47,10 @@ class Hub(Session):
         final = None
 
         try:
-            data = Data.products[device["hiveID"]]
+            data = self.session.self.session.data.products[device["hiveID"]]
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
-            final = Data.HIVETOHA[self.hubType]["Glass"].get(state, state)
+            final = HIVETOHA[self.hubType]["Glass"].get(state, state)
         except KeyError as e:
-            await self.logger.error(e)
+            await self.session.log.error(e)
 
         return final
