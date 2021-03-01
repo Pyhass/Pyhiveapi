@@ -196,7 +196,7 @@ class Light:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], status="OFF"
@@ -204,7 +204,7 @@ class Light:
 
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -216,7 +216,7 @@ class Light:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
             if brightness is not None:
@@ -231,7 +231,7 @@ class Light:
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -243,7 +243,7 @@ class Light:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"],
@@ -253,7 +253,7 @@ class Light:
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -265,7 +265,7 @@ class Light:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
             if data["type"] == "tuneablelight":
@@ -284,7 +284,7 @@ class Light:
 
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -296,7 +296,7 @@ class Light:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
             resp = await self.session.api.setState(
@@ -309,6 +309,6 @@ class Light:
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final

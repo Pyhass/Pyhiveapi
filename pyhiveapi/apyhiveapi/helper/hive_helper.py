@@ -36,8 +36,8 @@ class HiveHelper:
     def deviceRecovered(self, n_id):
         """Register that a device has recovered from being offline."""
         # name = HiveHelper.getDeviceName(n_id)
-        if n_id in self.errorList:
-            self.errorList.pop(n_id)
+        if n_id in self.session.config.errorList:
+            self.session.config.errorList.pop(n_id)
 
     def getDeviceFromID(self, n_id):
         """Get product/device data from ID."""

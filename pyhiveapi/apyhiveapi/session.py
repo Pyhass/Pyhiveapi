@@ -5,10 +5,12 @@ import json
 import operator
 import os
 import time
+import traceback
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
-from apyhiveapi import API, Auth
+
+from pyhiveapi import API, Auth
 
 from .device_attributes import Attributes
 from .helper.const import HIVE_TYPES
@@ -30,18 +32,20 @@ class Session:
     def __init__(self, username=None, password=None, websession=None):
         """Initialise the base variable values."""
         self.auth = None
-        self.api = API(websession=websession)
+        self.api = API(hiveSession=self, websession=websession)
         if None not in (username, password):
             self.auth = Auth(username=username, password=password)
 
-        self.helper = HiveHelper()
+        self.helper = HiveHelper(self)
         self.attr = Attributes(self)
-        self.log = Logger()
+        self.log = Logger(self)
         self.updateLock = asyncio.Lock()
+        self.username = username
+        self.scanInterval = 120
         self.tokens = Map(
             {
                 "tokenCreated": datetime.now() - timedelta(seconds=4000),
-                "tokenExpiry": timedelta(seconds=1800),
+                "tokenExpiry": timedelta(seconds=3600),
             }
         )
         self.update = Map(
@@ -52,8 +56,8 @@ class Session:
         )
         self.config = Map(
             {
-                "Mode": [],
-                "BATTERY": [],
+                "mode": [],
+                "battery": [],
                 "sensors": False,
                 "file": False,
                 "errorList": {},
@@ -67,7 +71,8 @@ class Session:
 
     def openFile(self, file):
         """Open a file."""
-        path = os.path.dirname(os.path.realpath(__file__)) + "/helper/" + file
+        path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
+        path = path.replace("/pyhiveapi/", "/apyhiveapi/")
         with open(path) as j:
             data = json.loads(j.read())
 
@@ -104,7 +109,7 @@ class Session:
                     formatted_data["haName"] = device_name
                 formatted_data.update(kwargs)
             except KeyError as e:
-                self.logger.error(e)
+                self.log.error(e)
 
             self.devices[type].append(formatted_data)
         return add
@@ -124,14 +129,22 @@ class Session:
 
     def updateTokens(self, tokens):
         """Update session tokens."""
-        if "AccessToken" in tokens:
-            self.tokens.update(
-                {
-                    "token": tokens["tokens"]["IdToken"],
-                    "refreshToken": tokens["tokens"]["RefreshToken"],
-                    "accessToken": tokens["tokens"]["AccessToken"],
-                }
-            )
+        data = {}
+        if "AuthenticationResult" in tokens:
+            data = tokens.get("AuthenticationResult")
+            self.tokens.token = data["IdToken"]
+            self.tokens.refreshToken = data["RefreshToken"]
+            self.tokens.accessToken = data["AccessToken"]
+            self.tokens.tokenCreated = datetime.now()
+        elif "token" in tokens:
+            data = tokens
+            self.tokens.token = data["token"]
+            self.tokens.refreshToken = data["refreshToken"]
+            self.tokens.accessToken = data["accessToken"]
+            self.tokens.tokenCreated = datetime.now()
+
+        if "ExpiresIn" in data:
+            self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
 
         return self.tokens
 
@@ -170,7 +183,7 @@ class Session:
         try:
             ep = self.update.lastUpdate + self.update.intervalSeconds
             if datetime.now() >= ep:
-                self.getDevices(device["hiveID"])
+                self.session.getDevices(device["hiveID"])
                 updated = True
         finally:
             self.updateLock.release()
@@ -183,11 +196,10 @@ class Session:
         api_resp_d = None
 
         try:
-            asyncio.sleep(1)
             if self.config.file:
                 api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
-                self.hiveRefreshTokens()
+                self.session.hiveRefreshTokens()
                 api_resp_d = self.api.getAll()
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
@@ -224,25 +236,33 @@ class Session:
 
         return get_nodes_successful
 
-    def startSession(self, config=None):
+    def startSession(self, config={}):
         """Setup the Hive platform."""
-        self.config.sensors = config.get("add_sensors", False)
-        self.updateInterval(config["options"]["scan_interval"])
-        self.useFile(config.get("username", False))
+        custom_component = False
+        for file, line, w1, w2 in traceback.extract_stack():
+            if "/custom_components/" in file:
+                custom_component = True
 
-        if config["tokens"] is not None and not self.config["file"]:
-            self.updateTokens(config["tokens"])
-        elif self.config.file:
-            self.logger.log(
-                "No_ID",
-                self.sessionType,
-                "Loading up a hive session with a preloaded file.",
-            )
-        else:
-            raise HiveUnknownConfiguration
+        self.config.sensors = custom_component
+        self.useFile(config.get("username", self.username))
+        self.updateInterval(
+            config.get("options", {}).get("scan_interval", self.scanInterval)
+        )
+
+        if config != {}:
+            if config["tokens"] is not None and not self.config.file:
+                self.updateTokens(config["tokens"])
+            elif self.config.file:
+                self.log.log(
+                    "No_ID",
+                    self.sessionType,
+                    "Loading up a hive session with a preloaded file.",
+                )
+            else:
+                raise HiveUnknownConfiguration
 
         try:
-            self.getDevices("No_ID")
+            self.session.getDevices("No_ID")
         except HTTPException:
             return HTTPException
 
@@ -287,7 +307,7 @@ class Session:
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Heating"]:
 
-                self.config["MODE"].append(p["id"])
+                self.config.mode.append(p["id"])
                 self.add_list(
                     "climate",
                     p,
@@ -354,7 +374,7 @@ class Session:
                 )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Switch"]:
-                self.config["MODE"].append(p["id"])
+                self.config.mode.append(p["id"])
                 self.add_list("switch", p)
                 self.add_list(
                     "sensor",
@@ -372,7 +392,7 @@ class Session:
                 )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Light"]:
-                self.config["MODE"].append(p["id"])
+                self.config.mode.append(p["id"])
                 self.add_list("light", p)
                 self.add_list(
                     "sensor",
@@ -398,7 +418,7 @@ class Session:
                 self.data["devices"][aDevice]["type"] in HIVE_TYPES["Thermo"]
                 or self.data["devices"][aDevice]["type"] in HIVE_TYPES["Sensor"]
             ):
-                self.config["BATTERY"].append(d["id"])
+                self.config.battery.append(d["id"])
                 self.add_list(
                     "sensor",
                     d,
@@ -432,7 +452,7 @@ class Session:
                     hiveType="action",
                 )
 
-        self.logger.log("No_ID", self.sessionType, "Hive component has initialised")
+        self.log.log("No_ID", self.sessionType, "Hive component has initialised")
 
         return self.devices
 

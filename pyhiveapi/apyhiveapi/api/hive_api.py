@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApi:
     """Hive API Code."""
 
-    def __init__(self, websession=None):
+    def __init__(self, hiveSession=None, websession=None, token=None):
         """Hive API initialisation."""
         self.urls = {
             "properties": "https://sso.hivehome.com/",
@@ -37,6 +37,24 @@ class HiveApi:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
+        self.session = hiveSession
+        self.token = token
+
+    def request(self, type, url, jsc=None):
+        """Make API request."""
+        if self.session is not None:
+            self.headers.update({"authorization": self.session.tokens.token})
+        else:
+            self.headers.update({"authorization": self.token})
+
+        if type == "GET":
+            return requests.get(
+                url=url, headers=self.headers, data=jsc, timeout=self.timeout
+            )
+        if type == "POST":
+            return requests.post(
+                url=url, headers=self.headers, data=jsc, timeout=self.timeout
+            )
 
     def refreshTokens(self, tokens):
         """Get new session tokens."""
@@ -49,11 +67,13 @@ class HiveApi:
             + "}"
         )
         try:
-            response = requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
+            info = self.request("POST", url, jsc)
+            if "token" in info and self.session:
+                self.session.updateTokens(info)
+                self.urls.update({"base": info["platform"]["endpoint"]})
+                self.urls.update({"camera": info["platform"]["cameraPlatform"]})
+            self.json_return.update({"original": info.status_code})
+            self.json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
@@ -82,15 +102,11 @@ class HiveApi:
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-    def getAllData(self, session_id):
+    def getAll(self):
         """Build and query all endpoint."""
-        self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["all"]
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -98,15 +114,11 @@ class HiveApi:
 
         return self.json_return
 
-    def getDevices(self, session_id):
+    def getDevices(self):
         """Call the get devices endpoint."""
-        self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["devices"]
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -114,15 +126,11 @@ class HiveApi:
 
         return self.json_return
 
-    def get_products(self, session_id):
+    def get_products(self):
         """Call the get products endpoint."""
-        self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["products"]
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -130,15 +138,11 @@ class HiveApi:
 
         return self.json_return
 
-    def get_actions(self, session_id):
+    def get_actions(self):
         """Call the get actions endpoint."""
-        self.headers.update({"authorization": session_id})
         url = self.urls["base"] + self.urls["actions"]
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -146,9 +150,8 @@ class HiveApi:
 
         return self.json_return
 
-    def motion_sensor(self, session_id, sensor, fromepoch, toepoch):
+    def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
-        self.headers.update({"authorization": session_id})
         url = (
             self.urls["base"]
             + self.urls["products"]
@@ -162,10 +165,7 @@ class HiveApi:
             + str(toepoch)
         )
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -178,10 +178,7 @@ class HiveApi:
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
         try:
-            jsc = None
-            response = requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("GET", url)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
@@ -189,9 +186,8 @@ class HiveApi:
 
         return self.json_return
 
-    def set_state(self, session_id, n_type, n_id, **kwargs):
+    def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        self.headers.update({"authorization": session_id})
         jsc = (
             "{"
             + ",".join(
@@ -203,9 +199,7 @@ class HiveApi:
         url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
 
         try:
-            response = requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("POST", url, jsc)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
@@ -213,15 +207,12 @@ class HiveApi:
 
         return self.json_return
 
-    def set_action(self, session_id, n_id, data):
+    def set_action(self, n_id, data):
         """Set the state of a Action."""
-        self.headers.update({"authorization": session_id})
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id
         try:
-            response = requests.put(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
-            )
+            response = self.request("POST", url, jsc)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
@@ -233,3 +224,7 @@ class HiveApi:
         """An error has occurred interacting with the Hive API."""
         self.json_return.update({"original": "Error making API call"})
         self.json_return.update({"parsed": "Error making API call"})
+
+
+class UnknownConfig(Exception):
+    """Unknown API config."""

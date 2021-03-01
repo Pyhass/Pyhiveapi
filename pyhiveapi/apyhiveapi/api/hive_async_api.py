@@ -2,7 +2,6 @@
 
 import json
 import operator
-from datetime import datetime
 from typing import Optional
 
 import requests
@@ -128,17 +127,9 @@ class HiveApiAsync:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    self.session.tokens.token.update({"token": info["token"]})
-                    self.session.tokens.token.update(
-                        {"refreshToken": info["refreshToken"]}
-                    )
-                    self.session.tokens.token.update(
-                        {"accessToken": info["accessToken"]}
-                    )
-
+                    self.session.updateTokens(info)
                     self.urls.update({"base": info["platform"]["endpoint"]})
                     self.urls.update({"camera": info["platform"]["cameraPlatform"]})
-                    self.tokens.tokenCreated = datetime.now()
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()

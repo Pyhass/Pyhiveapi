@@ -16,7 +16,8 @@ def requirements_from_file(filename="requirements.txt"):
 
 setup(
     version="0.3.5",
-    package_data={"pyhiveapi.pyhiveapi.hive": ["*.json"]},
+    package_data={"data": ["*.json"]},
+    include_package_data=True,
     cmdclass={
         "build_py": unasync.cmdclass_build_py(
             rules=[
@@ -24,7 +25,6 @@ setup(
                     "/apyhiveapi/",
                     "/pyhiveapi/",
                     additional_replacements={
-                        "HiveAsync": "Hive",
                         "apyhiveapi": "pyhiveapi",
                     },
                 )

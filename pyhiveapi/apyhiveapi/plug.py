@@ -93,14 +93,14 @@ class Plug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="ON"
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -112,13 +112,13 @@ class Plug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="OFF"
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final

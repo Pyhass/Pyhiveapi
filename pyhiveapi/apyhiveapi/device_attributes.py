@@ -18,11 +18,11 @@ class Attributes:
 
         if n_id in self.session.data.products or n_id in self.session.data.devices:
             attr.update({"available": (await self.online_offline(n_id))})
-            if n_id in self.session.config.BATTERY:
+            if n_id in self.session.config.battery:
                 battery = await self.battery(n_id)
                 if battery is not None:
                     attr.update({"battery": str(battery) + "%"})
-            if n_id in self.session.config.MODE:
+            if n_id in self.session.config.mode:
                 attr.update({"mode": (await self.get_mode(n_id))})
         return attr
 

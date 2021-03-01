@@ -54,14 +54,14 @@ class Action:
         final = False
 
         if device["hiveID"] in self.session.data.actions:
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": True})
             send = json.dumps(data)
             resp = await self.session.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -72,13 +72,13 @@ class Action:
         final = False
 
         if device["hiveID"] in self.session.data.actions:
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": False})
             send = json.dumps(data)
             resp = await self.session.api.setAction(device["hiveID"], send)
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final

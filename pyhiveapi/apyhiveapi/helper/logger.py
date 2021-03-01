@@ -3,20 +3,19 @@ import inspect
 import logging
 from datetime import datetime
 
-from .hive_helper import HiveHelper
-
 
 class Logger:
     """Custom Logging Code."""
 
     LOGGER = logging.getLogger(__name__)
 
-    def __init__(self):
+    def __init__(self, session=None):
         """Initialise the logger class."""
         self.debugOutFolder = ""
         self.debugOutFile = ""
         self.debugEnabled = False
         self.debugList = []
+        self.session = session
 
     async def checkDebugging(self, enable_debug: list):
         """Check Logging Active."""
@@ -30,7 +29,7 @@ class Logger:
 
     async def log(self, n_id, l_type, new_message, **kwargs):
         """Output new log entry if logging is turned on."""
-        name = HiveHelper.getDeviceName(n_id) + " - "
+        name = self.session.helper.getDeviceName(n_id) + " - "
         data = kwargs.get("info", [])
         if "_" in l_type:
             nxt = l_type.split("_")
@@ -80,20 +79,20 @@ class Logger:
         message = None
         new_data = None
         result = False
-        name = HiveHelper.getDeviceName(n_id)
+        name = self.session.helper.getDeviceName(n_id)
 
         if error_type is False:
             message = "Device offline could not update entity - " + name
             result = True
-            if n_id not in self.errorList:
+            if n_id not in self.session.config.errorList:
                 self.session.log.warning(message)
-                self.errorList.update({n_id: datetime.now()})
+                self.session.config.errorList.update({n_id: datetime.now()})
         elif error_type == "Failed":
             message = "ERROR - No data found for device - " + name
             result = True
-            if n_id not in self.errorList:
+            if n_id not in self.session.config.errorList:
                 self.session.log.error(message)
-                self.errorList.update({n_id: datetime.now()})
+                self.session.config.errorList.update({n_id: datetime.now()})
 
         await self.log(n_id, n_type, message, info=[new_data])
         return result

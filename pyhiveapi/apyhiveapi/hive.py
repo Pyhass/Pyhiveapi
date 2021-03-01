@@ -13,7 +13,7 @@ from .sensor import Sensor
 from .session import Session
 
 
-class HiveAsync(Session):
+class Hive(Session):
     """Hive Class."""
 
     def __init__(

@@ -145,14 +145,14 @@ class Hotwater:
         final = False
 
         if device["hiveID"] in self.session.data.products:
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode=new_mode
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -165,14 +165,14 @@ class Hotwater:
             and device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode="BOOST", boost=mins
             )
             if resp["original"] == 200:
                 final = True
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
 
         return final
 
@@ -185,14 +185,14 @@ class Hotwater:
             and await self.get_boost(device) == "ON"
             and device["deviceData"]["online"]
         ):
-            await self.hiveRefreshTokens()
+            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode=prev_mode
             )
             if resp["original"] == 200:
-                await self.getDevices(device["hiveID"])
+                await self.session.getDevices(device["hiveID"])
                 final = True
 
         return final
