@@ -49,8 +49,8 @@ class Hotwater:
                 "Device update {0}",
                 info=dev_data["status"],
             )
-            self.session.ha_devices.update({device["hiveID"]: dev_data})
-            return self.session.ha_devices[device["hiveID"]]
+            self.session.devices.update({device["hiveID"]: dev_data})
+            return self.session.devices[device["hiveID"]]
         else:
             await self.session.log.error_check(
                 device["device_id"], "ERROR", device["deviceData"]["online"]

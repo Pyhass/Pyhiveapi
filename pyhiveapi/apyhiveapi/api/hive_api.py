@@ -126,7 +126,7 @@ class HiveApi:
 
         return self.json_return
 
-    def get_products(self):
+    def getProducts(self):
         """Call the get products endpoint."""
         url = self.urls["base"] + self.urls["products"]
         try:
@@ -138,7 +138,7 @@ class HiveApi:
 
         return self.json_return
 
-    def get_actions(self):
+    def getActions(self):
         """Call the get actions endpoint."""
         url = self.urls["base"] + self.urls["actions"]
         try:
@@ -150,7 +150,7 @@ class HiveApi:
 
         return self.json_return
 
-    def motion_sensor(self, sensor, fromepoch, toepoch):
+    def motionSensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
         url = (
             self.urls["base"]
@@ -173,7 +173,7 @@ class HiveApi:
 
         return self.json_return
 
-    def get_weather(self, weather_url):
+    def getWeather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
@@ -186,7 +186,7 @@ class HiveApi:
 
         return self.json_return
 
-    def set_state(self, n_type, n_id, **kwargs):
+    def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
         jsc = (
             "{"
@@ -207,7 +207,7 @@ class HiveApi:
 
         return self.json_return
 
-    def set_action(self, n_id, data):
+    def setAction(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id

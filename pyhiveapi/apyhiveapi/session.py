@@ -67,7 +67,7 @@ class Session:
             {"products": {}, "devices": {}, "actions": {}, "user": {}, "minMax": {}}
         )
         self.devices = {}
-        self.ha_devices = {}
+        self.deviceList = {}
 
     def openFile(self, file):
         """Open a file."""
@@ -111,7 +111,7 @@ class Session:
             except KeyError as e:
                 self.log.error(e)
 
-            self.devices[type].append(formatted_data)
+            self.deviceList[type].append(formatted_data)
         return add
 
     def updateInterval(self, new_interval):
@@ -273,12 +273,12 @@ class Session:
 
     def createDevices(self):
         """Create list of devices."""
-        self.devices["binary_sensor"] = []
-        self.devices["climate"] = []
-        self.devices["light"] = []
-        self.devices["sensor"] = []
-        self.devices["switch"] = []
-        self.devices["water_heater"] = []
+        self.deviceList["binary_sensor"] = []
+        self.deviceList["climate"] = []
+        self.deviceList["light"] = []
+        self.deviceList["sensor"] = []
+        self.deviceList["switch"] = []
+        self.deviceList["water_heater"] = []
 
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
@@ -454,7 +454,7 @@ class Session:
 
         self.log.log("No_ID", self.sessionType, "Hive component has initialised")
 
-        return self.devices
+        return self.deviceList
 
     @staticmethod
     def epochtime(date_time, pattern, action):

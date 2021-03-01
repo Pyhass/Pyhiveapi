@@ -27,8 +27,8 @@ class Action:
                 "custom": device.get("custom", None),
             }
 
-            self.session.ha_devices.update({device["hiveID"]: dev_data})
-            return self.session.ha_devices[device["hiveID"]]
+            self.session.devices.update({device["hiveID"]: dev_data})
+            return self.session.devices[device["hiveID"]]
         else:
             exists = self.session.data.actions.get("hiveID", False)
             if exists is False:

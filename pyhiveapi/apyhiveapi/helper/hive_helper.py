@@ -43,7 +43,7 @@ class HiveHelper:
         """Get product/device data from ID."""
         data = False
         try:
-            data = self.session.ha_devices[n_id]
+            data = self.session.devices[n_id]
         except KeyError:
             pass
 
