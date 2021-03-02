@@ -10,7 +10,7 @@ but can be used independently (See examples below.)
 ## Examples
 Below are examples on how to use the library independently.
 
-### Login
+### Login - Using Tokens
 Below is an example how to login to Hive with 2FA if needed
 and get a session token.
 
@@ -55,7 +55,7 @@ else:
     raise Hive.NoApiToken
 ```
 
-### Get Hive Data
+### Get Hive Data - Using Tokens
 Below is an example how to data from the Hive platform 
 using the session token acquired from login.
 
