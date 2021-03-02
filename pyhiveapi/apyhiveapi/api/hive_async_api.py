@@ -79,12 +79,12 @@ class HiveApiAsync:
                 "API", "API", "Response is - {0}", info=[str(resp.status)]
             )
         elif resp.status == HTTP_UNAUTHORIZED:
-            await self.session.log.LOGGER.error(
+            self.session.log.LOGGER.error(
                 f"Hive token has expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
         elif url is not None and resp.status is not None:
-            await self.session.log.LOGGER.error(
+            self.session.log.LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
@@ -129,7 +129,7 @@ class HiveApiAsync:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    self.session.updateTokens(info)
+                    await self.session.updateTokens(info)
                     self.urls.update({"base": info["platform"]["endpoint"]})
                     self.urls.update({"camera": info["platform"]["cameraPlatform"]})
                 return True
