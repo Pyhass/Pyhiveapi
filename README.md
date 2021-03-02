@@ -27,6 +27,7 @@ if login.get("ChallengeName") == SMS_REQUIRED:
 session.startSession()
 ```
 
+
 ### Use the session object to get devices
 Below is an example of how to use the session object to get all devices of each type from `deviceList` and store in a seperate list for each device type.
 
@@ -38,6 +39,49 @@ Sensors = session.deviceList["sensor"]
 Switches = session.deviceList["switch"]
 WaterHeaters = session.deviceList["water_heater"]
 ```
+
+
+### Use the session object to interact with heating
+Below is an example of how to use the session object to interact with all the different heating actions.
+
+```Python
+if len(HeatingDevices) >= 1:
+    HeatingZone_1 = HeatingDevices[0]
+    
+    print("Heating Zone 1 :: " + str(HeatingZone_1))
+    print("Current Temperature : " + str(session.heating.current_temperature(HeatingZone_1)))
+    print("Target Temperature : " + str(session.heating.target_temperature(HeatingZone_1)))
+    print("Min / Max Temperatures : " + str(session.heating.minmax_temperatures(HeatingZone_1)))
+    print("Current Mode : " + str(session.heating.get_mode(HeatingZone_1)))
+    print("Current State : " + str(session.heating.get_state(HeatingZone_1)))
+    print("Current Operation : " + str(session.heating.current_operation(HeatingZone_1)))
+    print("Boost On/Off : " + str(session.heating.boost(HeatingZone_1)))
+    print("Bost time remaining : " + str(session.heating.get_boost_time(HeatingZone_1)))
+    print("Get Schedule now/next/later : " + str(session.heating.get_schedule_now_next_later(HeatingZone_1)))
+    print("Set Target Temp : " + str(session.heating.set_target_temperature(HeatingZone_1, 15)))
+    print("Get Operation Modes : " + str(session.heating.get_operation_modes()))
+    print("Set Operation Mode : " + str(session.heating.set_mode(HeatingZone_1, "SCHEDULE")))
+    print("Turn Boost On for 30 minutess at 15c: " + str(session.heating.turn_boost_on(HeatingZone_1, 30, 15)))
+    print("Turn off boost : " + str(session.heating.turn_boost_off(HeatingZone_1)))
+```
+
+
+### Use the session object to interact with hotwater
+Below is an example of how to use the session object to interact with all the differeht hotwater actions.
+
+```Python
+if len(WaterHeaters) >= 1:
+    WaterHeater_1 = WaterHeaters[0]
+    print("Current Mode : " + str(session.hotwater.get_mode(WaterHeater_1)))
+    print("Get Opertation Modes : " + str(session.hotwater.get_operation_modes()))
+    print("Get Boost : " + str(session.hotwater.get_boost(WaterHeater_1)))
+    print("Get Boost time remaining : " + str(session.hotwater.get_boost_time(WaterHeater_1)))
+    print("Get State : " + str(session.hotwater.get_state(WaterHeater_1)))
+    print("Get Schedule now/next/later : " + str(session.hotwater.get_schedule_now_next_later(WaterHeater_1)))
+    print("Turn Boost On for 30 minutes : " + str(session.hotwater.turn_boost_on(WaterHeater_1, 30)))
+    print("Turn Boost Off : " + str(session.hotwater.turn_boost_off(WaterHeater_1)))
+```
+
 
 ### Log in - Using Tokens
 Below is an example how to log in to Hive with 2FA if needed
