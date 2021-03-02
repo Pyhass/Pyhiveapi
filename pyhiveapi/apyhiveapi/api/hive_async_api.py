@@ -113,13 +113,12 @@ class HiveApiAsync:
     async def refreshTokens(self):
         """Refresh tokens."""
         url = self.urls["refresh"]
+        if self.session is not None:
+            tokens = self.session.tokens.tokenData
         jsc = (
             "{"
             + ",".join(
-                (
-                    '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in self.session.tokens.tokenData.items()
-                )
+                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in tokens.items())
             )
             + "}"
         )

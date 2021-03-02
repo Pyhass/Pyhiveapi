@@ -56,16 +56,15 @@ class HiveApi:
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
             )
 
-    def refreshTokens(self, tokens):
+    def refreshTokens(self, tokens={}):
         """Get new session tokens."""
         url = self.urls["refresh"]
+        if self.session is not None:
+            tokens = self.session.tokens.tokenData
         jsc = (
             "{"
             + ",".join(
-                (
-                    '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in self.session.tokens.tokenData.items()
-                )
+                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in tokens.items())
             )
             + "}"
         )
