@@ -135,7 +135,6 @@ class Session:
             self.tokens.tokenData.update({"token": data["IdToken"]})
             self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
-            self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
             self.tokens.tokenData.update({"token": data["token"]})

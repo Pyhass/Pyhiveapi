@@ -260,7 +260,6 @@ class HiveAuthAsync:
 
     async def sms_2fa(self, entered_code, challenge_parameters):
         """Send sms code for auth."""
-        boto_client = await self.client
         session = challenge_parameters.get("Session")
         code = str(entered_code)
         result = None
@@ -268,7 +267,7 @@ class HiveAuthAsync:
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    boto_client.respond_to_auth_challenge,
+                    self.client.respond_to_auth_challenge,
                     ClientId=self.__client_id,
                     ChallengeName=self.SMS_MFA_CHALLENGE,
                     Session=session,
