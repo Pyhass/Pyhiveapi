@@ -140,7 +140,6 @@ class Session:
             self.tokens.tokenData.update({"token": data["token"]})
             self.tokens.tokenData.update({"refreshToken": data["refreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["accessToken"]})
-            self.tokens.tokenCreated = datetime.now()
 
         if "ExpiresIn" in data:
             self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
@@ -172,6 +171,7 @@ class Session:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
                 updated = await self.api.refreshTokens()
+                self.tokens.tokenCreated = datetime.now()
 
         return updated
 
