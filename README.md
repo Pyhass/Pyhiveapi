@@ -10,8 +10,25 @@ but can be used independently (See examples below.)
 ## Examples
 Below are examples on how to use the library independently.
 
-### Login - Using Tokens
-Below is an example how to login to Hive with 2FA if needed
+
+### Log in - Using Hive Username and Password
+Below is an example of how to log in to Hive using your Hive Username and Hive password, using 2FA if needed, to create a pyhiveapi session object.
+
+```Python
+from pyhiveapi import Hive, SMS_REQUIRED
+
+session = Hive(username="HiveUserName", password="HivePassword")
+login = session.login()
+
+if login.get("ChallengeName") == SMS_REQUIRED:
+    code = input("Enter 2FA code: ")
+    session.sms_2fa(code, login)
+
+session.startSession()
+```
+
+### Log in - Using Tokens
+Below is an example how to log in to Hive with 2FA if needed
 and get a session token.
 
 ```Python
