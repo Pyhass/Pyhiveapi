@@ -78,7 +78,7 @@ class Session:
 
         return data
 
-    def add_list(self, type, data, **kwargs):
+    def addList(self, type, data, **kwargs):
         """Add entity to the list."""
         add = False if kwargs.get("custom") and not self.config.sensors else True
         device = self.helper.getDeviceData(data)
@@ -156,7 +156,7 @@ class Session:
         await self.updateTokens(result)
         return result
 
-    async def sms_2fa(self, code, session):
+    async def sms2FA(self, code, session):
         """Complete 2FA auth."""
         result = self.auth.sms_2fa(code, session)
         await self.updateTokens(result)
@@ -320,7 +320,7 @@ class Session:
         return self.deviceList
 
     @staticmethod
-    def epochtime(date_time, pattern, action):
+    def epochTime(date_time, pattern, action):
         """date/time conversion to epoch."""
         if action == "to_epoch":
             pattern = "%d.%m.%Y %H:%M:%S"

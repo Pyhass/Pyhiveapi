@@ -13,7 +13,7 @@ class Light:
         """Initialise light."""
         self.session = session
 
-    async def get_light(self, device):
+    async def getLight(self, device):
         """Get light data."""
         await self.session.log.log(
             device["hiveID"], self.lightType, "Getting light data."
@@ -35,8 +35,8 @@ class Light:
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.get_state(device),
-                    "brightness": await self.get_brightness(device),
+                    "state": await self.getState(device),
+                    "brightness": await self.getBrightness(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
@@ -49,26 +49,26 @@ class Light:
             if device["hiveType"] in ("tuneablelight", "colourtuneablelight"):
                 dev_data.update(
                     {
-                        "min_mireds": await self.get_min_color_temp(device),
-                        "max_mireds": await self.get_max_color_temp(device),
+                        "min_mireds": await self.getMinColorTemp(device),
+                        "max_mireds": await self.getMaxColorTemp(device),
                     }
                 )
                 dev_data["status"].update(
-                    {"color_temp": await self.get_color_temp(device)}
+                    {"color_temp": await self.getColorTemp(device)}
                 )
             if device["hiveType"] == "colourtuneablelight":
-                mode = await self.getColourMode(device)
+                mode = await self.getColorMode(device)
                 if mode == "COLOUR":
                     dev_data["status"].update(
                         {
-                            "hs_color": await self.get_color(device),
-                            "mode": await self.getColourMode(device),
+                            "hs_color": await self.getColor(device),
+                            "mode": await self.getColorMode(device),
                         }
                     )
                 else:
                     dev_data["status"].update(
                         {
-                            "mode": await self.getColourMode(device),
+                            "mode": await self.getColorMode(device),
                         }
                     )
 
@@ -86,7 +86,7 @@ class Light:
             )
             return device
 
-    async def get_state(self, device):
+    async def getState(self, device):
         """Get light current state."""
         state = None
         final = None
@@ -100,7 +100,7 @@ class Light:
 
         return final
 
-    async def get_brightness(self, device):
+    async def getBrightness(self, device):
         """Get light current brightness."""
         state = None
         final = None
@@ -114,7 +114,7 @@ class Light:
 
         return final
 
-    async def get_min_color_temp(self, device):
+    async def getMinColorTemp(self, device):
         """Get light minimum color temperature."""
         state = None
         final = None
@@ -128,7 +128,7 @@ class Light:
 
         return final
 
-    async def get_max_color_temp(self, device):
+    async def getMaxColorTemp(self, device):
         """Get light maximum color temperature."""
         state = None
         final = None
@@ -142,7 +142,7 @@ class Light:
 
         return final
 
-    async def get_color_temp(self, device):
+    async def getColorTemp(self, device):
         """Get light current color temperature."""
         state = None
         final = None
@@ -156,7 +156,7 @@ class Light:
 
         return final
 
-    async def get_color(self, device):
+    async def getColor(self, device):
         """Get light current colour."""
         state = None
         final = None
@@ -176,7 +176,7 @@ class Light:
 
         return final
 
-    async def getColourMode(self, device):
+    async def getColorMode(self, device):
         """Get Colour Mode."""
         state = None
 
@@ -188,7 +188,7 @@ class Light:
 
         return state
 
-    async def turn_off(self, device):
+    async def turnOff(self, device):
         """Set light to turn off."""
         final = False
 
@@ -208,7 +208,7 @@ class Light:
 
         return final
 
-    async def turn_on(self, device, brightness, color_temp, color):
+    async def turnOn(self, device, brightness, color_temp, color):
         """Set light to turn on."""
         final = False
 
@@ -220,11 +220,11 @@ class Light:
             data = self.session.data.products[device["hiveID"]]
 
             if brightness is not None:
-                return await self.set_brightness(device, brightness)
+                return await self.setBrightness(device, brightness)
             if color_temp is not None:
-                return await self.set_color_temp(device, color_temp)
+                return await self.setColorTemp(device, color_temp)
             if color is not None:
-                return await self.set_color(device, color)
+                return await self.setColor(device, color)
 
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], status="ON"
@@ -235,7 +235,7 @@ class Light:
 
         return final
 
-    async def set_brightness(self, device, n_brightness):
+    async def setBrightness(self, device, n_brightness):
         """Set brightness of the light."""
         final = False
 
@@ -257,7 +257,7 @@ class Light:
 
         return final
 
-    async def set_color_temp(self, device, color_temp):
+    async def setColorTemp(self, device, color_temp):
         """Set light to turn on."""
         final = False
 
@@ -288,7 +288,7 @@ class Light:
 
         return final
 
-    async def set_color(self, device, new_color):
+    async def setColor(self, device, new_color):
         """Set light to turn on."""
         final = False
 

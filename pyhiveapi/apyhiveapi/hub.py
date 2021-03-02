@@ -13,7 +13,7 @@ class Hub:
         """Initialise hub."""
         self.session = session
 
-    async def hub_smoke(self, device):
+    async def hubSmoke(self, device):
         """Get the online status of the Hive hub."""
         state = None
         final = None
@@ -27,7 +27,7 @@ class Hub:
 
         return final
 
-    async def hub_dog_bark(self, device):
+    async def hubDogBark(self, device):
         """Get the online status of the Hive hub."""
         state = None
         final = None
@@ -41,7 +41,7 @@ class Hub:
 
         return final
 
-    async def hub_glass(self, device):
+    async def hubGlass(self, device):
         """Get the glass detected status from the Hive hub."""
         state = None
         final = None

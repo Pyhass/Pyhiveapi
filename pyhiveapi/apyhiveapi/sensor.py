@@ -12,7 +12,7 @@ class Sensor:
         """Initialise sensor."""
         self.session = session
 
-    async def get_sensor(self, device):
+    async def getSensor(self, device):
         """Gets updated sensor data."""
         await self.session.log.log(
             device["hiveID"], self.sensorType, "Getting sensor data."
@@ -66,7 +66,7 @@ class Sensor:
                 data = self.session.data.devices.get(device["hiveID"], {})
                 dev_data.update(
                     {
-                        "status": {"state": await self.get_state(device)},
+                        "status": {"state": await self.getState(device)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                         "attributes": await self.session.attr.state_attributes(
@@ -89,7 +89,7 @@ class Sensor:
             )
             return device
 
-    async def get_state(self, device):
+    async def getState(self, device):
         """Get sensor state."""
         state = None
         final = None

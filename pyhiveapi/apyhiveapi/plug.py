@@ -12,7 +12,7 @@ class Plug:
         """Initialise plug."""
         self.session = session
 
-    async def get_plug(self, device):
+    async def getPlug(self, device):
         """Get smart plug data."""
         await self.session.log.log(
             device["hiveID"], self.plugType, "Getting switch data."
@@ -34,8 +34,8 @@ class Plug:
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.get_state(device),
-                    "power_usage": await self.get_power_usage(device),
+                    "state": await self.getState(device),
+                    "power_usage": await self.getPowerUsage(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
@@ -59,7 +59,7 @@ class Plug:
             )
             return device
 
-    async def get_state(self, device):
+    async def getState(self, device):
         """Get plug current state."""
         state = None
         final = None
@@ -73,7 +73,7 @@ class Plug:
 
         return final
 
-    async def get_power_usage(self, device):
+    async def getPowerUsage(self, device):
         """Get smart plug current power usage."""
         state = None
 
@@ -85,7 +85,7 @@ class Plug:
 
         return state
 
-    async def turn_on(self, device):
+    async def turnOn(self, device):
         """Set smart plug to turn on."""
         final = False
 
@@ -104,7 +104,7 @@ class Plug:
 
         return final
 
-    async def turn_off(self, device):
+    async def turnOff(self, device):
         """Set smart plug to turn off."""
         final = False
 

@@ -73,81 +73,81 @@ sensor_commands = {
 
 PRODUCTS = {
     "sense": [
-        'add_list("binary_sensor", p, haName="Glass Detection", hiveType="GLASS_BREAK")',
-        'add_list("binary_sensor", p, haName="Smoke Detection", hiveType="SMOKE_CO")',
-        'add_list("binary_sensor", p, haName="Dog Bark Detection", hiveType="DOG_BARK")',
+        'addList("binary_sensor", p, haName="Glass Detection", hiveType="GLASS_BREAK")',
+        'addList("binary_sensor", p, haName="Smoke Detection", hiveType="SMOKE_CO")',
+        'addList("binary_sensor", p, haName="Dog Bark Detection", hiveType="DOG_BARK")',
     ],
     "heating": [
-        'add_list("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'add_list("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
-        'add_list("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
-        'add_list("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
-        'add_list("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+        'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
     ],
     "trvcontrol": [
-        'add_list("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'add_list("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
-        'add_list("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
-        'add_list("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
-        'add_list("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+        'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
     ],
     "hotwater": [
-        'add_list("water_heater", p,)',
-        'add_list("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", custom=True)',
-        'add_list("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", custom=True)',
-        'add_list("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", custom=True)',
+        'addList("water_heater", p,)',
+        'addList("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", custom=True)',
+        'addList("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", custom=True)',
+        'addList("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", custom=True)',
     ],
     "activeplug": [
-        'add_list("switch", p)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
-        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("switch", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "warmwhitelight": [
-        'add_list("light", p)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
-        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "tuneablelight": [
-        'add_list("light", p)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
-        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "colourtuneablelight": [
-        'add_list("light", p)',
-        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
-        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
     ],
-    "motionsensor": ['add_list("binary_sensor", p)'],
-    "contactsensor": ['add_list("binary_sensor", p)'],
+    "motionsensor": ['addList("binary_sensor", p)'],
+    "contactsensor": ['addList("binary_sensor", p)'],
 }
 
 DEVICES = {
     "thermostatui": [
-        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "trv": [
-        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "motionsensor": [
-        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "contactsensor": [
-        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
     ],
     "sense": [
-        'add_list("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
     ],
     "hub": [
-        'add_list("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
     ],
 }
 
 ACTIONS = (
-    'add_list("switch", a, hiveName=a["name"], haName=a["name"], hiveType="action")'
+    'addList("switch", a, hiveName=a["name"], haName=a["name"], hiveType="action")'
 )
