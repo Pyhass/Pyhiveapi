@@ -90,13 +90,13 @@ Below is an example of how to use the `session` object to interact with all the 
 if len(Lights) >= 1:
     Light_1 = Lights[0]
     print("Light 1 : " + str(Light_1["hiveName"]))
-    print("Get state : " + str(session.light.get_state(Light_1)))
-    print("Get brightness : " + str(session.light.get_brightness(Light_1)))
-    print("Get min colour temperature : " + str(session.light.get_min_color_temp(Light_1)))
-    print("Get max colour temperature : " + str(session.light.get_max_color_temp(Light_1)))
-    print("Get colour temperature : " + str(session.light.get_color_temp(Light_1)))
-    print("Get colour : " + str(session.light.get_color(Light_1)))
-    print("Get colour mode : " + str(session.light.getColourMode(Light_1)))
+    print("Get state : " + str(session.light.getState(Light_1)))
+    print("Get brightness : " + str(session.light.getBrightness(Light_1)))
+    print("Get min colour temperature : " + str(session.light.getMinColorTemp(Light_1)))
+    print("Get max colour temperature : " + str(session.light.getMaxColorTemp(Light_1)))
+    print("Get colour temperature : " + str(session.light.getColorTemp(Light_1)))
+    print("Get colour : " + str(session.light.getColor(Light_1)))
+    print("Get colour mode : " + str(session.light.getColorMode(Light_1)))
 ```
 
 
