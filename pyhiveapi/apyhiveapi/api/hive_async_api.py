@@ -57,7 +57,9 @@ class HiveApiAsync:
         )
 
         try:
-            self.headers.update({"authorization": self.session.tokens.token})
+            self.headers.update(
+                {"authorization": self.session.tokens.tokenData["token"]}
+            )
         except KeyError:
             if "sso" in url:
                 pass
@@ -78,7 +80,7 @@ class HiveApiAsync:
             )
         elif resp.status == HTTP_UNAUTHORIZED:
             await self.session.log.LOGGER.error(
-                f"Hive token as expired when calling {url} - "
+                f"Hive token has expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
         elif url is not None and resp.status is not None:
@@ -116,7 +118,7 @@ class HiveApiAsync:
             + ",".join(
                 (
                     '"' + str(i) + '": ' '"' + str(t) + '" '
-                    for i, t in self.session.tokens.token.items()
+                    for i, t in self.session.tokens.tokenData.items()
                 )
             )
             + "}"

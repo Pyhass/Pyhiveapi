@@ -14,6 +14,12 @@ import re
 import boto3
 import botocore
 
+from ..helper.hive_exceptions import (
+    HiveApiError,
+    HiveInvalid2FACode,
+    HiveInvalidPassword,
+    HiveInvalidUsername,
+)
 from .hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
@@ -73,9 +79,9 @@ class HiveAuthAsync:
     async def async_init(self):
         """Initialise async variables."""
         self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
-        self.__pool_id = self.data._result.get("UPID")
-        self.__client_id = self.data._result.get("CLIID")
-        self.__region = self.data._result.get("REGION").split("_")[0]
+        self.__pool_id = self.data.get("UPID")
+        self.__client_id = self.data.get("CLIID")
+        self.__region = self.data.get("REGION").split("_")[0]
         self.client = await self.loop.run_in_executor(
             None, boto3.client, "cognito-idp", self.__region
         )
@@ -211,7 +217,6 @@ class HiveAuthAsync:
             return self.file_response
 
         await self.async_init()
-        boto_client = await self.client
         auth_params = await self.get_auth_params()
         response = None
         result = None
@@ -219,7 +224,7 @@ class HiveAuthAsync:
             response = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    boto_client.initiate_auth,
+                    self.client.initiate_auth,
                     AuthFlow="USER_SRP_AUTH",
                     AuthParameters=auth_params,
                     ClientId=self.__client_id,
@@ -227,10 +232,10 @@ class HiveAuthAsync:
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
-                return "INVALID_USER"
+                raise HiveInvalidUsername
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
+                raise HiveApiError
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = await self.process_challenge(
@@ -240,7 +245,7 @@ class HiveAuthAsync:
                 result = await self.loop.run_in_executor(
                     None,
                     functools.partial(
-                        boto_client.respond_to_auth_challenge,
+                        self.client.respond_to_auth_challenge,
                         ClientId=self.__client_id,
                         ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                         ChallengeResponses=challenge_response,
@@ -248,10 +253,10 @@ class HiveAuthAsync:
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
-                    return "INVALID_PASSWORD"
+                    raise HiveInvalidPassword
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    return "CONNECTION_ERROR"
+                    raise HiveApiError
 
             return result
         else:
@@ -261,7 +266,6 @@ class HiveAuthAsync:
 
     async def sms_2fa(self, entered_code, challenge_parameters):
         """Send sms code for auth."""
-        boto_client = await self.client
         session = challenge_parameters.get("Session")
         code = str(entered_code)
         result = None
@@ -269,7 +273,7 @@ class HiveAuthAsync:
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    boto_client.respond_to_auth_challenge,
+                    self.client.respond_to_auth_challenge,
                     ClientId=self.__client_id,
                     ChallengeName=self.SMS_MFA_CHALLENGE,
                     Session=session,
@@ -284,10 +288,10 @@ class HiveAuthAsync:
                 err.__class__.__name__ == "NotAuthorizedException"
                 or err.__class__.__name__ == "CodeMismatchException"
             ):
-                return "INVALID_CODE"
+                raise HiveInvalid2FACode
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
+                raise HiveApiError
 
         return result
 

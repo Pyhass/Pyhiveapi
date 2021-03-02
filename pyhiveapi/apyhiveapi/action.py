@@ -10,7 +10,7 @@ class Action:
         """Initialise Action."""
         self.session = session
 
-    async def get_action(self, device):
+    async def getAction(self, device):
         """Get smart plug current power usage."""
         dev_data = {}
 
@@ -21,7 +21,7 @@ class Action:
                 "hiveType": device["hiveType"],
                 "haName": device["haName"],
                 "haType": device["haType"],
-                "status": {"state": await self.get_state(device)},
+                "status": {"state": await self.getState(device)},
                 "power_usage": None,
                 "deviceData": {},
                 "custom": device.get("custom", None),
@@ -35,7 +35,7 @@ class Action:
                 return "REMOVE"
             return device
 
-    async def get_state(self, device):
+    async def getState(self, device):
         """Get action state."""
         final = None
 
@@ -47,7 +47,7 @@ class Action:
 
         return final
 
-    async def turn_on(self, device):
+    async def turnOn(self, device):
         """Set action turn on."""
         import json
 
@@ -65,7 +65,7 @@ class Action:
 
         return final
 
-    async def turn_off(self, device):
+    async def turnOff(self, device):
         """Set action to turn off."""
         import json
 

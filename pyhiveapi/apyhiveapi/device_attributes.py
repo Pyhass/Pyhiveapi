@@ -12,21 +12,21 @@ class Attributes:
         self.session.log = Logger()
         self.type = "Attribute"
 
-    async def state_attributes(self, n_id, _type):
+    async def stateAttributes(self, n_id, _type):
         """Get HA State Attributes."""
         attr = {}
 
         if n_id in self.session.data.products or n_id in self.session.data.devices:
-            attr.update({"available": (await self.online_offline(n_id))})
+            attr.update({"available": (await self.onlineOffline(n_id))})
             if n_id in self.session.config.battery:
-                battery = await self.battery(n_id)
+                battery = await self.getBattery(n_id)
                 if battery is not None:
                     attr.update({"battery": str(battery) + "%"})
             if n_id in self.session.config.mode:
-                attr.update({"mode": (await self.get_mode(n_id))})
+                attr.update({"mode": (await self.getMode(n_id))})
         return attr
 
-    async def online_offline(self, n_id):
+    async def onlineOffline(self, n_id):
         """Check if device is online."""
         state = None
 
@@ -38,7 +38,7 @@ class Attributes:
 
         return state
 
-    async def get_mode(self, n_id):
+    async def getMode(self, n_id):
         """Get sensor mode."""
         state = None
         final = None
@@ -52,7 +52,7 @@ class Attributes:
 
         return final
 
-    async def battery(self, n_id):
+    async def getBattery(self, n_id):
         """Get device battery level."""
         state = None
         final = None
@@ -61,7 +61,7 @@ class Attributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.session.log.error_check(n_id, self.type, state)
+            await self.session.log.errorCheck(n_id, self.type, state)
         except KeyError as e:
             await self.session.log.error(e)
 

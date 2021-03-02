@@ -1,6 +1,8 @@
 """Constants for Pyhiveapi."""
-PACKAGE_NAME = "Pyhiveapi"
-PACKAGE_DIR = "/pyhiveapi/"
+SYNC_PACKAGE_NAME = "pyhiveapi"
+SYNC_PACKAGE_DIR = "/pyhiveapi/"
+ASYNC_PACKAGE_NAME = "apyhiveapi"
+ASYNC_PACKAGE_DIR = "/apyhiveapi/"
 SMS_REQUIRED = "SMS_MFA"
 
 
@@ -52,19 +54,100 @@ HIVE_TYPES = {
     "Switch": ["activeplug"],
 }
 sensor_commands = {
-    "SMOKE_CO": "Hub.hub_smoke(Hub(), device)",
-    "DOG_BARK": "Hub.hub_dog_bark(Hub(), device)",
-    "GLASS_BREAK": "Hub.hub_glass(Hub(), device)",
-    "CurrentTemperature": "Heating.current_temperature(Heating(), device)",
-    "TargetTemperature": "Heating.target_temperature(Heating(), device)",
-    "Heating_State": "Heating.get_state(Heating(), device)",
-    "Heating_Mode": "Heating.get_mode(Heating(), device)",
-    "Heating_Boost": "Heating.boost(Heating(), device)",
-    "Hotwater_State": "Hotwater.get_state(Hotwater(), device)",
-    "Hotwater_Mode": "Hotwater.get_mode(Hotwater(), device)",
-    "Hotwater_Boost": "Hotwater.get_boost(Hotwater(), device)",
-    "Battery": 'self.session.attr.battery(device["device_id"])',
-    "Mode": 'self.session.attr.get_mode(device["hiveID"])',
+    "SMOKE_CO": "self.session.hub.hubSmoke(device)",
+    "DOG_BARK": "self.session.hub.hubDogBark(device)",
+    "GLASS_BREAK": "self.session.hub.hubGlass(device)",
+    "CurrentTemperature": "self.session.heating.currentTemperature(device)",
+    "TargetTemperature": "self.session.heating.targetTemperature(device)",
+    "Heating_State": "self.session.heating.getState(device)",
+    "Heating_Mode": "self.session.heating.getMode(device)",
+    "Heating_Boost": "self.session.heating.getBoost(device)",
+    "Hotwater_State": "self.session.hotwater.getState(device)",
+    "Hotwater_Mode": "self.session.hotwater.getMode(device)",
+    "Hotwater_Boost": "self.session.hotwater.getBoost(device)",
+    "Battery": 'self.session.attr.getBattery(device["device_id"])',
+    "Mode": 'self.session.attr.getMode(device["hiveID"])',
     "Availability": "self.online(device)",
     "Connectivity": "self.online(device)",
 }
+
+PRODUCTS = {
+    "sense": [
+        'addList("binary_sensor", p, haName="Glass Detection", hiveType="GLASS_BREAK")',
+        'addList("binary_sensor", p, haName="Smoke Detection", hiveType="SMOKE_CO")',
+        'addList("binary_sensor", p, haName="Dog Bark Detection", hiveType="DOG_BARK")',
+    ],
+    "heating": [
+        'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+    ],
+    "trvcontrol": [
+        'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+    ],
+    "hotwater": [
+        'addList("water_heater", p,)',
+        'addList("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", custom=True)',
+        'addList("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", custom=True)',
+        'addList("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", custom=True)',
+    ],
+    "activeplug": [
+        'addList("switch", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "warmwhitelight": [
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "tuneablelight": [
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "colourtuneablelight": [
+        'addList("light", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "motionsensor": ['addList("binary_sensor", p)'],
+    "contactsensor": ['addList("binary_sensor", p)'],
+}
+
+DEVICES = {
+    "thermostatui": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "trv": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "motionsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "contactsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "sense": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "hub": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+}
+
+ACTIONS = (
+    'addList("switch", a, hiveName=a["name"], haName=a["name"], hiveType="action")'
+)

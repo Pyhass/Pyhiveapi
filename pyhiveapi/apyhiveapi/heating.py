@@ -12,13 +12,13 @@ class Heating:
         """Initialise heating."""
         self.session = session
 
-    async def get_heating(self, device):
+    async def getHeating(self, device):
         """Get heating data."""
         await self.session.log.log(
             device["hiveID"], self.heatingType, "Getting heating data."
         )
         device["deviceData"].update(
-            {"online": await self.session.attr.online_offline(device["device_id"])}
+            {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
 
         if device["deviceData"]["online"]:
@@ -34,19 +34,19 @@ class Heating:
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "temperatureunit": device["temperatureunit"],
-                "min_temp": await self.min_temperature(device),
-                "max_temp": await self.max_temperature(device),
+                "min_temp": await self.minTemperature(device),
+                "max_temp": await self.maxTemperature(device),
                 "status": {
-                    "current_temperature": await self.current_temperature(device),
-                    "target_temperature": await self.target_temperature(device),
-                    "action": await self.current_operation(device),
-                    "mode": await self.get_mode(device),
-                    "boost": await self.boost(device),
+                    "current_temperature": await self.currentTemperature(device),
+                    "target_temperature": await self.targetTemperature(device),
+                    "action": await self.currentOperation(device),
+                    "mode": await self.getMode(device),
+                    "boost": await self.getBoost(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.state_attributes(
+                "attributes": await self.session.attr.stateAttributes(
                     device["device_id"], device["hiveType"]
                 ),
             }
@@ -59,24 +59,24 @@ class Heating:
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.error_check(
+            await self.session.log.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
 
-    async def min_temperature(self, device):
+    async def minTemperature(self, device):
         """Get heating minimum target temperature."""
         if device["hiveType"] == "nathermostat":
             return self.session.data.products[device["hiveID"]]["props"]["minHeat"]
         return 5
 
-    async def max_temperature(self, device):
+    async def maxTemperature(self, device):
         """Get heating maximum target temperature."""
         if device["hiveType"] == "nathermostat":
             return self.session.data.products[device["hiveID"]]["props"]["maxHeat"]
         return 32
 
-    async def current_temperature(self, device):
+    async def currentTemperature(self, device):
         """Get heating current temperature."""
         from datetime import datetime
 
@@ -132,7 +132,7 @@ class Heating:
 
         return final
 
-    async def minmax_temperatures(self, device):
+    async def minmaxTemperature(self, device):
         """Min/Max Temp."""
         state = None
         final = None
@@ -145,7 +145,7 @@ class Heating:
 
         return final
 
-    async def target_temperature(self, device):
+    async def targetTemperature(self, device):
         """Get heating target temperature."""
         state = None
 
@@ -158,7 +158,7 @@ class Heating:
 
         return state
 
-    async def get_mode(self, device):
+    async def getMode(self, device):
         """Get heating current mode."""
         state = None
         final = None
@@ -174,14 +174,14 @@ class Heating:
 
         return final
 
-    async def get_state(self, device):
+    async def getState(self, device):
         """Get heating current state."""
         state = None
         final = None
 
         try:
-            current_temp = await self.current_temperature(device)
-            target_temp = await self.target_temperature(device)
+            current_temp = await self.currentTemperature(device)
+            target_temp = await self.targetTemperature(device)
             if current_temp < target_temp:
                 state = "ON"
             else:
@@ -192,7 +192,7 @@ class Heating:
 
         return final
 
-    async def current_operation(self, device):
+    async def currentOperation(self, device):
         """Get heating current operation."""
         state = None
 
@@ -204,7 +204,7 @@ class Heating:
 
         return state
 
-    async def boost(self, device):
+    async def getBoost(self, device):
         """Get heating boost current status."""
         state = None
 
@@ -216,9 +216,9 @@ class Heating:
 
         return state
 
-    async def get_boost_time(self, device):
+    async def getBoostTime(self, device):
         """Get heating boost time remaining."""
-        if await self.boost(device) == "ON":
+        if await self.getBoost(device) == "ON":
             state = None
 
             try:
@@ -231,14 +231,14 @@ class Heating:
         return None
 
     @staticmethod
-    async def get_operation_modes():
+    async def getOperationModes():
         """Get heating list of possible modes."""
         return ["SCHEDULE", "MANUAL", "OFF"]
 
-    async def get_schedule_now_next_later(self, device):
+    async def getScheduleNowNextLater(self, device):
         """Hive get heating schedule now, next and later."""
-        online = await self.session.attr.online_offline(device["device_id"])
-        current_mode = await self.get_mode(device)
+        online = await self.session.attr.onlineOffline(device["device_id"])
+        current_mode = await self.getMode(device)
         state = None
 
         try:
@@ -250,7 +250,7 @@ class Heating:
 
         return state
 
-    async def set_target_temperature(self, device, new_temp):
+    async def setTargetTemperature(self, device, new_temp):
         """Set heating target temperature."""
         await self.session.hiveRefreshTokens()
         final = False
@@ -271,7 +271,7 @@ class Heating:
 
         return final
 
-    async def set_mode(self, device, new_mode):
+    async def setMode(self, device, new_mode):
         """Set heating mode."""
         await self.session.hiveRefreshTokens()
         final = False
@@ -291,10 +291,10 @@ class Heating:
 
         return final
 
-    async def turn_boost_on(self, device, mins, temp):
+    async def turnBoostOn(self, device, mins, temp):
         """Turn heating boost on."""
-        if mins > 0 and temp >= await self.min_temperature(device):
-            if temp <= await self.max_temperature(device):
+        if mins > 0 and temp >= await self.minTemperature(device):
+            if temp <= await self.maxTemperature(device):
                 await self.session.hiveRefreshTokens()
                 final = False
 
@@ -318,7 +318,7 @@ class Heating:
                 return final
         return None
 
-    async def turn_boost_off(self, device):
+    async def turnBoostOff(self, device):
         """Turn heating boost off."""
         final = False
 
@@ -329,7 +329,7 @@ class Heating:
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             await self.session.getDevices(device["hiveID"])
-            if await self.boost(device) == "ON":
+            if await self.getBoost(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode == "MANUAL" or prev_mode == "OFF":
                     pre_temp = data["props"]["previous"].get("target", 7)
