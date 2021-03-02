@@ -43,7 +43,9 @@ class HiveApi:
     def request(self, type, url, jsc=None):
         """Make API request."""
         if self.session is not None:
-            self.headers.update({"authorization": self.session.tokens.token})
+            self.headers.update(
+                {"authorization": self.session.tokens.tokenData["token"]}
+            )
         else:
             self.headers.update({"authorization": self.token})
 
@@ -70,10 +72,11 @@ class HiveApi:
         )
         try:
             info = self.request("POST", url, jsc)
-            if "token" in info and self.session:
-                self.session.updateTokens(info)
-                self.urls.update({"base": info["platform"]["endpoint"]})
-                self.urls.update({"camera": info["platform"]["cameraPlatform"]})
+            data = json.loads(info.text)
+            if "token" in data and self.session:
+                self.session.updateTokens(data)
+                self.urls.update({"base": data["platform"]["endpoint"]})
+                self.urls.update({"camera": data["platform"]["cameraPlatform"]})
             self.json_return.update({"original": info.status_code})
             self.json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
