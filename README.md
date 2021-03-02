@@ -48,7 +48,7 @@ Below is an example of how to use the `session` object to interact with all the 
 if len(HeatingDevices) >= 1:
     HeatingZone_1 = HeatingDevices[0]
     print("HeatingZone 1 : " + str(HeatingZone_1["hiveName"]))
-    print("Get Operation Modes : " + str(session.heating.getOperationModes()))
+    print("Get operation modes : " + str(session.heating.getOperationModes()))
     print("Current mode : " + str(session.heating.getMode(HeatingZone_1)))
     print("Current state : " + str(session.heating.getState(HeatingZone_1)))
     print("Current temperature : " + str(session.heating.currentTemperature(HeatingZone_1)))
@@ -72,19 +72,19 @@ Below is an example of how to use the `session` object to interact with all the 
 if len(WaterHeaters) >= 1:
     WaterHeater_1 = WaterHeaters[0]
     print("WaterHeater 1 : " + str(WaterHeater_1["hiveName"]))
-    print("Get operation modes : " + str(session.hotwater.get_operation_modes()))
-    print("Current mode : " + str(session.hotwater.get_mode(WaterHeater_1)))
-    print("Get state : " + str(session.hotwater.get_state(WaterHeater_1)))
-    print("Get whether boost is currently On/Off: " + str(session.hotwater.get_boost(WaterHeater_1)))
-    print("Get boost time remaining : " + str(session.hotwater.get_boost_time(WaterHeater_1)))
-    print("Get schedule now/next/later : " + str(session.hotwater.get_schedule_now_next_later(WaterHeater_1)))
-    print("Set mode to OFF : " + str(session.hotwater.set_mode(WaterHeater_1, "OFF")))
-    print("Turn boost on for 30 minutes : " + str(session.hotwater.turn_boost_on(WaterHeater_1, 30)))
-    print("Turn boost off : " + str(session.hotwater.turn_boost_off(WaterHeater_1)))
+    print("Get operation modes : " + str(session.hotwater.getOperationModes()))
+    print("Current mode : " + str(session.hotwater.getMode(WaterHeater_1)))
+    print("Get state : " + str(session.hotwater.getState(WaterHeater_1)))
+    print("Get whether boost is currently On/Off: " + str(session.hotwater.getBoost(WaterHeater_1)))
+    print("Get boost time remaining : " + str(session.hotwater.getBoostTime(WaterHeater_1)))
+    print("Get schedule now/next/later : " + str(session.hotwater.getScheduleNowNextLater(WaterHeater_1)))
+    print("Set mode to OFF : " + str(session.hotwater.setMode(WaterHeater_1, "OFF")))
+    print("Turn boost on for 30 minutes : " + str(session.hotwater.turnBoostOn(WaterHeater_1, 30)))
+    print("Turn boost off : " + str(session.hotwater.turnBoostOff(WaterHeater_1)))
 ```
 
 ### Use the session object to interact with lights
-Below is an example of how to use the session object to interact with all the different light actions.
+Below is an example of how to use the `session` object to interact with all the different light actions.
 
 ```Python
 if len(Lights) >= 1:
