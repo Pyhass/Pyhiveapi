@@ -29,7 +29,7 @@ session.startSession()
 
 
 ### Use the session object to get devices
-Below is an example of how to use the session object to get all devices of each type from `deviceList` and store in a seperate list for each device type.
+Below is an example of how to use the session object to get all devices of each type from `deviceList` and store in a separate list for each device type.
 
 ```Python
 BinarySensors = session.deviceList["binary_sensor"]
