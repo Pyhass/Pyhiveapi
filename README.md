@@ -27,6 +27,18 @@ if login.get("ChallengeName") == SMS_REQUIRED:
 session.startSession()
 ```
 
+### Use the session object to get devices
+Below is an example of how to use the session object to get all devices of each type from `deviceList` and store in a seperate list for each device type.
+
+```Python
+BinarySensors = session.deviceList["binary_sensor"]
+HeatingDevices = session.deviceList["climate"]
+Lights = session.deviceList["light"]
+Sensors = session.deviceList["sensor"]
+Switches = session.deviceList["switch"]
+WaterHeaters = session.deviceList["water_heater"]
+```
+
 ### Log in - Using Tokens
 Below is an example how to log in to Hive with 2FA if needed
 and get a session token.
