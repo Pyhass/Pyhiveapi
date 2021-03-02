@@ -60,7 +60,7 @@ if len(HeatingDevices) >= 1:
     print("Get Schedule now/next/later : " + str(session.heating.get_schedule_now_next_later(HeatingZone_1)))
     print("Set Target Temp : " + str(session.heating.set_target_temperature(HeatingZone_1, 15)))
     print("Get Operation Modes : " + str(session.heating.get_operation_modes()))
-    print("Set Operation Mode : " + str(session.heating.set_mode(HeatingZone_1, "SCHEDULE")))
+    print("Set Mode to SCHEDULE: " + str(session.heating.set_mode(HeatingZone_1, "SCHEDULE")))
     print("Turn Boost On for 30 minutess at 15c: " + str(session.heating.turn_boost_on(HeatingZone_1, 30, 15)))
     print("Turn off boost : " + str(session.heating.turn_boost_off(HeatingZone_1)))
 ```
@@ -73,7 +73,8 @@ Below is an example of how to use the session object to interact with all the di
 if len(WaterHeaters) >= 1:
     WaterHeater_1 = WaterHeaters[0]
     print("Current Mode : " + str(session.hotwater.get_mode(WaterHeater_1)))
-    print("Get Opertation Modes : " + str(session.hotwater.get_operation_modes()))
+    print("Get Operation Modes : " + str(session.hotwater.get_operation_modes()))
+    print("Set Mode to OFF : " + str(session.hotwater.set_mode(WaterHeater_1, "OFF")))
     print("Get Boost : " + str(session.hotwater.get_boost(WaterHeater_1)))
     print("Get Boost time remaining : " + str(session.hotwater.get_boost_time(WaterHeater_1)))
     print("Get State : " + str(session.hotwater.get_state(WaterHeater_1)))
