@@ -1,10 +1,6 @@
 """Hive Sensor Module."""
-import ast
 
-from .heating import Heating  # noqa: F401
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
-from .hotwater import Hotwater  # noqa: F401
-from .hub import Hub  # noqa: F401
 
 
 class Sensor:
@@ -61,7 +57,7 @@ class Sensor:
                 )
                 dev_data.update(
                     {
-                        "status": {"state": await ast.literal_eval(code)},
+                        "status": {"state": await eval(code)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                     }

@@ -1,6 +1,8 @@
 """Constants for Pyhiveapi."""
-PACKAGE_NAME = "Pyhiveapi"
-PACKAGE_DIR = "/pyhiveapi/"
+SYNC_PACKAGE_NAME = "pyhiveapi"
+SYNC_PACKAGE_DIR = "/pyhiveapi/"
+ASYNC_PACKAGE_NAME = "apyhiveapi"
+ASYNC_PACKAGE_DIR = "/apyhiveapi/"
 SMS_REQUIRED = "SMS_MFA"
 
 
@@ -52,19 +54,100 @@ HIVE_TYPES = {
     "Switch": ["activeplug"],
 }
 sensor_commands = {
-    "SMOKE_CO": "Hub.hub_smoke(Hub(), device)",
-    "DOG_BARK": "Hub.hub_dog_bark(Hub(), device)",
-    "GLASS_BREAK": "Hub.hub_glass(Hub(), device)",
-    "CurrentTemperature": "Heating.current_temperature(Heating(), device)",
-    "TargetTemperature": "Heating.target_temperature(Heating(), device)",
-    "Heating_State": "Heating.get_state(Heating(), device)",
-    "Heating_Mode": "Heating.get_mode(Heating(), device)",
-    "Heating_Boost": "Heating.boost(Heating(), device)",
-    "Hotwater_State": "Hotwater.get_state(Hotwater(), device)",
-    "Hotwater_Mode": "Hotwater.get_mode(Hotwater(), device)",
-    "Hotwater_Boost": "Hotwater.get_boost(Hotwater(), device)",
+    "SMOKE_CO": "self.session.hub.hub_smoke(device)",
+    "DOG_BARK": "self.session.hub.hub_dog_bark(device)",
+    "GLASS_BREAK": "self.session.hub.hub_glass(device)",
+    "CurrentTemperature": "self.session.heating.current_temperature(device)",
+    "TargetTemperature": "self.session.heating.target_temperature(device)",
+    "Heating_State": "self.session.heating.get_state(device)",
+    "Heating_Mode": "self.session.heating.get_mode(device)",
+    "Heating_Boost": "self.session.heating.boost(device)",
+    "Hotwater_State": "self.session.hotwater.get_state(device)",
+    "Hotwater_Mode": "self.session.hotwater.get_mode(device)",
+    "Hotwater_Boost": "self.session.hotwater.get_boost(device)",
     "Battery": 'self.session.attr.battery(device["device_id"])',
     "Mode": 'self.session.attr.get_mode(device["hiveID"])',
     "Availability": "self.online(device)",
     "Connectivity": "self.online(device)",
 }
+
+PRODUCTS = {
+    "sense": [
+        'add_list("binary_sensor", p, haName="Glass Detection", hiveType="GLASS_BREAK")',
+        'add_list("binary_sensor", p, haName="Smoke Detection", hiveType="SMOKE_CO")',
+        'add_list("binary_sensor", p, haName="Dog Bark Detection", hiveType="DOG_BARK")',
+    ],
+    "heating": [
+        'add_list("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'add_list("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'add_list("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'add_list("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'add_list("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+    ],
+    "trvcontrol": [
+        'add_list("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'add_list("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
+        'add_list("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'add_list("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
+        'add_list("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
+    ],
+    "hotwater": [
+        'add_list("water_heater", p,)',
+        'add_list("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", custom=True)',
+        'add_list("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", custom=True)',
+        'add_list("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", custom=True)',
+    ],
+    "activeplug": [
+        'add_list("switch", p)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "warmwhitelight": [
+        'add_list("light", p)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "tuneablelight": [
+        'add_list("light", p)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "colourtuneablelight": [
+        'add_list("light", p)',
+        'add_list("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'add_list("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "motionsensor": ['add_list("binary_sensor", p)'],
+    "contactsensor": ['add_list("binary_sensor", p)'],
+}
+
+DEVICES = {
+    "thermostatui": [
+        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "trv": [
+        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "motionsensor": [
+        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "contactsensor": [
+        'add_list("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'add_list("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "sense": [
+        'add_list("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "hub": [
+        'add_list("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+}
+
+ACTIONS = (
+    'add_list("switch", a, hiveName=a["name"], haName=a["name"], hiveType="action")'
+)

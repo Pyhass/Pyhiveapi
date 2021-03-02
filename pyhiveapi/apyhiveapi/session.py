@@ -9,11 +9,10 @@ import traceback
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
-
-from pyhiveapi import API, Auth
+from apyhiveapi import API, Auth
 
 from .device_attributes import Attributes
-from .helper.const import HIVE_TYPES
+from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
     HiveReauthRequired,
@@ -44,6 +43,7 @@ class Session:
         self.scanInterval = 120
         self.tokens = Map(
             {
+                "tokenData": {},
                 "tokenCreated": datetime.now() - timedelta(seconds=4000),
                 "tokenExpiry": timedelta(seconds=3600),
             }
@@ -114,33 +114,33 @@ class Session:
             self.deviceList[type].append(formatted_data)
         return add
 
-    def updateInterval(self, new_interval):
+    async def updateInterval(self, new_interval):
         """Update the scan interval."""
         interval = timedelta(seconds=new_interval)
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
         self.update.intervalSeconds = interval
 
-    def useFile(self, username=None):
+    async def useFile(self, username=None):
         """Update to check if file is being used."""
         using_file = True if username == "use@file.com" else False
         if using_file:
             self.config.file = True
 
-    def updateTokens(self, tokens):
+    async def updateTokens(self, tokens):
         """Update session tokens."""
         data = {}
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
-            self.tokens.token = data["IdToken"]
-            self.tokens.refreshToken = data["RefreshToken"]
-            self.tokens.accessToken = data["AccessToken"]
+            self.tokens.tokenData.update({"token": data["IdToken"]})
+            self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
+            self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
             self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
-            self.tokens.token = data["token"]
-            self.tokens.refreshToken = data["refreshToken"]
-            self.tokens.accessToken = data["accessToken"]
+            self.tokens.tokenData.update({"token": data["token"]})
+            self.tokens.tokenData.update({"refreshToken": data["refreshToken"]})
+            self.tokens.tokenData.update({"accessToken": data["accessToken"]})
             self.tokens.tokenCreated = datetime.now()
 
         if "ExpiresIn" in data:
@@ -148,22 +148,22 @@ class Session:
 
         return self.tokens
 
-    def login(self):
+    async def login(self):
         """Login to hive account."""
         if not self.auth:
             raise HiveUnknownConfiguration
 
         result = self.auth.login()
-        self.updateTokens(result)
+        await self.updateTokens(result)
         return result
 
-    def sms_2fa(self, code, session):
+    async def sms_2fa(self, code, session):
         """Complete 2FA auth."""
         result = self.auth.sms_2fa(code, session)
-        self.updateTokens(result)
+        await self.updateTokens(result)
         return result
 
-    def hiveRefreshTokens(self):
+    async def hiveRefreshTokens(self):
         """Refresh Hive tokens."""
         updated = False
 
@@ -172,25 +172,25 @@ class Session:
         else:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
-                updated = self.api.refreshTokens()
+                updated = await self.api.refreshTokens()
 
         return updated
 
-    def updateData(self, device):
+    async def updateData(self, device):
         """Get latest data for Hive nodes - rate limiting."""
-        self.updateLock.acquire()
+        await self.updateLock.acquire()
         updated = False
         try:
             ep = self.update.lastUpdate + self.update.intervalSeconds
             if datetime.now() >= ep:
-                self.session.getDevices(device["hiveID"])
+                await self.getDevices(device["hiveID"])
                 updated = True
         finally:
             self.updateLock.release()
 
         return updated
 
-    def getDevices(self, n_id):
+    async def getDevices(self, n_id):
         """Get latest data for Hive nodes."""
         get_nodes_successful = False
         api_resp_d = None
@@ -199,8 +199,8 @@ class Session:
             if self.config.file:
                 api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
-                self.session.hiveRefreshTokens()
-                api_resp_d = self.api.getAll()
+                await self.hiveRefreshTokens()
+                api_resp_d = await self.api.getAll()
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
@@ -236,7 +236,7 @@ class Session:
 
         return get_nodes_successful
 
-    def startSession(self, config={}):
+    async def startSession(self, config={}):
         """Setup the Hive platform."""
         custom_component = False
         for file, line, w1, w2 in traceback.extract_stack():
@@ -244,16 +244,16 @@ class Session:
                 custom_component = True
 
         self.config.sensors = custom_component
-        self.useFile(config.get("username", self.username))
-        self.updateInterval(
+        await self.useFile(config.get("username", self.username))
+        await self.updateInterval(
             config.get("options", {}).get("scan_interval", self.scanInterval)
         )
 
         if config != {}:
             if config["tokens"] is not None and not self.config.file:
-                self.updateTokens(config["tokens"])
+                await self.updateTokens(config["tokens"])
             elif self.config.file:
-                self.log.log(
+                await self.log.log(
                     "No_ID",
                     self.sessionType,
                     "Loading up a hive session with a preloaded file.",
@@ -262,16 +262,16 @@ class Session:
                 raise HiveUnknownConfiguration
 
         try:
-            self.session.getDevices("No_ID")
+            await self.getDevices("No_ID")
         except HTTPException:
             return HTTPException
 
         if self.data.devices == {} or self.data.products == {}:
             raise HiveReauthRequired
 
-        return self.createDevices()
+        return await self.createDevices()
 
-    def createDevices(self):
+    async def createDevices(self):
         """Create list of devices."""
         self.deviceList["binary_sensor"] = []
         self.deviceList["climate"] = []
@@ -285,174 +285,38 @@ class Session:
             if p.get("isGroup", False):
                 continue
 
-            if self.data.products[aProduct]["type"] == "sense":
-                self.add_list(
-                    "binary_sensor",
-                    p,
-                    haName="Glass Detection",
-                    hiveType="GLASS_BREAK",
-                )
-                self.add_list(
-                    "binary_sensor",
-                    p,
-                    haName="Smoke Detection",
-                    hiveType="SMOKE_CO",
-                )
-                self.add_list(
-                    "binary_sensor",
-                    p,
-                    haName="Dog Bark Detection",
-                    hiveType="DOG_BARK",
-                )
+            product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
+            for code in product_list:
+                eval("self." + code)
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Heating"]:
-
                 self.config.mode.append(p["id"])
-                self.add_list(
-                    "climate",
-                    p,
-                    temperatureunit=self.data["user"]["temperatureUnit"],
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Current Temperature",
-                    hiveType="CurrentTemperature",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Target Temperature",
-                    hiveType="TargetTemperature",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" State",
-                    hiveType="Heating_State",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Mode",
-                    hiveType="Heating_Mode",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Boost",
-                    hiveType="Heating_Boost",
-                    custom=True,
-                )
-
-            if self.data.products[aProduct]["type"] in HIVE_TYPES["Hotwater"]:
-                self.add_list("water_heater", p)
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName="Hotwater State",
-                    hiveType="Hotwater_State",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName="Hotwater Mode",
-                    hiveType="Hotwater_Mode",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName="Hotwater Boost",
-                    hiveType="Hotwater_Boost",
-                    custom=True,
-                )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Switch"]:
                 self.config.mode.append(p["id"])
-                self.add_list("switch", p)
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Mode",
-                    hiveType="Mode",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Availability",
-                    hiveType="Availability",
-                    custom=True,
-                )
 
             if self.data.products[aProduct]["type"] in HIVE_TYPES["Light"]:
                 self.config.mode.append(p["id"])
-                self.add_list("light", p)
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Mode",
-                    hiveType="Mode",
-                    custom=True,
-                )
-                self.add_list(
-                    "sensor",
-                    p,
-                    haName=" Availability",
-                    hiveType="Availability",
-                    custom=True,
-                )
-
-            if self.data.products[aProduct]["type"] in HIVE_TYPES["Sensor"]:
-                self.add_list("binary_sensor", p)
 
         for aDevice in self.data["devices"]:
             d = self.data["devices"][aDevice]
+
+            device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
+            for code in device_list:
+                eval("self." + code)
+
             if (
                 self.data["devices"][aDevice]["type"] in HIVE_TYPES["Thermo"]
                 or self.data["devices"][aDevice]["type"] in HIVE_TYPES["Sensor"]
             ):
                 self.config.battery.append(d["id"])
-                self.add_list(
-                    "sensor",
-                    d,
-                    haName=" Battery Level",
-                    hiveType="Battery",
-                )
-                self.add_list(
-                    "sensor",
-                    d,
-                    haName=" Availability",
-                    hiveType="Availability",
-                    custom=True,
-                )
-
-            if self.data["devices"][aDevice]["type"] in HIVE_TYPES["Hub"]:
-                self.add_list(
-                    "binary_sensor",
-                    d,
-                    haName="Hive Hub Status",
-                    hiveType="Connectivity",
-                )
 
         if "action" in HIVE_TYPES["Switch"]:
             for action in self.data["actions"]:
-                a = self.data["actions"][action]
-                self.add_list(
-                    "switch",
-                    a,
-                    hiveName=a["name"],
-                    haName=a["name"],
-                    hiveType="action",
-                )
+                a = self.data["actions"][action]  # noqa: F841
+                eval("self." + ACTIONS)
 
-        self.log.log("No_ID", self.sessionType, "Hive component has initialised")
+        await self.log.log("No_ID", self.sessionType, "Hive component has initialised")
 
         return self.deviceList
 

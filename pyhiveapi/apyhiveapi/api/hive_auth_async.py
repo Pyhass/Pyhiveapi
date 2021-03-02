@@ -73,9 +73,9 @@ class HiveAuthAsync:
     async def async_init(self):
         """Initialise async variables."""
         self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
-        self.__pool_id = self.data._result.get("UPID")
-        self.__client_id = self.data._result.get("CLIID")
-        self.__region = self.data._result.get("REGION").split("_")[0]
+        self.__pool_id = self.data.get("UPID")
+        self.__client_id = self.data.get("CLIID")
+        self.__region = self.data.get("REGION").split("_")[0]
         self.client = await self.loop.run_in_executor(
             None, boto3.client, "cognito-idp", self.__region
         )
@@ -211,7 +211,6 @@ class HiveAuthAsync:
             return self.file_response
 
         await self.async_init()
-        boto_client = await self.client
         auth_params = await self.get_auth_params()
         response = None
         result = None
@@ -219,7 +218,7 @@ class HiveAuthAsync:
             response = await self.loop.run_in_executor(
                 None,
                 functools.partial(
-                    boto_client.initiate_auth,
+                    self.client.initiate_auth,
                     AuthFlow="USER_SRP_AUTH",
                     AuthParameters=auth_params,
                     ClientId=self.__client_id,
@@ -240,7 +239,7 @@ class HiveAuthAsync:
                 result = await self.loop.run_in_executor(
                     None,
                     functools.partial(
-                        boto_client.respond_to_auth_challenge,
+                        self.client.respond_to_auth_challenge,
                         ClientId=self.__client_id,
                         ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                         ChallengeResponses=challenge_response,

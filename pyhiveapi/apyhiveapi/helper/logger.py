@@ -68,7 +68,7 @@ class Logger:
 
     async def error(self, e="UNKNOWN"):
         """Process and unexpected error."""
-        self.session.log.error(
+        self.LOGGER.error(
             f"An unexpected error has occurred whilst"
             f" executing {inspect.stack()[1][3]}"
             f" with exception {e.__class__} {e}"
@@ -85,13 +85,13 @@ class Logger:
             message = "Device offline could not update entity - " + name
             result = True
             if n_id not in self.session.config.errorList:
-                self.session.log.warning(message)
+                self.LOGGER.warning(message)
                 self.session.config.errorList.update({n_id: datetime.now()})
         elif error_type == "Failed":
             message = "ERROR - No data found for device - " + name
             result = True
             if n_id not in self.session.config.errorList:
-                self.session.log.error(message)
+                self.LOGGER.error(message)
                 self.session.config.errorList.update({n_id: datetime.now()})
 
         await self.log(n_id, n_type, message, info=[new_data])

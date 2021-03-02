@@ -24,7 +24,7 @@ class Light:
         dev_data = {}
 
         if device["deviceData"]["online"]:
-            self.helper.deviceRecovered(device["device_id"])
+            self.session.helper.deviceRecovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
