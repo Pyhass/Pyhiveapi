@@ -95,7 +95,7 @@ if len(Lights) >= 1:
     print("Get min colour temperature : " + str(session.light.get_min_color_temp(Light_1)))
     print("Get max colour temperature : " + str(session.light.get_max_color_temp(Light_1)))
     print("Get colour temperature : " + str(session.light.get_color_temp(Light_1)))
-    print("Get colour : " + str(session.light.get_color(Light_1))
+    print("Get colour : " + str(session.light.get_color(Light_1)))
     print("Get colour mode : " + str(session.light.getColourMode(Light_1)))
 ```
 
