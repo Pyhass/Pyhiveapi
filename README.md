@@ -47,6 +47,7 @@ Below is an example of how to use the session object to interact with all the di
 ```Python
 if len(HeatingDevices) >= 1:
     HeatingZone_1 = HeatingDevices[0]
+    print("HeatingZone 1 : " + str(HeatingZone_1["hiveName"]))
     print("Get Operation Modes : " + str(session.heating.get_operation_modes()))
     print("Current Mode : " + str(session.heating.get_mode(HeatingZone_1)))
     print("Current State : " + str(session.heating.get_state(HeatingZone_1)))
@@ -70,6 +71,7 @@ Below is an example of how to use the session object to interact with all the di
 ```Python
 if len(WaterHeaters) >= 1:
     WaterHeater_1 = WaterHeaters[0]
+    print("WaterHeater 1 : " + str(WaterHeater_1["hiveName"]))
     print("Get Operation Modes : " + str(session.hotwater.get_operation_modes()))
     print("Current Mode : " + str(session.hotwater.get_mode(WaterHeater_1)))
     print("Get State : " + str(session.hotwater.get_state(WaterHeater_1)))
@@ -79,6 +81,22 @@ if len(WaterHeaters) >= 1:
     print("Set Mode to OFF : " + str(session.hotwater.set_mode(WaterHeater_1, "OFF")))
     print("Turn Boost On for 30 minutes : " + str(session.hotwater.turn_boost_on(WaterHeater_1, 30)))
     print("Turn Boost Off : " + str(session.hotwater.turn_boost_off(WaterHeater_1)))
+```
+
+### Use the session object to interact with lights
+Below is an example of how to use the session object to interact with all the different light actions.
+
+```Python
+if len(Lights) >= 1:
+    Light_1 = Lights[0]
+    print("Light 1 : " + str(Light_1["hiveName"]))
+    print("Get State : " + str(session.light.get_state(Light_1)))
+    print("Get Brightness : " + str(session.light.get_brightness(Light_1)))
+    print("Get min colour temperature : " + str(session.light.get_min_color_temp(Light_1)))
+    print("Get max colour temperature : " + str(session.light.get_max_color_temp(Light_1)))
+    print("Get colour temperature : " + str(session.light.get_color_temp(Light_1)))
+    print("Get colour : " + str(session.light.get_color(Light_1))
+    print("Get colour mode : " + str(session.light.getColourMode(Light_1)))
 ```
 
 
