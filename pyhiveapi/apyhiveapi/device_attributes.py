@@ -61,7 +61,7 @@ class Attributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.session.log.error_check(n_id, self.type, state)
+            await self.session.log.errorCheck(n_id, self.type, state)
         except KeyError as e:
             await self.session.log.error(e)
 

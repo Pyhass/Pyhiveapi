@@ -18,7 +18,7 @@ class Plug:
             device["hiveID"], self.plugType, "Getting switch data."
         )
         device["deviceData"].update(
-            {"online": await self.session.attr.online_offline(device["device_id"])}
+            {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
         dev_data = {}
 
@@ -40,7 +40,7 @@ class Plug:
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.state_attributes(
+                "attributes": await self.session.attr.stateAttributes(
                     device["device_id"], device["hiveType"]
                 ),
             }
@@ -54,7 +54,7 @@ class Plug:
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.error_check(
+            await self.session.log.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
