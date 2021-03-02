@@ -14,6 +14,12 @@ import re
 import boto3
 import botocore
 
+from ..helper.hive_exceptions import (
+    HiveApiError,
+    HiveInvalid2FACode,
+    HiveInvalidPassword,
+    HiveInvalidUsername,
+)
 from .hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
@@ -226,10 +232,10 @@ class HiveAuthAsync:
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
-                return "INVALID_USER"
+                raise HiveInvalidUsername
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
+                raise HiveApiError
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = await self.process_challenge(
@@ -247,10 +253,10 @@ class HiveAuthAsync:
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
-                    return "INVALID_PASSWORD"
+                    raise HiveInvalidPassword
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    return "CONNECTION_ERROR"
+                    raise HiveApiError
 
             return result
         else:
@@ -282,10 +288,10 @@ class HiveAuthAsync:
                 err.__class__.__name__ == "NotAuthorizedException"
                 or err.__class__.__name__ == "CodeMismatchException"
             ):
-                return "INVALID_CODE"
+                raise HiveInvalid2FACode
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                return "CONNECTION_ERROR"
+                raise HiveApiError
 
         return result
 

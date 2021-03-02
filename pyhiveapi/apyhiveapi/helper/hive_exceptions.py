@@ -19,3 +19,15 @@ class HiveReauthRequired(Exception):
 
 class HiveUnknownConfiguration(Exception):
     """Unknown Hive Configuration."""
+
+
+class HiveInvalidUsername(Exception):
+    """Raise invalid Username."""
+
+
+class HiveInvalidPassword(Exception):
+    """Raise invalid password."""
+
+
+class HiveInvalid2FACode(Exception):
+    """Raise invalid 2FA code."""
