@@ -288,13 +288,10 @@ class Session:
             for code in product_list:
                 eval("self." + code)
 
-            if self.data.products[aProduct]["type"] in HIVE_TYPES["Heating"]:
-                self.config.mode.append(p["id"])
-
-            if self.data.products[aProduct]["type"] in HIVE_TYPES["Switch"]:
-                self.config.mode.append(p["id"])
-
-            if self.data.products[aProduct]["type"] in HIVE_TYPES["Light"]:
+            hive_type = (
+                HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
+            )
+            if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])
 
         for aDevice in self.data["devices"]:
@@ -304,10 +301,8 @@ class Session:
             for code in device_list:
                 eval("self." + code)
 
-            if (
-                self.data["devices"][aDevice]["type"] in HIVE_TYPES["Thermo"]
-                or self.data["devices"][aDevice]["type"] in HIVE_TYPES["Sensor"]
-            ):
+            hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
+            if self.data["devices"][aDevice]["type"] in hive_type:
                 self.config.battery.append(d["id"])
 
         if "action" in HIVE_TYPES["Switch"]:
