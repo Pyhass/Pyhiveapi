@@ -63,3 +63,9 @@ repos:
       - id: no-commit-to-branch
         args:
           - --branch=master
+  - repo: local
+    hooks:
+      - id: secretlint
+        name: Secretlint
+        language: docker_image
+        entry: secretlint/secretlint:latest secretlint
