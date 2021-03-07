@@ -89,26 +89,17 @@ class Heating:
             state = data["props"]["temperature"]
 
             if device["hiveID"] in self.session.data.minMax:
-                if self.session.data.minMax[device["hiveID"]][
-                    "TodayDate"
-                ] != datetime.date(datetime.now()):
-                    self.session.data.minMax[device["hiveID"]]["TodayMin"] = 1000
-                    self.session.data.minMax[device["hiveID"]]["TodayMax"] = -1000
-                    self.session.data.minMax[device["hiveID"]][
-                        "TodayDate"
-                    ] = datetime.date(datetime.now())
+                if state < self.session.data.minMax[device["hiveID"]]["TodayMin"]:
+                    self.session.data.minMax[device["hiveID"]]["TodayMin"] = state
 
-                    if state < self.session.data.minMax[device["hiveID"]]["TodayMin"]:
-                        self.session.data.minMax[device["hiveID"]]["TodayMin"] = state
+                if state > self.session.data.minMax[device["hiveID"]]["TodayMax"]:
+                    self.session.data.minMax[device["hiveID"]]["TodayMax"] = state
 
-                    if state > self.session.data.minMax[device["hiveID"]]["TodayMax"]:
-                        self.session.data.minMax[device["hiveID"]]["TodayMax"] = state
+                if state < self.session.data.minMax[device["hiveID"]]["RestartMin"]:
+                    self.session.data.minMax[device["hiveID"]]["RestartMin"] = state
 
-                    if state < self.session.data.minMax[device["hiveID"]]["RestartMin"]:
-                        self.session.data.minMax[device["hiveID"]]["RestartMin"] = state
-
-                    if state > self.session.data.minMax[device["hiveID"]]["RestartMax"]:
-                        self.session.data.minMax[device["hiveID"]]["RestartMax"] = state
+                if state > self.session.data.minMax[device["hiveID"]]["RestartMax"]:
+                    self.session.data.minMax[device["hiveID"]]["RestartMax"] = state
             else:
                 data = {
                     "TodayMin": state,
@@ -118,14 +109,8 @@ class Heating:
                     "RestartMax": state,
                 }
                 self.session.data.minMax[device["hiveID"]] = data
-            f_state = round(float(state), 1)
-            await self.session.log.log(
-                device["hiveID"],
-                self.heatingType + "_Extra",
-                "Current Temp is {0}",
-                info=[str(state)],
-            )
 
+            f_state = round(float(state), 1)
             final = f_state
         except KeyError as e:
             await self.session.log.error(e)
