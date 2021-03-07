@@ -89,11 +89,19 @@ class Heating:
             state = data["props"]["temperature"]
 
             if device["hiveID"] in self.session.data.minMax:
-                if state < self.session.data.minMax[device["hiveID"]]["TodayMin"]:
-                    self.session.data.minMax[device["hiveID"]]["TodayMin"] = state
+                if device["hiveID"]["TodayDate"] == str(datetime.date(datetime.now())):
+                    if state < self.session.data.minMax[device["hiveID"]]["TodayMin"]:
+                        self.session.data.minMax[device["hiveID"]]["TodayMin"] = state
 
-                if state > self.session.data.minMax[device["hiveID"]]["TodayMax"]:
-                    self.session.data.minMax[device["hiveID"]]["TodayMax"] = state
+                    if state > self.session.data.minMax[device["hiveID"]]["TodayMax"]:
+                        self.session.data.minMax[device["hiveID"]]["TodayMax"] = state
+                else:
+                    data = {
+                        "TodayMin": state,
+                        "TodayMax": state,
+                        "TodayDate": str(datetime.date(datetime.now())),
+                    }
+                    self.session.data.minMax[device["hiveID"]] = data
 
                 if state < self.session.data.minMax[device["hiveID"]]["RestartMin"]:
                     self.session.data.minMax[device["hiveID"]]["RestartMin"] = state
