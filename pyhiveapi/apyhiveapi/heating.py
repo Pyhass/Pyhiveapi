@@ -103,7 +103,7 @@ class Heating:
                         "TodayMax": state,
                         "TodayDate": str(datetime.date(datetime.now())),
                     }
-                    self.session.data.minMax[device["hiveID"]] = data
+                    self.session.data.minMax[device["hiveID"]].update(data)
 
                 if state < self.session.data.minMax[device["hiveID"]]["RestartMin"]:
                     self.session.data.minMax[device["hiveID"]]["RestartMin"] = state
