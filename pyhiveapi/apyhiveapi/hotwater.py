@@ -3,6 +3,8 @@
 from .helper.const import HIVETOHA
 
 
+# TODO: Add proper Doc Strings for each  function.
+# TODO: Update function names to be consistent get/set
 class Hotwater:
     """Hive Hotwater Code."""
 

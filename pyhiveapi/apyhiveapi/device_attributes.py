@@ -3,6 +3,8 @@ from .helper.const import HIVETOHA
 from .helper.logger import Logger
 
 
+# TODO: Add proper Doc Strings for each  function.
+# TODO: Update function names to be consistent get/set
 class Attributes:
     """Device Attributes Code."""
 

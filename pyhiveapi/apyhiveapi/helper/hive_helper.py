@@ -150,3 +150,16 @@ class HiveHelper:
         schedule_now_and_next["later"] = schedule_later
 
         return schedule_now_and_next
+
+    def getHeatOnDemandDevice(self, device: dict):
+        """Use TRV device to get the linked thermostat device.
+
+        Args:
+            device ([dictionary]): [The TRV device to lookup.]
+
+        Returns:
+            [dictionary]: [Gets the thermostat device linked to TRV.]
+        """
+        trv = self.session.data.products.get(device["HiveID"])
+        thermostat = self.session.data.products.get(trv["state"]["zone"])
+        return thermostat

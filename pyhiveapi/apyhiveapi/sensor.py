@@ -3,6 +3,8 @@
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
 
 
+# TODO: Add proper Doc Strings for each  function.
+# TODO: Update function names to be consistent get/set
 class Sensor:
     """Hive Sensor Code."""
 

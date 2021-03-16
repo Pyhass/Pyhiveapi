@@ -8,7 +8,7 @@ from .heating import Heating
 from .hotwater import Hotwater
 from .hub import Hub
 from .light import Light
-from .plug import Plug
+from .plug import Switch
 from .sensor import Sensor
 from .session import Session
 
@@ -27,5 +27,5 @@ class Hive(Session):
         self.hotwater = Hotwater(self.session)
         self.hub = Hub(self.session)
         self.light = Light(self.session)
-        self.switch = Plug(self.session)
+        self.switch = Switch(self.session)
         self.sensor = Sensor(self.session)

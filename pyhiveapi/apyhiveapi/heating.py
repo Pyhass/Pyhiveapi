@@ -3,6 +3,8 @@
 from .helper.const import HIVETOHA
 
 
+# TODO: Add proper Doc Strings for each  function.
+# TODO: Update function names to be consistent get/set
 class Heating:
     """Hive Heating Code."""
 
@@ -225,6 +227,25 @@ class Heating:
             return state
         return None
 
+    async def getHeatOnDemand(self, device):
+        """Get heat on demand status.
+
+        Args:
+            device ([dictionary]): [Get Heat on Demand status for Thermostat device.]
+
+        Returns:
+            [string]: [Return True or False for the Heat on Demand status.]
+        """
+        state = None
+
+        try:
+            data = self.session.data.products[device["hiveID"]]
+            state = HIVETOHA["Heating"][data["state"]["autoBoost"]]
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return state
+
     @staticmethod
     async def getOperationModes():
         """Get heating list of possible modes."""
@@ -341,5 +362,33 @@ class Heating:
                 if resp["original"] == 200:
                     await self.session.getDevices(device["hiveID"])
                     final = True
+
+        return final
+
+    async def setHeatOnDemand(self, device: dict, state: str):
+        """Enable or disable Heat on Demand for a Thermostat.
+
+        Args:
+            device ([dictionary]): [This is the Thermostat device you want to update.]
+            state ([str]): [This is the state you want to set. (Either "ENABLED" or "DISABLED")]
+
+        Returns:
+            [boolean]: [Return True or False if the Heat on Demand was set successfully.]
+        """
+        final = False
+
+        if (
+            device["hiveID"] in self.session.data.products
+            and device["deviceData"]["online"]
+        ):
+            data = self.session.data.products[device["hiveID"]]
+            await self.session.hiveRefreshTokens()
+            resp = await self.session.api.setState(
+                data["type"], device["hiveID"], autoBoost=state
+            )
+
+            if resp["original"] == 200:
+                await self.session.getDevices(device["hiveID"])
+                final = True
 
         return final

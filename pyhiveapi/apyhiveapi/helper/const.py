@@ -26,7 +26,7 @@ HTTP_SERVICE_UNAVAILABLE = 503
 HIVETOHA = {
     "Attribute": {True: "Online", False: "Offline"},
     "Boost": {None: "OFF", False: "OFF"},
-    "Heating": {False: "OFF"},
+    "Heating": {False: "OFF", "ENABLED": True, "DISABLED": False},
     "Hotwater": {"MANUAL": "ON", None: "OFF", False: "OFF"},
     "Hub": {
         "Status": {True: 1, False: 0},
@@ -79,6 +79,7 @@ PRODUCTS = {
     ],
     "heating": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
+        'addList("switch", p, haName=" Heat on Demand", hiveType="HeatOnDemand")',
         'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
         'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
         'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
