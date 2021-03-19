@@ -109,7 +109,7 @@ class Session:
                     formatted_data["haName"] = device_name
                 formatted_data.update(kwargs)
             except KeyError as e:
-                self.log.error(e)
+                self.logger.error(e)
 
             self.deviceList[type].append(formatted_data)
         return add
@@ -251,13 +251,7 @@ class Session:
         if config != {}:
             if config["tokens"] is not None and not self.config.file:
                 await self.updateTokens(config["tokens"])
-            elif self.config.file:
-                await self.log.log(
-                    "No_ID",
-                    self.sessionType,
-                    "Loading up a hive session with a preloaded file.",
-                )
-            else:
+            elif not self.config.file:
                 raise HiveUnknownConfiguration
 
         try:
@@ -309,8 +303,6 @@ class Session:
             for action in self.data["actions"]:
                 a = self.data["actions"][action]  # noqa: F841
                 eval("self." + ACTIONS)
-
-        await self.log.log("No_ID", self.sessionType, "Hive component has initialised")
 
         return self.deviceList
 
