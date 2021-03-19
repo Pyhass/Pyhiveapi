@@ -2,18 +2,121 @@
 
 from .helper.const import HIVETOHA
 
+# TODO: Add proper Doc Strings for each  function.
+# TODO: Update function names to be consistent get/set
 
-class Plug:
-    """Hive Switch Code."""
+
+class SmartPlug:
+    """Plug Device.
+
+    Returns:
+        object: Returns Plug object
+    """
 
     plugType = "Switch"
 
-    def __init__(self, session):
-        """Initialise plug."""
+    async def getPlugState(self, device: dict):
+        """Get smart plug state.
+
+        Args:
+            device (dict): Device to get the plug state for.
+
+        Returns:
+            boolean: Returns True or False based on if the plug is on
+        """
+        state = None
+
+        try:
+            data = self.session.data.products[device["hiveID"]]
+            state = data["state"]["status"]
+            state = HIVETOHA["Switch"].get(state, state)
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return state
+
+    async def getPlugPowerUsage(self, device: dict):
+        """Get smart plug current power usage.
+
+        Args:
+            device (dict): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        state = None
+
+        try:
+            data = self.session.data.products[device["hiveID"]]
+            state = data["props"]["powerConsumption"]
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return state
+
+    async def setPlugStatusOn(self, device: dict):
+        """Set smart plug to turn on."""
+        final = False
+
+        if (
+            device["hiveID"] in self.session.data.products
+            and device["deviceData"]["online"]
+        ):
+            await self.session.hiveRefreshTokens()
+            data = self.session.data.products[device["hiveID"]]
+            resp = await self.session.api.setState(
+                data["type"], data["id"], status="ON"
+            )
+            if resp["original"] == 200:
+                final = True
+                await self.session.getDevices(device["hiveID"])
+
+        return final
+
+    async def setPlugStatusOff(self, device: dict):
+        """Set smart plug to turn off."""
+        final = False
+
+        if (
+            device["hiveID"] in self.session.data.products
+            and device["deviceData"]["online"]
+        ):
+            await self.session.hiveRefreshTokens()
+            data = self.session.data.products[device["hiveID"]]
+            resp = await self.session.api.setState(
+                data["type"], data["id"], status="OFF"
+            )
+            if resp["original"] == 200:
+                final = True
+                await self.session.getDevices(device["hiveID"])
+
+        return final
+
+
+class Switch(SmartPlug):
+    """Home Assistant switch class.
+
+    Args:
+        SmartPlug (Class): Initialises the Smartplug Class.
+    """
+
+    def __init__(self, session: object):
+        """Initialise switch.
+
+        Args:
+            session (object): This is the session object to interact with the current session.
+        """
         self.session = session
 
-    async def getPlug(self, device):
-        """Get smart plug data."""
+    async def getSwitch(self, device: dict):
+        """Home assistant wrapper to get switch device.
+
+        Args:
+            device (dict): Device to be update.
+
+        Returns:
+            dict: Return device after update is complete.
+        """
         await self.session.log.log(
             device["hiveID"], self.plugType, "Getting switch data."
         )
@@ -59,66 +162,44 @@ class Plug:
             )
             return device
 
-    async def getState(self, device):
-        """Get plug current state."""
-        state = None
-        final = None
+    async def getState(self, device: dict):
+        """Home Assistant wrapper to get updated switch state.
 
-        try:
-            data = self.session.data.products[device["hiveID"]]
-            state = data["state"]["status"]
-            final = HIVETOHA["Switch"].get(state, state)
-        except KeyError as e:
-            await self.session.log.error(e)
+        Args:
+            device (dict): Device to get state for
 
-        return final
+        Returns:
+            boolean: Return True or False for the state.
+        """
+        if device["hiveType"] == "HeatOnDemand":
+            return await self.session.heating.getHeatOnDemand(device)
+        else:
+            return await self.getPlugState(device)
 
-    async def getPowerUsage(self, device):
-        """Get smart plug current power usage."""
-        state = None
+    async def turnOn(self, device: dict):
+        """Home Assisatnt wrapper for turning switch on.
 
-        try:
-            data = self.session.data.products[device["hiveID"]]
-            state = data["props"]["powerConsumption"]
-        except KeyError as e:
-            await self.session.log.error(e)
+        Args:
+            device (dict): Device to switch on.
 
-        return state
+        Returns:
+            function: Calls relevant function.
+        """
+        if device["hiveType"] == "HeatOnDemand":
+            return await self.session.heating.setHeatOnDemand(device, "ENABLED")
+        else:
+            return await self.setPlugStatusOn(device)
 
-    async def turnOn(self, device):
-        """Set smart plug to turn on."""
-        final = False
+    async def turnOff(self, device: dict):
+        """Home Assisatnt wrapper for turning switch off.
 
-        if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
-        ):
-            await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
-                data["type"], data["id"], status="ON"
-            )
-            if resp["original"] == 200:
-                final = True
-                await self.session.getDevices(device["hiveID"])
+        Args:
+            device (dict): Device to switch off.
 
-        return final
-
-    async def turnOff(self, device):
-        """Set smart plug to turn off."""
-        final = False
-
-        if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
-        ):
-            await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
-                data["type"], data["id"], status="OFF"
-            )
-            if resp["original"] == 200:
-                final = True
-                await self.session.getDevices(device["hiveID"])
-
-        return final
+        Returns:
+            function: Calls relevant function.
+        """
+        if device["hiveType"] == "HeatOnDemand":
+            return await self.session.heating.setHeatOnDemand(device, "DISABLED")
+        else:
+            return await self.setPlugStatusOff(device)
