@@ -88,8 +88,8 @@ PRODUCTS = {
     ],
     "trvcontrol": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
-        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", custom=True)',
         'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
         'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
         'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
