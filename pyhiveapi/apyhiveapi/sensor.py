@@ -3,19 +3,81 @@
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
 
 
-# TODO: Add proper Doc Strings for each  function.
-# TODO: Update function names to be consistent get/set
-class Sensor:
+class HiveSensor:
     """Hive Sensor Code."""
 
     sensorType = "Sensor"
 
-    def __init__(self, session):
-        """Initialise sensor."""
+    async def getState(self, device: dict):
+        """Get sensor state.
+
+        Args:
+            device (dict): Device to get state off.
+
+        Returns:
+            str: State of device.
+        """
+        state = None
+        final = None
+
+        try:
+            data = self.session.data.products[device["hiveID"]]
+            if data["type"] == "contactsensor":
+                state = data["props"]["status"]
+                final = HIVETOHA[self.sensorType].get(state, state)
+            elif data["type"] == "motionsensor":
+                final = data["props"]["motion"]["status"]
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return final
+
+    async def online(self, device: dict):
+        """Get the online status of the Hive hub.
+
+        Args:
+            device (dict): Device to get the state of.
+
+        Returns:
+            boolean: True/False if the device is online.
+        """
+        state = None
+        final = None
+
+        try:
+            data = self.session.data.devices[device["device_id"]]
+            state = data["props"]["online"]
+            final = HIVETOHA[self.sensorType].get(state, state)
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return final
+
+
+class Sensor(HiveSensor):
+    """Home Assisatnt sensor code.
+
+    Args:
+        HiveSensor (object): Hive sensor code.
+    """
+
+    def __init__(self, session: object = None):
+        """Initialise sensor.
+
+        Args:
+            session (object, optional): session to interact with Hive account. Defaults to None.
+        """
         self.session = session
 
-    async def getSensor(self, device):
-        """Gets updated sensor data."""
+    async def getSensor(self, device: dict):
+        """Gets updated sensor data.
+
+        Args:
+            device (dict): Device to update.
+
+        Returns:
+            dict: Updated device.
+        """
         await self.session.log.log(
             device["hiveID"], self.sensorType, "Getting sensor data."
         )
@@ -90,34 +152,3 @@ class Sensor:
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
-
-    async def getState(self, device):
-        """Get sensor state."""
-        state = None
-        final = None
-
-        try:
-            data = self.session.data.products[device["hiveID"]]
-            if data["type"] == "contactsensor":
-                state = data["props"]["status"]
-                final = HIVETOHA[self.sensorType].get(state, state)
-            elif data["type"] == "motionsensor":
-                final = data["props"]["motion"]["status"]
-        except KeyError as e:
-            await self.session.log.error(e)
-
-        return final
-
-    async def online(self, device):
-        """Get the online status of the Hive hub."""
-        state = None
-        final = None
-
-        try:
-            data = self.session.data.devices[device["device_id"]]
-            state = data["props"]["online"]
-            final = HIVETOHA[self.sensorType].get(state, state)
-        except KeyError as e:
-            await self.session.log.error(e)
-
-        return final

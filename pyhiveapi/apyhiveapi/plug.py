@@ -2,11 +2,8 @@
 
 from .helper.const import HIVETOHA
 
-# TODO: Add proper Doc Strings for each  function.
-# TODO: Update function names to be consistent get/set
 
-
-class SmartPlug:
+class HiveSmartPlug:
     """Plug Device.
 
     Returns:
@@ -93,7 +90,7 @@ class SmartPlug:
         return final
 
 
-class Switch(SmartPlug):
+class Switch(HiveSmartPlug):
     """Home Assistant switch class.
 
     Args:
@@ -138,7 +135,6 @@ class Switch(SmartPlug):
                 "device_name": device["device_name"],
                 "status": {
                     "state": await self.getState(device),
-                    "power_usage": await self.getPowerUsage(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
@@ -147,6 +143,11 @@ class Switch(SmartPlug):
                     device["device_id"], device["hiveType"]
                 ),
             }
+
+            if device["hiveType"] == "activeplug":
+                dev_data["status"].update(
+                    {"power_usage": await self.getPlugPowerUsage(device)}
+                )
 
             await self.session.log.log(
                 device["hiveID"],
@@ -171,7 +172,7 @@ class Switch(SmartPlug):
         Returns:
             boolean: Return True or False for the state.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.getHeatOnDemand(device)
         else:
             return await self.getPlugState(device)
@@ -185,7 +186,7 @@ class Switch(SmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "ENABLED")
         else:
             return await self.setPlugStatusOn(device)
@@ -199,7 +200,7 @@ class Switch(SmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "DISABLED")
         else:
             return await self.setPlugStatusOff(device)
