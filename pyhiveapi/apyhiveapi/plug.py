@@ -139,14 +139,20 @@ class Switch(HiveSmartPlug):
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.stateAttributes(
-                    device["device_id"], device["hiveType"]
-                ),
+                "attributes": {},
             }
 
             if device["hiveType"] == "activeplug":
                 dev_data["status"].update(
-                    {"power_usage": await self.getPlugPowerUsage(device)}
+                    {
+                        "status": {
+                            "state": dev_data["status"]["state"],
+                            "power_usage": await self.getPlugPowerUsage(device),
+                        },
+                        "attributes": await self.session.attr.stateAttributes(
+                            device["device_id"], device["hiveType"]
+                        ),
+                    }
                 )
 
             await self.session.log.log(
