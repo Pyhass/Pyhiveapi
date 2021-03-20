@@ -319,8 +319,8 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
-        if mins > 0 and temp >= await self.minTemperature(device):
-            if temp <= await self.maxTemperature(device):
+        if mins > 0 and temp >= await self.getMinTemperature(device):
+            if temp <= await self.getMaxTemperature(device):
                 await self.session.hiveRefreshTokens()
                 final = False
 
