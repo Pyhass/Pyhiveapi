@@ -52,7 +52,14 @@ class HiveSmartPlug:
         return state
 
     async def setPlugStatusOn(self, device: dict):
-        """Set smart plug to turn on."""
+        """Set smart plug to turn on.
+
+        Args:
+            device (dict): Device to switch on.
+
+        Returns:
+            boolean: True/False if successful
+        """
         final = False
 
         if (
@@ -71,7 +78,14 @@ class HiveSmartPlug:
         return final
 
     async def setPlugStatusOff(self, device: dict):
-        """Set smart plug to turn off."""
+        """Set smart plug to turn off.
+
+        Args:
+            device (dict): Device to switch off.
+
+        Returns:
+            boolean: True/False if successful
+        """
         final = False
 
         if (
