@@ -152,8 +152,8 @@ class HiveHeating:
         final = None
 
         try:
-            current_temp = await self.currentTemperature(device)
-            target_temp = await self.targetTemperature(device)
+            current_temp = await self.getCurrentTemperature(device)
+            target_temp = await self.getTargetTemperature(device)
             if current_temp < target_temp:
                 state = "ON"
             else:
@@ -460,7 +460,7 @@ class Climate(HiveHeating):
                 "status": {
                     "current_temperature": await self.getCurrentTemperature(device),
                     "target_temperature": await self.getTargetTemperature(device),
-                    "action": await self.currentOperation(device),
+                    "action": await self.getCurrentOperation(device),
                     "mode": await self.getMode(device),
                     "boost": await self.getBoostStatus(device),
                 },
