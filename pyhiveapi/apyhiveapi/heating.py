@@ -362,7 +362,7 @@ class HiveHeating:
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             await self.session.getDevices(device["hiveID"])
-            if await self.getBoost(device) == "ON":
+            if await self.getBoostStatus(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode == "MANUAL" or prev_mode == "OFF":
                     pre_temp = data["props"]["previous"].get("target", 7)
