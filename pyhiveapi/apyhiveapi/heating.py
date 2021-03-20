@@ -211,7 +211,7 @@ class HiveHeating:
         Returns:
             str: Boost time.
         """
-        if await self.getBoost(device) == "ON":
+        if await self.getBoostStatus(device) == "ON":
             state = None
 
             try:
