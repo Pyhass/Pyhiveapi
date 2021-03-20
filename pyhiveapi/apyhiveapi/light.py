@@ -435,7 +435,7 @@ class Light(HiveLight):
         if color is not None:
             return await self.setColor(device, color)
 
-        return self.setStatusOn(device)
+        return await self.setStatusOn(device)
 
     async def turnOff(self, device: dict):
         """Set light to turn off.
@@ -446,4 +446,4 @@ class Light(HiveLight):
         Returns:
             boolean: True/False if successful.
         """
-        return self.setStatusOff(device)
+        return await self.setStatusOff(device)
