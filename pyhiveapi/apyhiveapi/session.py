@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from aiohttp.web import HTTPException
 from apyhiveapi import API, Auth
 
-from .device_attributes import Attributes
+from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
@@ -23,20 +23,38 @@ from .helper.logger import Logger
 from .helper.map import Map
 
 
-class Session:
-    """Hive Session Code."""
+class HiveSession:
+    """Hive Session Code.
+
+    Raises:
+        HiveUnknownConfiguration: Unknown configuration.
+        HTTPException: HTTP error has occurred.
+        HiveApiError: Hive has retuend an error code.
+        HiveReauthRequired: Tokens have expired and reauthentiction is required.
+
+    Returns:
+        object: Session object.
+    """
 
     sessionType = "Session"
 
-    def __init__(self, username=None, password=None, websession=None):
-        """Initialise the base variable values."""
+    def __init__(
+        self, username: str = None, password: str = None, websession: object = None
+    ):
+        """Initialise the base variable values.
+
+        Args:
+            username (str, optional): Hive username. Defaults to None.
+            password (str, optional): Hive Password. Defaults to None.
+            websession (object, optional): Websession for api calls. Defaults to None.
+        """
         self.auth = None
         self.api = API(hiveSession=self, websession=websession)
         if None not in (username, password):
             self.auth = Auth(username=username, password=password)
 
         self.helper = HiveHelper(self)
-        self.attr = Attributes(self)
+        self.attr = HiveAttributes(self)
         self.log = Logger(self)
         self.updateLock = asyncio.Lock()
         self.username = username
@@ -69,8 +87,15 @@ class Session:
         self.devices = {}
         self.deviceList = {}
 
-    def openFile(self, file):
-        """Open a file."""
+    def openFile(self, file: str):
+        """Open a file.
+
+        Args:
+            file (str): File location
+
+        Returns:
+            dict: Data from the chosen file.
+        """
         path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
         path = path.replace("/pyhiveapi/", "/apyhiveapi/")
         with open(path) as j:
@@ -78,8 +103,16 @@ class Session:
 
         return data
 
-    def addList(self, type, data, **kwargs):
-        """Add entity to the list."""
+    def addList(self, type: str, data: dict, **kwargs: dict):
+        """Add entity to the list.
+
+        Args:
+            type (str): Type of entity
+            data (dict): Information to create entity.
+
+        Returns:
+            dict: Entity.
+        """
         add = False if kwargs.get("custom") and not self.config.sensors else True
         device = self.helper.getDeviceData(data)
         device_name = (
@@ -114,21 +147,36 @@ class Session:
             self.deviceList[type].append(formatted_data)
         return add
 
-    async def updateInterval(self, new_interval):
-        """Update the scan interval."""
+    async def updateInterval(self, new_interval: int):
+        """Update the scan interval.
+
+        Args:
+            new_interval (int): New interval for polling.
+        """
         interval = timedelta(seconds=new_interval)
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
         self.update.intervalSeconds = interval
 
-    async def useFile(self, username=None):
-        """Update to check if file is being used."""
+    async def useFile(self, username: str = None):
+        """Update to check if file is being used.
+
+        Args:
+            username (str, optional): Looks for use@file.com. Defaults to None.
+        """
         using_file = True if username == "use@file.com" else False
         if using_file:
             self.config.file = True
 
-    async def updateTokens(self, tokens):
-        """Update session tokens."""
+    async def updateTokens(self, tokens: dict):
+        """Update session tokens.
+
+        Args:
+            tokens (dict): Tokens from API response.
+
+        Returns:
+            dict: Parsed dictionary of tokens
+        """
         data = {}
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
@@ -147,7 +195,14 @@ class Session:
         return self.tokens
 
     async def login(self):
-        """Login to hive account."""
+        """Login to hive account.
+
+        Raises:
+            HiveUnknownConfiguration: Login information is unknown.
+
+        Returns:
+            dict: result of the login request.
+        """
         if not self.auth:
             raise HiveUnknownConfiguration
 
@@ -155,14 +210,26 @@ class Session:
         await self.updateTokens(result)
         return result
 
-    async def sms2FA(self, code, session):
-        """Complete 2FA auth."""
+    async def sms2FA(self, code: str, session: dict):
+        """Complete 2FA auth.
+
+        Args:
+            code (str): 2FA code to complete login.
+            session (dict): The session data from login.
+
+        Returns:
+            dict: result of the login request.
+        """
         result = self.auth.sms_2fa(code, session)
         await self.updateTokens(result)
         return result
 
     async def hiveRefreshTokens(self):
-        """Refresh Hive tokens."""
+        """Refresh Hive tokens.
+
+        Returns:
+            boolean: True/False if update was successful
+        """
         updated = False
 
         if self.config.file:
@@ -175,8 +242,15 @@ class Session:
 
         return updated
 
-    async def updateData(self, device):
-        """Get latest data for Hive nodes - rate limiting."""
+    async def updateData(self, device: dict):
+        """Get latest data for Hive nodes - rate limiting.
+
+        Args:
+            device (dict): Device requesting the update.
+
+        Returns:
+            boolean: True/False if update was successful
+        """
         await self.updateLock.acquire()
         updated = False
         try:
@@ -189,8 +263,19 @@ class Session:
 
         return updated
 
-    async def getDevices(self, n_id):
-        """Get latest data for Hive nodes."""
+    async def getDevices(self, n_id: str):
+        """Get latest data for Hive nodes.
+
+        Args:
+            n_id (str): ID of the device requesting data.
+
+        Raises:
+            HTTPException: HTTP error has occurred updating the devices.
+            HiveApiError: An API error code has been returned.
+
+        Returns:
+            boolean: True/False if update was successful.
+        """
         get_nodes_successful = False
         api_resp_d = None
 
@@ -235,8 +320,19 @@ class Session:
 
         return get_nodes_successful
 
-    async def startSession(self, config={}):
-        """Setup the Hive platform."""
+    async def startSession(self, config: dict = {}):
+        """Setup the Hive platform.
+
+        Args:
+            config (dict, optional): Configuration for Home Assistant to use. Defaults to {}.
+
+        Raises:
+            HiveUnknownConfiguration: Unknown configuration identifed.
+            HiveReauthRequired: Tokens have expired and reauthentication is required.
+
+        Returns:
+            list: List of devices
+        """
         custom_component = False
         for file, line, w1, w2 in traceback.extract_stack():
             if "/custom_components/" in file:
@@ -271,7 +367,11 @@ class Session:
         return await self.createDevices()
 
     async def createDevices(self):
-        """Create list of devices."""
+        """Create list of devices.
+
+        Returns:
+            list: List of devices
+        """
         self.deviceList["binary_sensor"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
@@ -315,8 +415,17 @@ class Session:
         return self.deviceList
 
     @staticmethod
-    def epochTime(date_time, pattern, action):
-        """date/time conversion to epoch."""
+    def epochTime(date_time: any, pattern: str, action: str):
+        """date/time conversion to epoch.
+
+        Args:
+            date_time (any): epoch time or date and time to use.
+            pattern (str): Pattern for converting to epoch.
+            action (str): Convert from/to.
+
+        Returns:
+            any: Converted time.
+        """
         if action == "to_epoch":
             pattern = "%d.%m.%Y %H:%M:%S"
             epochtime = int(time.mktime(time.strptime(str(date_time), pattern)))

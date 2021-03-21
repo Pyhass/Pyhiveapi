@@ -2,11 +2,8 @@
 
 from .helper.const import HIVETOHA
 
-# TODO: Add proper Doc Strings for each  function.
-# TODO: Update function names to be consistent get/set
 
-
-class SmartPlug:
+class HiveSmartPlug:
     """Plug Device.
 
     Returns:
@@ -55,7 +52,14 @@ class SmartPlug:
         return state
 
     async def setPlugStatusOn(self, device: dict):
-        """Set smart plug to turn on."""
+        """Set smart plug to turn on.
+
+        Args:
+            device (dict): Device to switch on.
+
+        Returns:
+            boolean: True/False if successful
+        """
         final = False
 
         if (
@@ -74,7 +78,14 @@ class SmartPlug:
         return final
 
     async def setPlugStatusOff(self, device: dict):
-        """Set smart plug to turn off."""
+        """Set smart plug to turn off.
+
+        Args:
+            device (dict): Device to switch off.
+
+        Returns:
+            boolean: True/False if successful
+        """
         final = False
 
         if (
@@ -93,7 +104,7 @@ class SmartPlug:
         return final
 
 
-class Switch(SmartPlug):
+class Switch(HiveSmartPlug):
     """Home Assistant switch class.
 
     Args:
@@ -138,15 +149,25 @@ class Switch(SmartPlug):
                 "device_name": device["device_name"],
                 "status": {
                     "state": await self.getState(device),
-                    "power_usage": await self.getPowerUsage(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.stateAttributes(
-                    device["device_id"], device["hiveType"]
-                ),
+                "attributes": {},
             }
+
+            if device["hiveType"] == "activeplug":
+                dev_data["status"].update(
+                    {
+                        "status": {
+                            "state": dev_data["status"]["state"],
+                            "power_usage": await self.getPlugPowerUsage(device),
+                        },
+                        "attributes": await self.session.attr.stateAttributes(
+                            device["device_id"], device["hiveType"]
+                        ),
+                    }
+                )
 
             await self.session.log.log(
                 device["hiveID"],
@@ -171,7 +192,7 @@ class Switch(SmartPlug):
         Returns:
             boolean: Return True or False for the state.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.getHeatOnDemand(device)
         else:
             return await self.getPlugState(device)
@@ -185,7 +206,7 @@ class Switch(SmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "ENABLED")
         else:
             return await self.setPlugStatusOn(device)
@@ -199,7 +220,7 @@ class Switch(SmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "HeatOnDemand":
+        if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "DISABLED")
         else:
             return await self.setPlugStatusOff(device)

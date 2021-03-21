@@ -3,20 +3,33 @@
 from .helper.const import HIVETOHA
 
 
-# TODO: Add proper Doc Strings for each  function.
-# TODO: Update function names to be consistent get/set
-class Hub:
-    """Hive Hub Code."""
+class HiveHub:
+    """Hive hub.
+
+    Returns:
+        object: Returns a hub object.
+    """
 
     hubType = "Hub"
     logType = "Sensor"
 
-    def __init__(self, session=None):
-        """Initialise hub."""
+    def __init__(self, session: object = None):
+        """Initialise hub.
+
+        Args:
+            session (object, optional): session to interact with Hive account. Defaults to None.
+        """
         self.session = session
 
-    async def hubSmoke(self, device):
-        """Get the online status of the Hive hub."""
+    async def getSmokeStatus(self, device: dict):
+        """Get the hub smoke status.
+
+        Args:
+            device (dict): device to get status for
+
+        Returns:
+            str: Return smoke status.
+        """
         state = None
         final = None
 
@@ -29,8 +42,15 @@ class Hub:
 
         return final
 
-    async def hubDogBark(self, device):
-        """Get the online status of the Hive hub."""
+    async def getDogBarkStatus(self, device: dict):
+        """Get dog bark status.
+
+        Args:
+            device (dict): Device to get status for.
+
+        Returns:
+            str: Return status.
+        """
         state = None
         final = None
 
@@ -43,8 +63,15 @@ class Hub:
 
         return final
 
-    async def hubGlass(self, device):
-        """Get the glass detected status from the Hive hub."""
+    async def getGlassBreakStatus(self, device: dict):
+        """Get the glass detected status from the Hive hub.
+
+        Args:
+            device (dict): Device to get status for.
+
+        Returns:
+            str: Return status.
+        """
         state = None
         final = None
 

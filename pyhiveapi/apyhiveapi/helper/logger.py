@@ -5,12 +5,20 @@ from datetime import datetime
 
 
 class Logger:
-    """Custom Logging Code."""
+    """Custom Logging Code.
+
+    Returns:
+        object: Logger object.
+    """
 
     LOGGER = logging.getLogger(__name__)
 
-    def __init__(self, session=None):
-        """Initialise the logger class."""
+    def __init__(self, session: object = None):
+        """Initialise the logger class.
+
+        Args:
+            session (object, optional): inertact with hive account. Defaults to None.
+        """
         self.debugOutFolder = ""
         self.debugOutFile = ""
         self.debugEnabled = False
@@ -18,7 +26,14 @@ class Logger:
         self.session = session
 
     async def checkDebugging(self, enable_debug: list):
-        """Check Logging Active."""
+        """Check Logging Active.
+
+        Args:
+            enable_debug (list): List of areas to log.
+
+        Returns:
+            boolean: True/False if debugging is on.
+        """
         if len(enable_debug) > 0:
             self.debugEnabled = True
         else:
@@ -66,16 +81,29 @@ class Logger:
         else:
             pass
 
-    async def error(self, e="UNKNOWN"):
-        """Process and unexpected error."""
+    async def error(self, e: str = "UNKNOWN"):
+        """Process and unexpected error.
+
+        Args:
+            e (str, optional): log and unexpected error. Defaults to "UNKNOWN".
+        """
         self.LOGGER.error(
             f"An unexpected error has occurred whilst"
             f" executing {inspect.stack()[1][3]}"
             f" with exception {e.__class__} {e}"
         )
 
-    async def errorCheck(self, n_id, n_type, error_type, **kwargs):
-        """Error has occurred."""
+    async def errorCheck(self, n_id: str, n_type: str, error_type: str, **kwargs):
+        """Error has occurred.
+
+        Args:
+            n_id (str): The id of the device.
+            n_type (str): The type of device.
+            error_type (str): The error type to check.
+
+        Returns:
+            boolean: True/False if error has occurred.
+        """
         message = None
         new_data = None
         result = False

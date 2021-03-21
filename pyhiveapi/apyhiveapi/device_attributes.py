@@ -3,19 +3,29 @@ from .helper.const import HIVETOHA
 from .helper.logger import Logger
 
 
-# TODO: Add proper Doc Strings for each  function.
-# TODO: Update function names to be consistent get/set
-class Attributes:
+class HiveAttributes:
     """Device Attributes Code."""
 
-    def __init__(self, session=None):
-        """Initialise attributes."""
+    def __init__(self, session: object = None):
+        """Initialise attributes.
+
+        Args:
+            session (object, optional): Session to interact with hive account. Defaults to None.
+        """
         self.session = session
         self.session.log = Logger()
         self.type = "Attribute"
 
-    async def stateAttributes(self, n_id, _type):
-        """Get HA State Attributes."""
+    async def stateAttributes(self, n_id: str, _type: str):
+        """Get HA State Attributes.
+
+        Args:
+            n_id (str): The id of the device.
+            _type (str): The device type.
+
+        Returns:
+            dict: Set of attributes.
+        """
         attr = {}
 
         if n_id in self.session.data.products or n_id in self.session.data.devices:
@@ -28,8 +38,15 @@ class Attributes:
                 attr.update({"mode": (await self.getMode(n_id))})
         return attr
 
-    async def onlineOffline(self, n_id):
-        """Check if device is online."""
+    async def onlineOffline(self, n_id: str):
+        """Check if device is online.
+
+        Args:
+            n_id (str): The id of the device.
+
+        Returns:
+            boolean: True/False if device online.
+        """
         state = None
 
         try:
@@ -40,8 +57,15 @@ class Attributes:
 
         return state
 
-    async def getMode(self, n_id):
-        """Get sensor mode."""
+    async def getMode(self, n_id: str):
+        """Get sensor mode.
+
+        Args:
+            n_id (str): The id of the device
+
+        Returns:
+            str: The mode of the device.
+        """
         state = None
         final = None
 
@@ -54,8 +78,15 @@ class Attributes:
 
         return final
 
-    async def getBattery(self, n_id):
-        """Get device battery level."""
+    async def getBattery(self, n_id: str):
+        """Get device battery level.
+
+        Args:
+            n_id (str): The id of the device.
+
+        Returns:
+            str: Battery level of device.
+        """
         state = None
         final = None
 
