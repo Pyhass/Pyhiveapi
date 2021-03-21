@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class Logger:
-    """Custom Logging Code.
+    """Custom Logging Code."""
 
     def __init__(self, session=None):
         """Initialise the logger class."""
