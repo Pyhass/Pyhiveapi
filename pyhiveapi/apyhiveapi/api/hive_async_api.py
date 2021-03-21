@@ -29,6 +29,7 @@ class HiveApiAsync:
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
             "all": self.baseUrl + "/nodes/all?products=true&devices=true&actions=true",
+            "alarm": self.baseUrl + "/security-lite?homeId=",
             "devices": self.baseUrl + "/devices",
             "products": self.baseUrl + "/products",
             "actions": self.baseUrl + "/actions",
@@ -147,6 +148,16 @@ class HiveApiAsync:
 
         return self.json_return
 
+    async def getAlarm(self):
+        """Build and query alarm endpoint."""
+        url = self.urls["alarm"] + self.session.config.homeID
+        try:
+            await self.request("get", url)
+        except (OSError, RuntimeError, ZeroDivisionError):
+            await self.error()
+
+        return self.json_return
+
     async def getDevices(self):
         """Call the get devices endpoint."""
         url = self.urls["devices"]
@@ -220,6 +231,28 @@ class HiveApiAsync:
         )
 
         url = self.urls["nodes"].format(n_type, n_id)
+        try:
+            await self.isFileBeingUsed()
+            await self.request("post", url, data=jsc)
+        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
+            if e.__class__.__name__ == "FileInUse":
+                return {"original": "file"}
+            else:
+                await self.error()
+
+        return self.json_return
+
+    async def setAlarm(self, **kwargs):
+        """Set the state of the alarm."""
+        jsc = (
+            "{"
+            + ",".join(
+                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
+            )
+            + "}"
+        )
+
+        url = f"{self.baseUrl}{self.urls['nodes']}{self.session.config.homeID}"
         try:
             await self.isFileBeingUsed()
             await self.request("post", url, data=jsc)
