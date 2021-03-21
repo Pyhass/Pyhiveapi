@@ -128,9 +128,6 @@ class Switch(HiveSmartPlug):
         Returns:
             dict: Return device after update is complete.
         """
-        await self.session.log.log(
-            device["hiveID"], self.plugType, "Getting switch data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -169,12 +166,6 @@ class Switch(HiveSmartPlug):
                     }
                 )
 
-            await self.session.log.log(
-                device["hiveID"],
-                self.plugType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:

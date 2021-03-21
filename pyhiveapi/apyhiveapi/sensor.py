@@ -78,9 +78,6 @@ class Sensor(HiveSensor):
         Returns:
             dict: Updated device.
         """
-        await self.session.log.log(
-            device["hiveID"], self.sensorType, "Getting sensor data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -139,12 +136,6 @@ class Sensor(HiveSensor):
                     }
                 )
 
-            await self.session.log.log(
-                device["hiveID"],
-                self.sensorType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:

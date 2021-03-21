@@ -129,6 +129,7 @@ class Hive(HiveSession):
         Returns:
             object: Returns traceback object.
         """
+        global debug
         debug = debugger
         if debug:
             return sys.settrace(trace_debug)
