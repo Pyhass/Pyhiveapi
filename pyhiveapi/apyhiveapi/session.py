@@ -89,6 +89,7 @@ class HiveSession:
                 "alarm": {},
             }
         )
+        self.devices = {}
         self.deviceList = {}
 
     def openFile(self, file: str):
@@ -401,13 +402,13 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        self.deviceList["alarm_control_panel"] = {}
-        self.deviceList["binary_sensor"] = {}
-        self.deviceList["climate"] = {}
-        self.deviceList["light"] = {}
-        self.deviceList["sensor"] = {}
-        self.deviceList["switch"] = {}
-        self.deviceList["water_heater"] = {}
+        self.deviceList["alarm_control_panel"] = []
+        self.deviceList["binary_sensor"] = []
+        self.deviceList["climate"] = []
+        self.deviceList["light"] = []
+        self.deviceList["sensor"] = []
+        self.deviceList["switch"] = []
+        self.deviceList["water_heater"] = []
 
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:

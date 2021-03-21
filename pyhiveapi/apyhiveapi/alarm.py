@@ -129,9 +129,7 @@ class Alarm(HiveHomeShield):
                 "Device update {0}",
                 info=[dev_data["status"]],
             )
-            self.session.devicelist[device["haType"]].update(
-                {device["haName"]: dev_data}
-            )
+            self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
             await self.session.log.errorCheck(
