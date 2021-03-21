@@ -4,6 +4,7 @@ from typing import Optional
 from aiohttp import ClientSession
 
 from .action import HiveAction
+from .alarm import Alarm
 from .heating import Climate
 from .hotwater import WaterHeater
 from .hub import HiveHub
@@ -30,6 +31,7 @@ class Hive(HiveSession):
         super().__init__(username, password, websession)
         self.session = self
         self.action = HiveAction(self.session)
+        self.alarm = Alarm(self.session)
         self.heating = Climate(self.session)
         self.hotwater = WaterHeater(self.session)
         self.hub = HiveHub(self.session)

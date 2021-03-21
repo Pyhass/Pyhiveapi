@@ -24,6 +24,7 @@ HTTP_SERVICE_UNAVAILABLE = 503
 
 
 HIVETOHA = {
+    "Alarm": {"home": "armed_home", "away": "armed_away", "asleep": "armed_night"},
     "Attribute": {True: "Online", False: "Offline"},
     "Boost": {None: "OFF", False: "OFF"},
     "Heating": {False: "OFF", "ENABLED": True, "DISABLED": False},
@@ -125,6 +126,21 @@ PRODUCTS = {
 }
 
 DEVICES = {
+    "contactsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "hub": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "motionsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "sense": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "siren": ['addList("alarm_control_panel", d)'],
     "thermostatui": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
         'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
@@ -132,20 +148,6 @@ DEVICES = {
     "trv": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
         'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "motionsensor": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "contactsensor": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "sense": [
-        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
-    ],
-    "hub": [
-        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
     ],
 }
 

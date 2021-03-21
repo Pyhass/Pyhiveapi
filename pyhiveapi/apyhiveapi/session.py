@@ -57,8 +57,6 @@ class HiveSession:
         self.attr = HiveAttributes(self)
         self.log = Logger(self)
         self.updateLock = asyncio.Lock()
-        self.username = username
-        self.scanInterval = 120
         self.tokens = Map(
             {
                 "tokenData": {},
@@ -66,25 +64,31 @@ class HiveSession:
                 "tokenExpiry": timedelta(seconds=3600),
             }
         )
-        self.update = Map(
-            {
-                "lastUpdated": datetime.now(),
-                "intervalSeconds": timedelta(seconds=120),
-            }
-        )
         self.config = Map(
             {
-                "mode": [],
+                "alarm": False,
                 "battery": [],
-                "sensors": False,
-                "file": False,
                 "errorList": {},
+                "file": False,
+                "homeID": None,
+                "lastUpdated": datetime.now(),
+                "mode": [],
+                "scanInterval": timedelta(seconds=120),
+                "sensors": False,
+                "userID": None,
+                "username": username,
             }
         )
         self.data = Map(
-            {"products": {}, "devices": {}, "actions": {}, "user": {}, "minMax": {}}
+            {
+                "products": {},
+                "devices": {},
+                "actions": {},
+                "user": {},
+                "minMax": {},
+                "alarm": {},
+            }
         )
-        self.devices = {}
         self.deviceList = {}
 
     def openFile(self, file: str):
@@ -144,19 +148,19 @@ class HiveSession:
             except KeyError as e:
                 self.log.error(e)
 
-            self.deviceList[type].append(formatted_data)
+            self.deviceList[type].update({formatted_data["haName"]: formatted_data})
         return add
 
-    async def updateInterval(self, new_interval: int):
+    async def updateInterval(self, new_interval: timedelta):
         """Update the scan interval.
 
         Args:
             new_interval (int): New interval for polling.
         """
-        interval = timedelta(seconds=new_interval)
+        interval = new_interval
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
-        self.update.intervalSeconds = interval
+        self.config.scanInterval = interval
 
     async def useFile(self, username: str = None):
         """Update to check if file is being used.
@@ -254,7 +258,7 @@ class HiveSession:
         await self.updateLock.acquire()
         updated = False
         try:
-            ep = self.update.lastUpdate + self.update.intervalSeconds
+            ep = self.config.lastUpdate + self.config.scanInterval
             if datetime.now() >= ep:
                 await self.getDevices(device["hiveID"])
                 updated = True
@@ -262,6 +266,24 @@ class HiveSession:
             self.updateLock.release()
 
         return updated
+
+    async def getAlarm(self):
+        """Get alarm data.
+
+        Raises:
+            HTTPException: HTTP error has occurred updating the devices.
+            HiveApiError: An API error code has been returned.
+        """
+        if self.config.file:
+            api_resp_d = self.openFile("alarm.json")
+        elif self.tokens is not None:
+            api_resp_d = await self.api.getAlarm()
+            if operator.contains(str(api_resp_d["original"]), "20") is False:
+                raise HTTPException
+            elif api_resp_d["parsed"] is None:
+                raise HiveApiError
+
+        self.data.alarm = api_resp_d["parsed"]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
@@ -298,22 +320,29 @@ class HiveSession:
             for hiveType in api_resp_p:
                 if hiveType == "user":
                     self.data.user = api_resp_p[hiveType]
+                    self.config.userID = api_resp_p[hiveType]["id"]
                 if hiveType == "products":
                     for aProduct in api_resp_p[hiveType]:
                         tmpProducts.update({aProduct["id"]: aProduct})
                 if hiveType == "devices":
                     for aDevice in api_resp_p[hiveType]:
                         tmpDevices.update({aDevice["id"]: aDevice})
+                        if aDevice["type"] == "siren":
+                            self.config.alarm = True
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
+                if hiveType == "homes":
+                    self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
 
             if len(tmpProducts) > 0:
                 self.data.products = copy.deepcopy(tmpProducts)
             if len(tmpDevices) > 0:
                 self.data.devices = copy.deepcopy(tmpDevices)
             self.data.actions = copy.deepcopy(tmpActions)
-            self.update.lastUpdate = datetime.now()
+            if self.config.alarm:
+                await self.getAlarm()
+            self.config.lastUpdate = datetime.now()
             get_nodes_successful = True
         except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
             get_nodes_successful = False
@@ -339,9 +368,9 @@ class HiveSession:
                 custom_component = True
 
         self.config.sensors = custom_component
-        await self.useFile(config.get("username", self.username))
+        await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
-            config.get("options", {}).get("scan_interval", self.scanInterval)
+            config.get("options", {}).get("scan_interval", self.config.scanInterval)
         )
 
         if config != {}:
@@ -372,36 +401,33 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        self.deviceList["binary_sensor"] = []
-        self.deviceList["climate"] = []
-        self.deviceList["light"] = []
-        self.deviceList["sensor"] = []
-        self.deviceList["switch"] = []
-        self.deviceList["water_heater"] = []
+        self.deviceList["alarm_control_panel"] = {}
+        self.deviceList["binary_sensor"] = {}
+        self.deviceList["climate"] = {}
+        self.deviceList["light"] = {}
+        self.deviceList["sensor"] = {}
+        self.deviceList["switch"] = {}
+        self.deviceList["water_heater"] = {}
 
+        hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
             if p.get("isGroup", False):
                 continue
-
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
             for code in product_list:
                 eval("self." + code)
 
-            hive_type = (
-                HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
-            )
             if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])
 
+        hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
         for aDevice in self.data["devices"]:
-            d = self.data["devices"][aDevice]
-
+            d = self.data.devices[aDevice]
             device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
             for code in device_list:
                 eval("self." + code)
 
-            hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
             if self.data["devices"][aDevice]["type"] in hive_type:
                 self.config.battery.append(d["id"])
 

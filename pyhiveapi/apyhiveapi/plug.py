@@ -12,7 +12,7 @@ class HiveSmartPlug:
 
     plugType = "Switch"
 
-    async def getPlugState(self, device: dict):
+    async def getState(self, device: dict):
         """Get smart plug state.
 
         Args:
@@ -32,7 +32,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def getPlugPowerUsage(self, device: dict):
+    async def getPowerUsage(self, device: dict):
         """Get smart plug current power usage.
 
         Args:
@@ -51,7 +51,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def setPlugStatusOn(self, device: dict):
+    async def setStatusOn(self, device: dict):
         """Set smart plug to turn on.
 
         Args:
@@ -77,7 +77,7 @@ class HiveSmartPlug:
 
         return final
 
-    async def setPlugStatusOff(self, device: dict):
+    async def setStatusOff(self, device: dict):
         """Set smart plug to turn off.
 
         Args:
@@ -161,7 +161,7 @@ class Switch(HiveSmartPlug):
                     {
                         "status": {
                             "state": dev_data["status"]["state"],
-                            "power_usage": await self.getPlugPowerUsage(device),
+                            "power_usage": await self.getPowerUsage(device),
                         },
                         "attributes": await self.session.attr.stateAttributes(
                             device["device_id"], device["hiveType"]
@@ -195,7 +195,7 @@ class Switch(HiveSmartPlug):
         if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.getHeatOnDemand(device)
         else:
-            return await self.getPlugState(device)
+            return await self.getState(device)
 
     async def turnOn(self, device: dict):
         """Home Assisatnt wrapper for turning switch on.
@@ -209,7 +209,7 @@ class Switch(HiveSmartPlug):
         if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "ENABLED")
         else:
-            return await self.setPlugStatusOn(device)
+            return await self.setStatusOn(device)
 
     async def turnOff(self, device: dict):
         """Home Assisatnt wrapper for turning switch off.
@@ -223,4 +223,4 @@ class Switch(HiveSmartPlug):
         if device["hiveType"] == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "DISABLED")
         else:
-            return await self.setPlugStatusOff(device)
+            return await self.setStatusOff(device)
