@@ -158,6 +158,9 @@ class HiveSession:
         Args:
             new_interval (int): New interval for polling.
         """
+        if type(new_interval) == int:
+            new_interval = timedelta(seconds=new_interval)
+
         interval = new_interval
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)

@@ -22,7 +22,6 @@ class Logger:
     def errorCheck(self, n_id, n_type, error_type, **kwargs):
         """Error has occurred."""
         message = None
-        new_data = None
         result = False
         name = self.session.helper.getDeviceName(n_id)
 
@@ -39,5 +38,4 @@ class Logger:
                 self.session.logger.error(message)
                 self.session.config.errorList.update({n_id: datetime.now()})
 
-        self.log(n_id, n_type, message, info=[new_data])
         return result
