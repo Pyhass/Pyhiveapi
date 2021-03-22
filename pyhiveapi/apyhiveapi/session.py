@@ -147,7 +147,7 @@ class HiveSession:
                     formatted_data["haName"] = device_name
                 formatted_data.update(kwargs)
             except KeyError as e:
-                self.logger.error(e)
+                self.log.error(e)
 
             self.deviceList[type].append(formatted_data)
         return add
