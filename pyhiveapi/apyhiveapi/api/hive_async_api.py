@@ -1,6 +1,7 @@
 """Hive API Module."""
 
 import json
+import operator
 from typing import Optional
 
 import requests
@@ -67,7 +68,9 @@ class HiveApiAsync:
             self.json_return.update({"original": resp.status})
             self.json_return.update({"parsed": await resp.json(content_type=None)})
 
-        if resp.status == HTTP_UNAUTHORIZED:
+        if operator.contains(20):
+            return True
+        elif resp.status == HTTP_UNAUTHORIZED:
             self.session.logger.error(
                 f"Hive token has expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
