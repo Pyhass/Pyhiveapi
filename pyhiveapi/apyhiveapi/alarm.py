@@ -1,7 +1,5 @@
 """Hive Alarm Module."""
 
-from .helper.const import HIVETOHA
-
 
 class HiveHomeShield:
     """Hive homeshield alarm.
@@ -22,7 +20,7 @@ class HiveHomeShield:
 
         try:
             data = self.session.data.alarm
-            state = HIVETOHA[self.alarmType][data["mode"]]
+            state = data["mode"]
         except KeyError as e:
             await self.session.log.error(e)
 
