@@ -243,7 +243,7 @@ class HiveApiAsync:
             + "}"
         )
 
-        url = f"{self.baseUrl}{self.urls['nodes']}{self.session.config.homeID}"
+        url = f"{self.urls['alarm']}{self.session.config.homeID}"
         try:
             await self.isFileBeingUsed()
             await self.request("post", url, data=jsc)
