@@ -68,7 +68,7 @@ class HiveApiAsync:
             self.json_return.update({"original": resp.status})
             self.json_return.update({"parsed": await resp.json(content_type=None)})
 
-        if operator.contains(20):
+        if operator.contains(resp.status, 20):
             return True
         elif resp.status == HTTP_UNAUTHORIZED:
             self.session.logger.error(
