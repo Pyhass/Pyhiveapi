@@ -11,7 +11,7 @@ class Logger:
         """Initialise the logger class."""
         self.session = session
 
-    def error(self, e="UNKNOWN"):
+    async def error(self, e="UNKNOWN"):
         """Process and unexpected error."""
         self.session.logger.error(
             f"An unexpected error has occurred whilst"
@@ -19,7 +19,7 @@ class Logger:
             f" with exception {e.__class__} {e}"
         )
 
-    def errorCheck(self, n_id, n_type, error_type, **kwargs):
+    async def errorCheck(self, n_id, n_type, error_type, **kwargs):
         """Error has occurred."""
         message = None
         name = self.session.helper.getDeviceName(n_id)
