@@ -1,5 +1,6 @@
 """Hive Device Attribute Module."""
 from .helper.const import HIVETOHA
+from .helper.logger import Logger
 
 
 class HiveAttributes:
@@ -12,6 +13,7 @@ class HiveAttributes:
             session (object, optional): Session to interact with hive account. Defaults to None.
         """
         self.session = session
+        self.session.log = Logger()
         self.type = "Attribute"
 
     async def stateAttributes(self, n_id: str, _type: str):
