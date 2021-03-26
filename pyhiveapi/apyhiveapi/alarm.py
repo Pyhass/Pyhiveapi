@@ -1,7 +1,5 @@
 """Hive Alarm Module."""
 
-from .helper.const import HIVETOHA
-
 
 class HiveHomeShield:
     """Hive homeshield alarm.
@@ -22,7 +20,7 @@ class HiveHomeShield:
 
         try:
             data = self.session.data.alarm
-            state = HIVETOHA[self.alarmType][data["mode"]]
+            state = data["mode"]
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -92,9 +90,6 @@ class Alarm(HiveHomeShield):
         Returns:
             dict: Updated device.
         """
-        await self.session.log.log(
-            device["hiveID"], self.alarmType, "Getting alarm data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -123,12 +118,6 @@ class Alarm(HiveHomeShield):
                 ),
             }
 
-            await self.session.log.log(
-                device["hiveID"],
-                self.alarmType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:

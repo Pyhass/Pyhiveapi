@@ -345,9 +345,6 @@ class Light(HiveLight):
         Returns:
             dict: Updated device.
         """
-        await self.session.log.log(
-            device["hiveID"], self.lightType, "Getting light data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -402,12 +399,6 @@ class Light(HiveLight):
                         }
                     )
 
-            await self.session.log.log(
-                device["hiveID"],
-                self.lightType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:

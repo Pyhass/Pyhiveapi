@@ -50,12 +50,6 @@ class HiveApiAsync:
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
         data = kwargs.get("data", None)
-        await self.session.log.log(
-            "No_ID",
-            "API",
-            "Request is - {0}:{1}  Body is {2}",
-            info=[method, url, data],
-        )
 
         try:
             self.headers.update(
@@ -65,7 +59,6 @@ class HiveApiAsync:
             if "sso" in url:
                 pass
             else:
-                self.session.log.log("No_ID", "API", "ERROR - NO API TOKEN")
                 raise NoApiToken
 
         async with self.websession.request(
@@ -76,16 +69,14 @@ class HiveApiAsync:
             self.json_return.update({"parsed": await resp.json(content_type=None)})
 
         if operator.contains(str(resp.status), "20"):
-            await self.session.log.log(
-                "API", "API", "Response is - {0}", info=[str(resp.status)]
-            )
+            return True
         elif resp.status == HTTP_UNAUTHORIZED:
-            self.session.log.LOGGER.error(
+            self.session.logger.error(
                 f"Hive token has expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
         elif url is not None and resp.status is not None:
-            self.session.log.LOGGER.error(
+            self.session.logger.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
@@ -252,7 +243,7 @@ class HiveApiAsync:
             + "}"
         )
 
-        url = f"{self.baseUrl}{self.urls['nodes']}{self.session.config.homeID}"
+        url = f"{self.urls['alarm']}{self.session.config.homeID}"
         try:
             await self.isFileBeingUsed()
             await self.request("post", url, data=jsc)
@@ -281,7 +272,6 @@ class HiveApiAsync:
 
     async def error(self):
         """An error has occurred iteracting with the Hive API."""
-        await self.session.log.log("API_ERROR", "ERROR", "Error attempting API call")
         raise web_exceptions.HTTPError
 
     async def isFileBeingUsed(self):

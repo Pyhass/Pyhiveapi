@@ -435,9 +435,6 @@ class Climate(HiveHeating):
         Returns:
             dict: Updated device.
         """
-        await self.session.log.log(
-            device["hiveID"], self.heatingType, "Getting heating data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -471,12 +468,6 @@ class Climate(HiveHeating):
                     device["device_id"], device["hiveType"]
                 ),
             }
-            await self.session.log.log(
-                device["hiveID"],
-                self.heatingType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:

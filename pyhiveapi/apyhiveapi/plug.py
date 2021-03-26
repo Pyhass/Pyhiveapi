@@ -128,9 +128,6 @@ class Switch(HiveSmartPlug):
         Returns:
             dict: Return device after update is complete.
         """
-        await self.session.log.log(
-            device["hiveID"], self.plugType, "Getting switch data."
-        )
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -148,7 +145,7 @@ class Switch(HiveSmartPlug):
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.getState(device),
+                    "state": await self.getSwitchState(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
@@ -169,12 +166,6 @@ class Switch(HiveSmartPlug):
                     }
                 )
 
-            await self.session.log.log(
-                device["hiveID"],
-                self.plugType,
-                "Device update {0}",
-                info=[dev_data["status"]],
-            )
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
@@ -183,7 +174,7 @@ class Switch(HiveSmartPlug):
             )
             return device
 
-    async def getState(self, device: dict):
+    async def getSwitchState(self, device: dict):
         """Home Assistant wrapper to get updated switch state.
 
         Args:
