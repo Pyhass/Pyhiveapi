@@ -5,5 +5,4 @@ requests
 aiohttp
 pyquery
 unasync
-pathlib
 loguru

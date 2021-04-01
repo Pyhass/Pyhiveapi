@@ -1,7 +1,7 @@
 """Start Hive Session."""
 import sys
 import traceback
-from pathlib import Path
+from os.path import expanduser
 from typing import Optional
 
 from aiohttp import ClientSession
@@ -18,7 +18,7 @@ from .sensor import Sensor
 from .session import HiveSession
 
 debug = []
-home = str(Path.home())
+home = expanduser("~")
 logger.add(
     home + "/pyhiveapi_debug.log", filter=lambda record: record["level"].name == "DEBUG"
 )
