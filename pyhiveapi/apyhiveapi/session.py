@@ -401,6 +401,7 @@ class HiveSession:
         """
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
+        self.deviceList["camera"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
         self.deviceList["sensor"] = []
