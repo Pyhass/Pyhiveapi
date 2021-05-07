@@ -10,5 +10,5 @@ but it can also be used independently (See examples below.)
 ## Examples
 Here are examples and documentation on how to use the library independently.
 
-https://pyhive.github.io/pyhiveapi.docs/
+https://pyhass.github.io/pyhiveapi.docs/
 
