@@ -8,12 +8,23 @@ from .const import HIVE_TYPES
 class HiveHelper:
     """Hive helper class."""
 
-    def __init__(self, session=None):
-        """Hive Helper."""
+    def __init__(self, session: object = None):
+        """Hive Helper.
+
+        Args:
+            session (object, optional): Interact with hive account. Defaults to None.
+        """
         self.session = session
 
-    def getDeviceName(self, n_id):
-        """Resolve a id into a name."""
+    def getDeviceName(self, n_id: str):
+        """Resolve a id into a name.
+
+        Args:
+            n_id (str): ID of a device.
+
+        Returns:
+            str: Name of device.
+        """
         try:
             product_name = self.session.data.products[n_id]["state"]["name"]
         except KeyError:
@@ -33,14 +44,25 @@ class HiveHelper:
         else:
             return n_id
 
-    def deviceRecovered(self, n_id):
-        """Register that a device has recovered from being offline."""
+    def deviceRecovered(self, n_id: str):
+        """Register that a device has recovered from being offline.
+
+        Args:
+            n_id (str): ID of the device.
+        """
         # name = HiveHelper.getDeviceName(n_id)
         if n_id in self.session.config.errorList:
             self.session.config.errorList.pop(n_id)
 
-    def getDeviceFromID(self, n_id):
-        """Get product/device data from ID."""
+    def getDeviceFromID(self, n_id: str):
+        """Get product/device data from ID.
+
+        Args:
+            n_id (str): ID of the device.
+
+        Returns:
+            dict: Device data.
+        """
         data = False
         try:
             data = self.session.devices[n_id]
@@ -49,8 +71,15 @@ class HiveHelper:
 
         return data
 
-    def getDeviceData(self, product):
-        """Get device Data."""
+    def getDeviceData(self, product: dict):
+        """Get device from product data.
+
+        Args:
+            product (dict): Product data.
+
+        Returns:
+            [type]: Device data.
+        """
         device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
@@ -75,8 +104,15 @@ class HiveHelper:
 
         return device
 
-    def convertMinutesToTime(self, minutes_to_convert):
-        """Convert minutes string to datetime."""
+    def convertMinutesToTime(self, minutes_to_convert: str):
+        """Convert minutes string to datetime.
+
+        Args:
+            minutes_to_convert (str): minutes in string value.
+
+        Returns:
+            timedelta: time object of the minutes.
+        """
         hours_converted, minutes_converted = divmod(minutes_to_convert, 60)
         converted_time = datetime.datetime.strptime(
             str(hours_converted) + ":" + str(minutes_converted), "%H:%M"
@@ -84,8 +120,15 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def getScheduleNNL(self, hive_api_schedule):
-        """Get the schedule now, next and later of a given nodes schedule."""
+    def getScheduleNNL(self, hive_api_schedule: list):
+        """Get the schedule now, next and later of a given nodes schedule.
+
+        Args:
+            hive_api_schedule (list): Schedule to parse.
+
+        Returns:
+            dict: Now, Next and later values.
+        """
         schedule_now_and_next = {}
         date_time_now = datetime.datetime.now()
         date_time_now_day_int = date_time_now.today().weekday()
@@ -150,3 +193,16 @@ class HiveHelper:
         schedule_now_and_next["later"] = schedule_later
 
         return schedule_now_and_next
+
+    def getHeatOnDemandDevice(self, device: dict):
+        """Use TRV device to get the linked thermostat device.
+
+        Args:
+            device ([dictionary]): [The TRV device to lookup.]
+
+        Returns:
+            [dictionary]: [Gets the thermostat device linked to TRV.]
+        """
+        trv = self.session.data.products.get(device["HiveID"])
+        thermostat = self.session.data.products.get(trv["state"]["zone"])
+        return thermostat

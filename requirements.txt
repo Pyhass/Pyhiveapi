@@ -5,3 +5,4 @@ requests
 aiohttp
 pyquery
 unasync
+loguru

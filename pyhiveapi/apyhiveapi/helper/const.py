@@ -24,9 +24,10 @@ HTTP_SERVICE_UNAVAILABLE = 503
 
 
 HIVETOHA = {
+    "Alarm": {"home": "armed_home", "away": "armed_away", "asleep": "armed_night"},
     "Attribute": {True: "Online", False: "Offline"},
     "Boost": {None: "OFF", False: "OFF"},
-    "Heating": {False: "OFF"},
+    "Heating": {False: "OFF", "ENABLED": True, "DISABLED": False},
     "Hotwater": {"MANUAL": "ON", None: "OFF", False: "OFF"},
     "Hub": {
         "Status": {True: 1, False: 0},
@@ -54,14 +55,14 @@ HIVE_TYPES = {
     "Switch": ["activeplug"],
 }
 sensor_commands = {
-    "SMOKE_CO": "self.session.hub.hubSmoke(device)",
-    "DOG_BARK": "self.session.hub.hubDogBark(device)",
-    "GLASS_BREAK": "self.session.hub.hubGlass(device)",
-    "CurrentTemperature": "self.session.heating.currentTemperature(device)",
-    "TargetTemperature": "self.session.heating.targetTemperature(device)",
+    "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
+    "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
+    "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
+    "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
+    "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",
     "Heating_State": "self.session.heating.getState(device)",
     "Heating_Mode": "self.session.heating.getMode(device)",
-    "Heating_Boost": "self.session.heating.getBoost(device)",
+    "Heating_Boost": "self.session.heating.getBoostStatus(device)",
     "Hotwater_State": "self.session.hotwater.getState(device)",
     "Hotwater_Mode": "self.session.hotwater.getMode(device)",
     "Hotwater_Boost": "self.session.hotwater.getBoost(device)",
@@ -79,16 +80,17 @@ PRODUCTS = {
     ],
     "heating": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
-        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("switch", p, haName=" Heat on Demand", hiveType="Heating_Heat_On_Demand")',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", custom=True)',
         'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
         'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
         'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
     ],
     "trvcontrol": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'addList("sensor", p, haName=" Current Temperature", hiveType="CurrentTemperature", custom=True)',
-        'addList("sensor", p, haName=" Target Temperature", hiveType="TargetTemperature", custom=True)',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", custom=True)',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", custom=True)',
         'addList("sensor", p, haName=" State", hiveType="Heating_State", custom=True)',
         'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", custom=True)',
         'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", custom=True)',
@@ -124,6 +126,21 @@ PRODUCTS = {
 }
 
 DEVICES = {
+    "contactsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "hub": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "motionsensor": [
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
+    ],
+    "sense": [
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+    ],
+    "siren": ['addList("alarm_control_panel", d)'],
     "thermostatui": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
         'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
@@ -131,20 +148,6 @@ DEVICES = {
     "trv": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
         'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "motionsensor": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "contactsensor": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=True)',
-    ],
-    "sense": [
-        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
-    ],
-    "hub": [
-        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
     ],
 }
 

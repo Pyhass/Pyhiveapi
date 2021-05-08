@@ -1,17 +1,32 @@
 """Hive Action Module."""
 
 
-class Action:
-    """Hive Action Code."""
+class HiveAction:
+    """Hive Action Code.
+
+    Returns:
+        object: Return hive action object.
+    """
 
     actionType = "Actions"
 
-    def __init__(self, session=None):
-        """Initialise Action."""
+    def __init__(self, session: object = None):
+        """Initialise Action.
+
+        Args:
+            session (object, optional): session to interact with hive account. Defaults to None.
+        """
         self.session = session
 
-    async def getAction(self, device):
-        """Get smart plug current power usage."""
+    async def getAction(self, device: dict):
+        """Action device to update.
+
+        Args:
+            device (dict): Device to be updated.
+
+        Returns:
+            dict: Updated device.
+        """
         dev_data = {}
 
         if device["hiveID"] in self.data["action"]:
@@ -35,8 +50,15 @@ class Action:
                 return "REMOVE"
             return device
 
-    async def getState(self, device):
-        """Get action state."""
+    async def getState(self, device: dict):
+        """Get action state.
+
+        Args:
+            device (dict): Device to get state of.
+
+        Returns:
+            str: Return state.
+        """
         final = None
 
         try:
@@ -47,8 +69,15 @@ class Action:
 
         return final
 
-    async def turnOn(self, device):
-        """Set action turn on."""
+    async def setStatusOn(self, device: dict):
+        """Set action turn on.
+
+        Args:
+            device (dict): Device to set state of.
+
+        Returns:
+            boolean: True/False if successful.
+        """
         import json
 
         final = False
@@ -65,8 +94,15 @@ class Action:
 
         return final
 
-    async def turnOff(self, device):
-        """Set action to turn off."""
+    async def setStatusOff(self, device: dict):
+        """Set action to turn off.
+
+        Args:
+            device (dict): Device to set state of.
+
+        Returns:
+            boolean: True/False if successful.
+        """
         import json
 
         final = False

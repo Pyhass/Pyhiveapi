@@ -12,3 +12,4 @@ Here are examples and documentation on how to use the library independently.
 
 https://pyhass.github.io/pyhiveapi.docs/  [WIP]
 
+

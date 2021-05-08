@@ -44,14 +44,47 @@ info_bits = bytearray("Caldera Derived Key", "utf-8")
 
 
 class HiveAuth:
-    """Sync Hive Auth."""
+    """Sync Hive Auth.
+
+    Raises:
+        ValueError: [description]
+        ValueError: [description]
+        ValueError: [description]
+        HiveInvalidUsername: [description]
+        HiveApiError: [description]
+        HiveInvalidPassword: [description]
+        HiveApiError: [description]
+        NotImplementedError: [description]
+        HiveInvalid2FACode: [description]
+        HiveApiError: [description]
+        HiveApiError: [description]
+
+    Returns:
+        [type]: [description]
+    """
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
 
-    def __init__(self, username, password, pool_region=None, client_secret=None):
-        """Intilaise Sync Hive Auth."""
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        pool_region: str = None,
+        client_secret: str = None,
+    ):
+        """Intilaise Sync Hive Auth.
+
+        Args:
+            username (str): [description]
+            password (str): [description]
+            pool_region (str, optional): [description]. Defaults to None.
+            client_secret (str, optional): [description]. Defaults to None.
+
+        Raises:
+            ValueError: pool_region and client should not both be specified.
+        """
         if pool_region is not None:
             raise ValueError(
                 "pool_region and client should not both be specified "
@@ -77,20 +110,22 @@ class HiveAuth:
         self.client = boto3.client("cognito-idp", self.__region)
 
     def generate_random_small_a(self):
-        """
-        Helper function to generate a random big integer.
+        """Helper function to generate a random big integer.
 
-        :return {Long integer} a random value.
+        Returns:
+            int: {Long integer} a random value.
         """
         random_long_int = get_random(128)
         return random_long_int % self.big_n
 
     def calculate_a(self):
-        """
-        Calculate the client's public value A = g^a%N with the generated random number.
+        """Calculate the client's public value A = g^a%N with the generated random number.
 
-        :param {Long integer} a Randomly generated small A.
-        :return {Long integer} Computed large A.
+        Raises:
+            ValueError: Safety check for 0 value.
+
+        Returns:
+            int: {Long integer} Computed large A.
         """
         big_a = pow(self.g, self.small_a_value, self.big_n)
         # safety check
@@ -98,7 +133,9 @@ class HiveAuth:
             raise ValueError("Safety check for A failed")
         return big_a
 
-    def get_password_authentication_key(self, username, password, server_b_value, salt):
+    def get_password_authentication_key(
+        self, username: str, password: str, server_b_value: int, salt: int
+    ):
         """
         Calculates the final hkdf based on computed S value, and computed U value and the key.
 
@@ -146,13 +183,13 @@ class HiveAuth:
         return auth_params
 
     @staticmethod
-    def get_secret_hash(username, client_id, client_secret):
+    def get_secret_hash(username, client_id: str, client_secret: str):
         """Get secret hash."""
         message = bytearray(username + client_id, "utf-8")
         hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
-    def process_challenge(self, challenge_parameters):
+    def process_challenge(self, challenge_parameters: dict):
         """Process 2FA challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
         salt_hex = challenge_parameters["SALT"]
@@ -235,7 +272,7 @@ class HiveAuth:
                 "The %s challenge is not supported" % response["ChallengeName"]
             )
 
-    def sms_2fa(self, entered_code, challenge_parameters):
+    def sms_2fa(self, entered_code: str, challenge_parameters: dict):
         """Process 2FA sms verification."""
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -262,18 +299,8 @@ class HiveAuth:
 
         return result
 
-    def getDeviceList(self, token):
-        """Get list of devices."""
-        try:
-            result = self.client.list_devices(AccessToken=token)
 
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
-        return result
-
-
-def hex_to_long(hex_string):
+def hex_to_long(hex_string: str):
     """Convert hex to long."""
     return int(hex_string, 16)
 
