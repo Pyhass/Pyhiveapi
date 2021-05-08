@@ -10,7 +10,7 @@ class HiveCamera:
 
     cameraType = "Camera"
 
-    async def getState(self, device: dict):
+    async def getCameraTemperature(self, device: dict):
         """Get the camera state.
 
         Returns:
@@ -26,7 +26,23 @@ class HiveCamera:
 
         return state
 
-    async def getImageURL(self, device: dict):
+    async def getCameraState(self, device: dict):
+        """Get the camera state.
+
+        Returns:
+            boolean: True/False if camera is on.
+        """
+        state = None
+
+        try:
+            data = self.session.data.devices[device["hiveID"]]
+            state = data["state"]["alarmActive"]
+        except KeyError as e:
+            await self.session.log.error(e)
+
+        return state
+
+    async def getCameraImageURL(self, device: dict):
         """Get the camera image url.
 
         Returns:
@@ -42,7 +58,7 @@ class HiveCamera:
 
         return state
 
-    async def getRecodringURL(self, device: dict):
+    async def getCameraRecodringURL(self, device: dict):
         """Get the camera recording url.
 
         Returns:
@@ -121,7 +137,7 @@ class Camera(HiveCamera):
         self.session = session
 
     async def getCamera(self, device: dict):
-        """Get alarm data.
+        """Get camera data.
 
         Args:
             device (dict): Device to update.
@@ -146,9 +162,10 @@ class Camera(HiveCamera):
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.getState(device),
-                    "imageURL": await self.getImageURL(device),
-                    "recordingURL": await self.getRecodringURL(device),
+                    "temperature": await self.getCameraTemperature(device),
+                    "state": await self.getCameraState(device),
+                    "imageURL": await self.getCameraImageURL(device),
+                    "recordingURL": await self.getCameraRecodringURL(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),

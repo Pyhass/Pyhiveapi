@@ -1,5 +1,6 @@
 """Hive API Module."""
 import json
+import uuid
 
 import requests
 import urllib3
@@ -13,6 +14,7 @@ class HiveApi:
 
     def __init__(self, hiveSession=None, websession=None, token=None):
         """Hive API initialisation."""
+        self.cameraBaseUrl = "prod.hcam.bgchtest.info"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
@@ -23,6 +25,7 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
+            "cameraEvents": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
@@ -125,6 +128,23 @@ class HiveApi:
         if self.session is not None:
             homeID = self.session.config.homeID
         url = self.urls["base"] + self.urls["alarm"] + homeID
+        try:
+            info = self.request("GET", url)
+            self.json_return.update({"original": info.status_code})
+            self.json_return.update({"parsed": info.json()})
+        except (OSError, RuntimeError, ZeroDivisionError):
+            self.error()
+
+        return self.json_return
+
+    def getCamera(self, device=None, accessToken=None):
+        """Build and query camera endpoint."""
+        if self.session is not None:
+            accessToken = self.session.tokens.tokenData.get("accessToken")
+
+        self.headers.update({"x-jwt-token": accessToken})
+        self.headers.update({"x-request-id": str(uuid.uuid1())})
+        url = self.urls["cameraEvents"].format(device["props"]["hardwareIdentifier"])
         try:
             info = self.request("GET", url)
             self.json_return.update({"original": info.status_code})

@@ -124,7 +124,7 @@ PRODUCTS = {
     "hivecamera": [
         'addList("camera", p)',
         'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)'
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
         'addList("sensor", p, haName=" Temperature", hiveType="Temp", custom=True)',
     ],
     "motionsensor": [
