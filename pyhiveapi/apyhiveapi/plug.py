@@ -154,7 +154,7 @@ class Switch(HiveSmartPlug):
             }
 
             if device["hiveType"] == "activeplug":
-                dev_data["status"].update(
+                dev_data.update(
                     {
                         "status": {
                             "state": dev_data["status"]["state"],
