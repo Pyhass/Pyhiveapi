@@ -189,7 +189,8 @@ class HiveSession:
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
             self.tokens.tokenData.update({"token": data["IdToken"]})
-            self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
+            if "RefreshToken" in data:
+                self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
         elif "token" in tokens:
             data = tokens
@@ -238,17 +239,20 @@ class HiveSession:
         Returns:
             boolean: True/False if update was successful
         """
-        updated = False
+        result = None
 
         if self.config.file:
             return None
         else:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
-                updated = await self.api.refreshTokens()
+                result = await self.auth.refreshToken(
+                    self.tokens.tokenData["refreshToken"]
+                )
+                self.updateTokens(result[0])
                 self.tokens.tokenCreated = datetime.now()
 
-        return updated
+        return result
 
     async def updateData(self, device: dict):
         """Get latest data for Hive nodes - rate limiting.

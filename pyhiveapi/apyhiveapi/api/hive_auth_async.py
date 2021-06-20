@@ -295,6 +295,31 @@ class HiveAuthAsync:
 
         return result
 
+    async def refreshToken(self, refresh_token):
+        """Send sms code for auth."""
+        result = None
+        try:
+            result = await self.loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.client.initiate_auth,
+                    ClientId=self.__client_id,
+                    AuthFlow="REFRESH_TOKEN_AUTH",
+                    AuthParameters={"REFRESH_TOKEN": refresh_token},
+                ),
+            )
+        except botocore.exceptions.ClientError as err:
+            if (
+                err.__class__.__name__ == "NotAuthorizedException"
+                or err.__class__.__name__ == "CodeMismatchException"
+            ):
+                raise HiveInvalid2FACode
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
 
 def hex_to_long(hex_string):
     """Convert hex to long number."""

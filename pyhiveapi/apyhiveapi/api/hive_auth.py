@@ -299,6 +299,29 @@ class HiveAuth:
 
         return result
 
+    def refreshToken(
+        self,
+        refresh_token: str,
+    ):
+        """Process 2FA sms verification."""
+        result = None
+        try:
+            result = (
+                self.client.initiate_auth(
+                    ClientId=self.__client_id,
+                    AuthFlow="REFRESH_TOKEN_AUTH",
+                    AuthParameters={"REFRESH_TOKEN": refresh_token},
+                ),
+            )
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "NotAuthorizedException":
+                raise HiveInvalid2FACode
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
 
 def hex_to_long(hex_string: str):
     """Convert hex to long."""
