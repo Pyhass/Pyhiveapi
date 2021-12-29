@@ -16,3 +16,6 @@ pyhiveapi.egg-info
 .tox
 .cache
 test*
+
+# virtual environment folder
+.venv/
