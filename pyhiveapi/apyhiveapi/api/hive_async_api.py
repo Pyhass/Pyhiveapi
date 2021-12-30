@@ -213,18 +213,11 @@ class HiveApiAsync:
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
-            )
-            + "}"
-        )
-
+        json_string = json.dumps(kwargs)
         url = self.urls["nodes"].format(n_type, n_id)
         try:
             await self.isFileBeingUsed()
-            await self.request("post", url, data=jsc)
+            await self.request("post", url, data=json_string)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
