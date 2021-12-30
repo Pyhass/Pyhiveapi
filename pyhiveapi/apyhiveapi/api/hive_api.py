@@ -208,18 +208,12 @@ class HiveApi:
 
     def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
-            )
-            + "}"
-        )
+        json_string = json.dumps(kwargs)
 
         url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
 
         try:
-            response = self.request("POST", url, jsc)
+            response = self.request("POST", url, json_string)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
