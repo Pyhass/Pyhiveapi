@@ -246,7 +246,7 @@ class HiveSession:
                 result = await self.auth.refreshToken(
                     self.tokens.tokenData["refreshToken"]
                 )
-                self.updateTokens(result[0])
+                await self.updateTokens(result)
                 self.tokens.tokenCreated = datetime.now()
 
         return result
