@@ -23,17 +23,17 @@ class HiveApiAsync:
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
-            "login": self.baseUrl + "/cognito/login",
-            "refresh": self.baseUrl + "/cognito/refresh-token",
+            "login": f"{self.baseUrl}/cognito/login",
+            "refresh": f"{self.baseUrl}/cognito/refresh-token",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
-            "all": self.baseUrl + "/nodes/all?products=true&devices=true&actions=true",
-            "alarm": self.baseUrl + "/security-lite?homeId=",
-            "devices": self.baseUrl + "/devices",
-            "products": self.baseUrl + "/products",
-            "actions": self.baseUrl + "/actions",
-            "nodes": self.baseUrl + "/nodes/{0}/{1}",
+            "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
+            "alarm": f"{self.baseUrl}/security-lite?homeId=",
+            "devices": f"{self.baseUrl}/devices",
+            "products": f"{self.baseUrl}/products",
+            "actions": f"{self.baseUrl}/actions",
+            "nodes": f"{self.baseUrl}/nodes/{0}/{1}",
         }
         self.headers = {
             "content-type": "application/json",
@@ -258,7 +258,7 @@ class HiveApiAsync:
     async def setAction(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
-        url = self.urls["base"] + self.urls["actions"] + "/" + n_id
+        url = self.urls["actions"] + "/" + n_id
         try:
             await self.isFileBeingUsed()
             await self.request("put", url, data=jsc)

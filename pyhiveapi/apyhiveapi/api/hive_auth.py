@@ -303,7 +303,7 @@ class HiveAuth:
         self,
         refresh_token: str,
     ):
-        """Process 2FA sms verification."""
+        """Refresh Hive Tokens."""
         result = None
         try:
             result = (
@@ -313,9 +313,6 @@ class HiveAuth:
                     AuthParameters={"REFRESH_TOKEN": refresh_token},
                 ),
             )
-        except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "NotAuthorizedException":
-                raise HiveInvalid2FACode
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
                 raise HiveApiError

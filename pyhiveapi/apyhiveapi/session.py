@@ -48,11 +48,8 @@ class HiveSession:
             password (str, optional): Hive Password. Defaults to None.
             websession (object, optional): Websession for api calls. Defaults to None.
         """
-        self.auth = None
+        self.auth = Auth(username=username, password=password)
         self.api = API(hiveSession=self, websession=websession)
-        if None not in (username, password):
-            self.auth = Auth(username=username, password=password)
-
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
         self.log = Logger(self)

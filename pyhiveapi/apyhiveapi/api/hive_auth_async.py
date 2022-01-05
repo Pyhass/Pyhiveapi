@@ -54,7 +54,7 @@ class HiveAuthAsync:
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
 
-    def __init__(self, username, password, pool_region=None, client_secret=None):
+    def __init__(self, username=None, password=None, pool_region=None, client_secret=None):
         """Initialise async auth."""
         if pool_region is not None:
             raise ValueError(
@@ -296,7 +296,7 @@ class HiveAuthAsync:
         return result
 
     async def refreshToken(self, refresh_token):
-        """Send sms code for auth."""
+        """Refresh token."""
         result = None
         try:
             result = await self.loop.run_in_executor(
@@ -308,12 +308,6 @@ class HiveAuthAsync:
                     AuthParameters={"REFRESH_TOKEN": refresh_token},
                 ),
             )
-        except botocore.exceptions.ClientError as err:
-            if (
-                err.__class__.__name__ == "NotAuthorizedException"
-                or err.__class__.__name__ == "CodeMismatchException"
-            ):
-                raise HiveInvalid2FACode
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
                 raise HiveApiError
