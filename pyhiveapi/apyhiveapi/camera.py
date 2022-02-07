@@ -20,7 +20,7 @@ class HiveCamera:
 
         try:
             data = self.session.data.devices[device["hiveID"]]
-            state = data["state"]["alarmActive"]
+            state = data["props"]["temperature"]
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -36,7 +36,7 @@ class HiveCamera:
 
         try:
             data = self.session.data.devices[device["hiveID"]]
-            state = data["state"]["alarmActive"]
+            state = True if data["state"]["mode"] == 'ARMED' else False
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -51,8 +51,7 @@ class HiveCamera:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
-            state = data["state"]["alarmActive"]
+            state = self.session.data.camera[device['hiveID']]['thumbnailUrls'][0]
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -67,8 +66,7 @@ class HiveCamera:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
-            state = data["state"]["alarmActive"]
+            state = self.session.data.camera[device['hiveID']]['cameraRecording']
         except KeyError as e:
             await self.session.log.error(e)
 
