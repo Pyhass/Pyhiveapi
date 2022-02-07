@@ -270,7 +270,7 @@ class HiveApiAsync:
     async def setAction(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
-        url = self.urls["base"] + self.urls["actions"] + "/" + n_id
+        url = self.urls["actions"] + "/" + n_id
         try:
             await self.isFileBeingUsed()
             await self.request("put", url, data=jsc)

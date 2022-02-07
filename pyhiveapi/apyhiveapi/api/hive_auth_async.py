@@ -216,7 +216,8 @@ class HiveAuthAsync:
         if self.useFile:
             return self.file_response
 
-        await self.async_init()
+        if 'client' not in dir(self):
+            await self.async_init()
         auth_params = await self.get_auth_params()
         response = None
         result = None
@@ -281,6 +282,33 @@ class HiveAuthAsync:
                         "SMS_MFA_CODE": code,
                         "USERNAME": self.user_id,
                     },
+                ),
+            )
+        except botocore.exceptions.ClientError as err:
+            if (
+                err.__class__.__name__ == "NotAuthorizedException"
+                or err.__class__.__name__ == "CodeMismatchException"
+            ):
+                raise HiveInvalid2FACode
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
+    async def refreshToken(self, refresh_token):
+        """Refresh Hive Tokens."""
+        if 'client' not in dir(self):
+            await self.async_init()
+        result = None
+        try:
+            result = await self.loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.client.initiate_auth,
+                    ClientId=self.__client_id,
+                    AuthFlow="REFRESH_TOKEN_AUTH",
+                    AuthParameters={"REFRESH_TOKEN": refresh_token},
                 ),
             )
         except botocore.exceptions.ClientError as err:
