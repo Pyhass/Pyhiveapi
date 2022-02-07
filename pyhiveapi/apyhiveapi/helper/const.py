@@ -123,7 +123,15 @@ PRODUCTS = {
         'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
         'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
     ],
-    "motionsensor": ['addList("binary_sensor", p)'],
+    "hivecamera": [
+        'addList("camera", p)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=True)',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=True)',
+        'addList("sensor", p, haName=" Temperature", hiveType="Temp", custom=True)',
+    ],
+    "motionsensor": [
+        'addList("binary_sensor", p)',
+    ],
     "contactsensor": ['addList("binary_sensor", p)'],
 }
 

@@ -9,6 +9,7 @@ from loguru import logger
 
 from .action import HiveAction
 from .alarm import Alarm
+from .camera import Camera
 from .heating import Climate
 from .hotwater import WaterHeater
 from .hub import HiveHub
@@ -110,6 +111,7 @@ class Hive(HiveSession):
         self.session = self
         self.action = HiveAction(self.session)
         self.alarm = Alarm(self.session)
+        self.camera = Camera(self.session)
         self.heating = Climate(self.session)
         self.hotwater = WaterHeater(self.session)
         self.hub = HiveHub(self.session)

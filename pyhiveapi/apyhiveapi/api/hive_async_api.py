@@ -21,19 +21,21 @@ class HiveApiAsync:
     def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
+        self.cameraBaseUrl = "prod.hcam.bgchtest.info"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": f"{self.baseUrl}/cognito/login",
             "refresh": f"{self.baseUrl}/cognito/refresh-token",
-            "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
-            "weather": "https://weather.prod.bgchprod.info/weather",
-            "holiday_mode": "/holiday-mode",
+            "holiday_mode": f"{self.baseUrl}/holiday-mode",
             "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
             "alarm": f"{self.baseUrl}/security-lite?homeId=",
+            "cameraEvents": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true$cameraId={0}",
             "devices": f"{self.baseUrl}/devices",
             "products": f"{self.baseUrl}/products",
             "actions": f"{self.baseUrl}/actions",
             "nodes": f"{self.baseUrl}/nodes/{0}/{1}",
+            "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
+            "weather": "https://weather.prod.bgchprod.info/weather",
         }
         self.headers = {
             "content-type": "application/json",
@@ -121,8 +123,8 @@ class HiveApiAsync:
                 info = self.json_return["parsed"]
                 if "token" in info:
                     await self.session.updateTokens(info)
-                    self.urls.update({"base": info["platform"]["endpoint"]})
-                    self.urls.update({"camera": info["platform"]["cameraPlatform"]})
+                    self.baseUrl = info["platform"]["endpoint"]
+                    self.cameraBaseUrl = info["platform"]["cameraPlatform"]
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
@@ -142,6 +144,16 @@ class HiveApiAsync:
     async def getAlarm(self):
         """Build and query alarm endpoint."""
         url = self.urls["alarm"] + self.session.config.homeID
+        try:
+            await self.request("get", url)
+        except (OSError, RuntimeError, ZeroDivisionError):
+            await self.error()
+
+        return self.json_return
+
+    async def getCamera(self, device):
+        """Build and query alarm endpoint."""
+        url = self.urls["cameraEvents"].format(device["props"]["hardwareIdentifier"])
         try:
             await self.request("get", url)
         except (OSError, RuntimeError, ZeroDivisionError):
