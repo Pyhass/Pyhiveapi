@@ -131,15 +131,16 @@ class HiveApi:
 
     def getAll(self):
         """Build and query all endpoint."""
+        json_return = {}
         url = self.urls["base"] + self.urls["all"]
         try:
             info = self.request("GET", url)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
 
     def getAlarm(self, homeID=None):
         """Build and query alarm endpoint."""
@@ -157,27 +158,29 @@ class HiveApi:
 
     def getCameraImage(self, device=None, accessToken=None):
         """Build and query camera endpoint."""
+        json_return = {}
         url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
         try:
             info = self.request("GET", url, camera=True)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
     
     def getCameraRecording(self, device=None, eventId=None):
         """Build and query camera endpoint."""
+        json_return = {}
         url = self.urls["cameraRecordings"].format(device["props"]["hardwareIdentifier"], eventId)
         try:
             info = self.request("GET", url, camera=True)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.text.split("\n")[3]})
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.text.split("\n")[3]})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
 
     def getDevices(self):
         """Call the get devices endpoint."""

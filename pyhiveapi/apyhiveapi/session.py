@@ -314,6 +314,7 @@ class HiveSession:
             raise HTTPException
         elif cameraImage["parsed"] is None:
             raise HiveApiError
+        self.data.camera[device['id']] = {}
         self.data.camera[device['id']]['cameraImage'] = cameraImage["parsed"]['events'][0]
         self.data.camera[device['id']]['cameraRecording'] = cameraRecording["parsed"]
 
