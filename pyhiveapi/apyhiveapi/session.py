@@ -303,16 +303,22 @@ class HiveSession:
             HiveApiError: An API error code has been returned.
         """
         if self.config.file:
-            api_resp_d = self.openFile("camera.json")
+            cameraImage = self.openFile("camera.json")
         if self.tokens is None:
             raise NoApiToken
-        api_resp_d = await self.api.getCamera(device)
-        if operator.contains(str(api_resp_d["original"]), "20") is False:
-            raise HTTPException
-        elif api_resp_d["parsed"] is None:
-            raise HiveApiError
+        cameraImage = await self.api.getCameraImage(device)
+        if cameraImage["parsed"]['events'][0]['hasRecording'] is True:
+            cameraRecording = await self.api.getCameraRecording(device, cameraImage["parsed"]['events'][0]['eventId'])
 
-        return api_resp_d["parsed"]
+        if operator.contains(str(cameraImage["original"]), "20") is False:
+            raise HTTPException
+        elif cameraImage["parsed"] is None:
+            raise HiveApiError
+        self.data.camera[device['id']] = {}
+        self.data.camera[device['id']]['cameraImage'] = cameraImage["parsed"]['events'][0]
+        self.data.camera[device['id']]['cameraRecording'] = cameraRecording["parsed"]
+
+        return self.data.camera[device['id']]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
@@ -359,9 +365,7 @@ class HiveSession:
                         if aDevice["type"] == "siren":
                             self.config.alarm = True
                         if aDevice["type"] == "hivecamera":
-                            self.data.camera.update(
-                                {aDevice["id"]: self.getCamera(aDevice)}
-                            )
+                            self.getCamera(aDevice)
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})

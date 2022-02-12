@@ -25,16 +25,12 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
-            "cameraEvents": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
             "nodes": "/nodes/{0}/{1}",
-        }
-        self.headers = {
-            "content-type": "application/json",
-            "Accept": "*/*",
-            "authorization": "None",
         }
         self.timeout = 10
         self.json_return = {
@@ -44,14 +40,36 @@ class HiveApi:
         self.session = hiveSession
         self.token = token
 
-    def request(self, type, url, jsc=None):
+    def request(self, type, url, jsc=None, camera=False):
         """Make API request."""
         if self.session is not None:
-            self.headers.update(
-                {"authorization": self.session.tokens.tokenData["token"]}
-            )
+            if camera:
+                self.headers = {
+                    "content-type": "application/json",
+                    "Accept": "*/*",
+                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
+                    "x-jwt-token": self.session.tokens.tokenData['token'],
+                }
+            else:
+                self.headers = {
+                    "content-type": "application/json",
+                    "Accept": "*/*",
+                    "authorization": self.session.tokens.tokenData["token"],
+                }
         else:
-            self.headers.update({"authorization": self.token})
+            if camera:
+                self.headers = {
+                    "content-type": "application/json",
+                    "Accept": "*/*",
+                    "Authorization": f"Bearer {self.token}",
+                    "x-jwt-token": self.token
+                }
+            else:
+                self.headers = {
+                    "content-type": "application/json",
+                    "Accept": "*/*",
+                    "authorization": self.token,
+                }
 
         if type == "GET":
             return requests.get(
@@ -113,15 +131,16 @@ class HiveApi:
 
     def getAll(self):
         """Build and query all endpoint."""
+        json_return = {}
         url = self.urls["base"] + self.urls["all"]
         try:
             info = self.request("GET", url)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
 
     def getAlarm(self, homeID=None):
         """Build and query alarm endpoint."""
@@ -137,22 +156,31 @@ class HiveApi:
 
         return self.json_return
 
-    def getCamera(self, device=None, accessToken=None):
+    def getCameraImage(self, device=None, accessToken=None):
         """Build and query camera endpoint."""
-        if self.session is not None:
-            accessToken = self.session.tokens.tokenData.get("accessToken")
-
-        self.headers.update({"x-jwt-token": accessToken})
-        self.headers.update({"x-request-id": str(uuid.uuid1())})
-        url = self.urls["cameraEvents"].format(device["props"]["hardwareIdentifier"])
+        json_return = {}
+        url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
         try:
-            info = self.request("GET", url)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
+            info = self.request("GET", url, camera=True)
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
+    
+    def getCameraRecording(self, device=None, eventId=None):
+        """Build and query camera endpoint."""
+        json_return = {}
+        url = self.urls["cameraRecordings"].format(device["props"]["hardwareIdentifier"], eventId)
+        try:
+            info = self.request("GET", url, camera=True)
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": info.text.split("\n")[3]})
+        except (OSError, RuntimeError, ZeroDivisionError):
+            self.error()
+
+        return json_return
 
     def getDevices(self):
         """Call the get devices endpoint."""
