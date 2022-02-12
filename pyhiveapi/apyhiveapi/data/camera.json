@@ -1,0 +1,12 @@
+{
+    "cameraImage": {
+        "parsed": {
+            "events": [
+                "https://test.com/image"
+            ]
+        }
+    },
+    "camaeraRecording": {
+        "parsed": "https://test.com/video"
+    }
+}
