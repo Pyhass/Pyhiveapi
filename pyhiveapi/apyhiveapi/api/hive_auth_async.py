@@ -54,7 +54,9 @@ class HiveAuthAsync:
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
 
-    def __init__(self, username, password, pool_region=None, client_secret=None):
+    def __init__(
+        self, username=None, password=None, pool_region=None, client_secret=None
+    ):
         """Initialise async auth."""
         if pool_region is not None:
             raise ValueError(
@@ -216,7 +218,7 @@ class HiveAuthAsync:
         if self.useFile:
             return self.file_response
 
-        if 'client' not in dir(self):
+        if "client" not in dir(self):
             await self.async_init()
         auth_params = await self.get_auth_params()
         response = None
@@ -298,7 +300,7 @@ class HiveAuthAsync:
 
     async def refreshToken(self, refresh_token):
         """Refresh Hive Tokens."""
-        if 'client' not in dir(self):
+        if "client" not in dir(self):
             await self.async_init()
         result = None
         try:
