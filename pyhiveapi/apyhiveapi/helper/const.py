@@ -58,6 +58,7 @@ sensor_commands = {
     "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
     "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
     "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
+    "Camera_Temp": "self.session.camera.getCameraTemperature(device)",
     "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",
     "Heating_State": "self.session.heating.getState(device)",
@@ -70,7 +71,7 @@ sensor_commands = {
     "Mode": 'self.session.attr.getMode(device["hiveID"])',
     "Availability": "self.online(device)",
     "Connectivity": "self.online(device)",
-    "Power": "self.session.switch.getPowerUsage(device)"
+    "Power": "self.session.switch.getPowerUsage(device)",
 }
 
 PRODUCTS = {
@@ -123,12 +124,12 @@ PRODUCTS = {
         'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
         'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
     ],
-    "hivecamera": [
-        'addList("camera", p)',
-        'addList("sensor", p, haName=" Mode", hiveType="Mode", custom=False)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", custom=False)',
-        'addList("sensor", p, haName=" Temperature", hiveType="Temp", custom=False)',
-    ],
+    #    "hivecamera": [
+    #        'addList("camera", p)',
+    #        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
+    #        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+    #        'addList("sensor", p, haName=" Temperature", hiveType="Camera_Temp", category="diagnostic", custom=False)',
+    #    ],
     "motionsensor": [
         'addList("binary_sensor", p)',
     ],
@@ -141,11 +142,11 @@ DEVICES = {
         'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
     ],
     "hub": [
-        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
+        'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity", category="diagnostic")',
     ],
     "motionsensor": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", custom=False)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
     ],
     "sense": [
         'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',

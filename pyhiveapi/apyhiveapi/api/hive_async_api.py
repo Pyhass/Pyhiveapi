@@ -46,7 +46,9 @@ class HiveApiAsync:
         self.session = hiveSession
         self.websession = ClientSession() if websession is None else websession
 
-    async def request(self, method: str, url: str, camera: bool = False, **kwargs) -> ClientResponse:
+    async def request(
+        self, method: str, url: str, camera: bool = False, **kwargs
+    ) -> ClientResponse:
         """Make a request."""
         data = kwargs.get("data", None)
 
@@ -56,7 +58,7 @@ class HiveApiAsync:
                     "content-type": "application/json",
                     "Accept": "*/*",
                     "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData['token'],
+                    "x-jwt-token": self.session.tokens.tokenData["token"],
                 }
             else:
                 headers = {
@@ -73,7 +75,7 @@ class HiveApiAsync:
         async with self.websession.request(
             method, url, headers=headers, data=data
         ) as resp:
-            await resp.json(content_type=None)
+            await resp.text()
             if operator.contains(str(resp.status), "20"):
                 return resp
 
@@ -178,16 +180,18 @@ class HiveApiAsync:
     async def getCameraRecording(self, device, eventId):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["cameraRecordings"].format(device["props"]["hardwareIdentifier"], eventId)
+        url = self.urls["cameraRecordings"].format(
+            device["props"]["hardwareIdentifier"], eventId
+        )
         try:
             resp = await self.request("get", url, True)
+            recUrl = await resp.text()
             json_return.update({"original": resp.status})
-            json_return.update({"parsed": resp.text.split("\n")[3]})
+            json_return.update({"parsed": recUrl.split("\n")[3]})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return json_return
-
 
     async def getDevices(self):
         """Call the get devices endpoint."""
