@@ -320,6 +320,10 @@ class HiveSession:
         else:
             raise NoApiToken
 
+        self.data.camera[device["id"]] = {}
+        self.data.camera[device["id"]]["cameraImage"] = None
+        self.data.camera[device["id"]]["cameraRecording"] = None
+
         if cameraImage is not None:
             self.data.camera[device["id"]] = {}
             self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
