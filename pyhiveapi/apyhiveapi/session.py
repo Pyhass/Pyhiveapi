@@ -319,13 +319,16 @@ class HiveSession:
                 raise HiveApiError
         else:
             raise NoApiToken
-        self.data.camera[device["id"]] = {}
-        self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"]["events"][
-            0
-        ]
-        self.data.camera[device["id"]]["cameraRecording"] = cameraRecording["parsed"]
 
-        return self.data.camera[device["id"]]
+        if cameraImage is not None:
+            self.data.camera[device["id"]] = {}
+            self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
+                "events"
+            ][0]
+        if cameraRecording is not None:
+            self.data.camera[device["id"]]["cameraRecording"] = cameraRecording[
+                "parsed"
+            ]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
