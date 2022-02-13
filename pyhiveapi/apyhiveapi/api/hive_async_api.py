@@ -34,7 +34,7 @@ class HiveApiAsync:
             "devices": f"{self.baseUrl}/devices",
             "products": f"{self.baseUrl}/products",
             "actions": f"{self.baseUrl}/actions",
-            "nodes": f"{self.baseUrl}/nodes/{0}/{1}",
+            "nodes": f"{self.baseUrl}/nodes/{{0}}/{{1}}",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
         }

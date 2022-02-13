@@ -2,7 +2,12 @@
     "cameraImage": {
         "parsed": {
             "events": [
-                "https://test.com/image"
+                {
+                    "thumbnailUrls": [
+                        "https://test.com/image"
+                    ],
+                    "hasRecording": true
+                }
             ]
         }
     },

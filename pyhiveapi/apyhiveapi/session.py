@@ -305,18 +305,20 @@ class HiveSession:
         """
         if self.config.file:
             cameraImage = self.openFile("camera.json")
-        if self.tokens is None:
-            raise NoApiToken
-        cameraImage = await self.api.getCameraImage(device)
-        if cameraImage["parsed"]["events"][0]["hasRecording"] is True:
-            cameraRecording = await self.api.getCameraRecording(
-                device, cameraImage["parsed"]["events"][0]["eventId"]
-            )
+            cameraRecording = self.openFile("camera.json")
+        elif self.tokens is not None:
+            cameraImage = await self.api.getCameraImage(device)
+            if cameraImage["parsed"]["events"][0]["hasRecording"] is True:
+                cameraRecording = await self.api.getCameraRecording(
+                    device, cameraImage["parsed"]["events"][0]["eventId"]
+                )
 
-        if operator.contains(str(cameraImage["original"]), "20") is False:
-            raise HTTPException
-        elif cameraImage["parsed"] is None:
-            raise HiveApiError
+            if operator.contains(str(cameraImage["original"]), "20") is False:
+                raise HTTPException
+            elif cameraImage["parsed"] is None:
+                raise HiveApiError
+        else:
+            raise NoApiToken
         self.data.camera[device["id"]] = {}
         self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"]["events"][
             0
