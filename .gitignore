@@ -16,3 +16,4 @@ pyhiveapi.egg-info
 .tox
 .cache
 test*
+custom_tests/*
