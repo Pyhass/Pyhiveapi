@@ -299,6 +299,31 @@ class HiveAuth:
 
         return result
 
+    def confirmDevice(
+            self,
+            accessToken: str,
+            deviceKey: str
+        ):
+        """Confirm Device Hive."""
+        result = None
+        try:
+            result = (
+                self.client.confirm_device(
+                    AccessToken=accessToken,
+                    DeviceKey=deviceKey,
+                    DeviceName="Home Assistant"
+                    #DeviceSecretVerifierConfig={
+                    #        'PasswordVerifier': 'string',
+                    #        'Salt': 'string'
+                    #    },
+                ),
+            )
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
     def refreshToken(
         self,
         refresh_token: str,

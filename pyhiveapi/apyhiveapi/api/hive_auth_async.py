@@ -298,6 +298,37 @@ class HiveAuthAsync:
 
         return result
 
+    async def confirmDevice(self, accessToken, deviceKey):
+        """Confirm Hive Device."""
+        if 'client' not in dir(self):
+            await self.async_init()
+        result = None
+        try:
+            result = await self.loop.run_in_executor(
+                None,
+                functools.partial(
+                    self.client.confirm_device,
+                    AccessToken=accessToken,
+                    DeviceKey=deviceKey,
+                    DeviceName="Home Assistant"
+                    #DeviceSecretVerifierConfig={
+                    #        'PasswordVerifier': 'string',
+                    #        'Salt': 'string'
+                    #    },
+                ),
+            )
+        except botocore.exceptions.ClientError as err:
+            if (
+                err.__class__.__name__ == "NotAuthorizedException"
+                or err.__class__.__name__ == "CodeMismatchException"
+            ):
+                raise HiveInvalid2FACode
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
     async def refreshToken(self, refresh_token):
         """Refresh Hive Tokens."""
         if "client" not in dir(self):
