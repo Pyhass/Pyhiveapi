@@ -17,3 +17,6 @@ pyhiveapi.egg-info
 .cache
 test*
 custom_tests/*
+
+# virtual environment folder
+.venv/
