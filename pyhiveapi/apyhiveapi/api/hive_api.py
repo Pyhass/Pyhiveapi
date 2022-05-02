@@ -81,7 +81,7 @@ class HiveApi:
             )
 
     def refreshTokens(self, tokens={}):
-        """Get new session tokens."""
+        """Get new session tokens. - DEPRECATED NOW BY AWS TOKEN MANAGEMENT"""
         url = self.urls["refresh"]
         if self.session is not None:
             tokens = self.session.tokens.tokenData

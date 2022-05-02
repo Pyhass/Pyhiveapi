@@ -99,6 +99,9 @@ class Hive(HiveSession):
         websession: Optional[ClientSession] = None,
         username: str = None,
         password: str = None,
+        deviceGroupKey: str = None,
+        deviceKey: str = None,
+        devicePassword: str = None,
     ):
         """Generate a Hive session.
 
@@ -106,8 +109,13 @@ class Hive(HiveSession):
             websession (Optional[ClientSession], optional): This is a websession that can be used for the api. Defaults to None.
             username (str, optional): This is the Hive username used for login. Defaults to None.
             password (str, optional): This is the Hive password used for login. Defaults to None.
+            deviceGroupKey (str, optional): This is the Hive group key used for trusted devices. Defaults to None.
+            deviceKey (str, optional): This is the Hive device key used for trusted devices. Defaults to None.
+            devicePassword (str, optional): This is the Hive device password used for trusted devices. Defaults to None.
         """
-        super().__init__(username, password, websession)
+        super().__init__(
+            username, password, deviceGroupKey, deviceKey, devicePassword, websession
+        )
         self.session = self
         self.action = HiveAction(self.session)
         self.alarm = Alarm(self.session)

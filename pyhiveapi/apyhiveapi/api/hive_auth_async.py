@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import os
 import re
+import socket
 
 import boto3
 import botocore
@@ -17,6 +18,7 @@ import botocore
 from ..helper.hive_exceptions import (
     HiveApiError,
     HiveInvalid2FACode,
+    HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
 )
@@ -53,9 +55,17 @@ class HiveAuthAsync:
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
+    DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
 
     def __init__(
-        self, username=None, password=None, pool_region=None, client_secret=None
+        self,
+        username: str,
+        password: str,
+        deviceGroupKey: str = None,
+        deviceKey: str = None,
+        devicePassword: str = None,
+        pool_region: str = None,
+        client_secret: str = None,
     ):
         """Initialise async auth."""
         if pool_region is not None:
@@ -67,6 +77,10 @@ class HiveAuthAsync:
         self.loop = asyncio.get_event_loop()
         self.username = username
         self.password = password
+        self.deviceGroupKey = deviceGroupKey
+        self.deviceKey = deviceKey
+        self.devicePassword = devicePassword
+        self.accessToken = None
         self.api = HiveApi()
         self.user_id = "user_id"
         self.client_secret = client_secret
@@ -167,6 +181,93 @@ class HiveAuthAsync:
         hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
+    async def generate_hash_device(self, device_group_key, device_key):
+        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137
+
+        # random device password, which will be used for DEVICE_SRP_AUTH flow
+        device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
+
+        combined_string = "%s%s:%s" % (device_group_key, device_key, device_password)
+        combined_string_hash = hash_sha256(combined_string.encode("utf-8"))
+        salt = pad_hex(get_random(16))
+
+        x_value = hex_to_long(hex_hash(salt + combined_string_hash))
+        g = hex_to_long(g_hex)
+        big_n = hex_to_long(n_hex)
+        verifier_device_not_padded = pow(g, x_value, big_n)
+        verifier = pad_hex(verifier_device_not_padded)
+
+        device_secret_verifier_config = {
+            "PasswordVerifier": base64.standard_b64encode(
+                bytearray.fromhex(verifier)
+            ).decode("utf-8"),
+            "Salt": base64.standard_b64encode(bytearray.fromhex(salt)).decode("utf-8"),
+        }
+        return device_password, device_secret_verifier_config
+
+    async def get_device_authentication_key(
+        self, device_group_key, device_key, device_password, server_b_value, salt
+    ):
+        u_value = calculate_u(self.large_a_value, server_b_value)
+        if u_value == 0:
+            raise ValueError("U cannot be zero.")
+        username_password = "%s%s:%s" % (device_group_key, device_key, device_password)
+        username_password_hash = hash_sha256(username_password.encode("utf-8"))
+
+        x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
+        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        int_value2 = server_b_value - self.k * g_mod_pow_xn
+        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
+        hkdf = compute_hkdf(
+            bytearray.fromhex(pad_hex(s_value)),
+            bytearray.fromhex(pad_hex(long_to_hex(u_value))),
+        )
+        return hkdf
+
+    async def process_device_challenge(self, challenge_parameters):
+        username = challenge_parameters["USERNAME"]
+        salt_hex = challenge_parameters["SALT"]
+        srp_b_hex = challenge_parameters["SRP_B"]
+        secret_block_b64 = challenge_parameters["SECRET_BLOCK"]
+        # re strips leading zero from a day number (required by AWS Cognito)
+        timestamp = re.sub(
+            r" 0(\d) ",
+            r" \1 ",
+            datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
+        )
+        hkdf = await self.get_device_authentication_key(
+            self.deviceGroupKey,
+            self.deviceKey,
+            self.devicePassword,
+            hex_to_long(srp_b_hex),
+            salt_hex,
+        )
+        secret_block_bytes = base64.standard_b64decode(secret_block_b64)
+        msg = (
+            bytearray(self.deviceGroupKey, "utf-8")
+            + bytearray(self.deviceKey, "utf-8")
+            + bytearray(secret_block_bytes)
+            + bytearray(timestamp, "utf-8")
+        )
+        hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
+        signature_string = base64.standard_b64encode(hmac_obj.digest())
+        response = {
+            "TIMESTAMP": timestamp,
+            "USERNAME": username,
+            "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
+            "PASSWORD_CLAIM_SIGNATURE": signature_string.decode("utf-8"),
+            "DEVICE_KEY": self.deviceKey,
+        }
+        if self.client_secret is not None:
+            response.update(
+                {
+                    "SECRET_HASH": await self.get_secret_hash(
+                        username, self.__client_id, self.client_secret
+                    )
+                }
+            )
+        return response
+
     async def process_challenge(self, challenge_parameters):
         """Process auth challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
@@ -257,6 +358,8 @@ class HiveAuthAsync:
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
                     raise HiveInvalidPassword
+                if err.__class__.__name__ == "ResourceNotFoundException":
+                    raise HiveInvalidDeviceAuthentication
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
                     raise HiveApiError
@@ -267,7 +370,52 @@ class HiveAuthAsync:
                 "The %s challenge is not supported" % response["ChallengeName"]
             )
 
-    async def sms_2fa(self, entered_code, challenge_parameters):
+    async def deviceLogin(self):
+        """Perform device login instead"""
+
+        loginResult = await self.login()
+        auth_params = await self.get_auth_params()
+        auth_params["DEVICE_KEY"] = self.deviceKey
+
+        if loginResult.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
+            try:
+                initialResult = await self.loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        self.client.respond_to_auth_challenge,
+                        ClientId=self.__client_id,
+                        ChallengeName=self.DEVICE_VERIFIER_CHALLENGE,
+                        ChallengeResponses=auth_params,
+                    ),
+                )
+
+                cr = await self.process_device_challenge(
+                    initialResult["ChallengeParameters"]
+                )
+                result = await self.loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        self.client.respond_to_auth_challenge,
+                        ClientId=self.__client_id,
+                        ChallengeName="DEVICE_PASSWORD_VERIFIER",
+                        ChallengeResponses=cr,
+                    ),
+                )
+            except botocore.exceptions.EndpointConnectionError as err:
+                if err.__class__.__name__ == "EndpointConnectionError":
+                    raise HiveApiError
+        else:
+            raise HiveInvalidDeviceAuthentication
+
+        return result
+
+    async def sms_2fa(
+        self,
+        entered_code,
+        challenge_parameters,
+        deviceName=None,
+        autoDeviceRegistration=True,
+    ):
         """Send sms code for auth."""
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -286,6 +434,19 @@ class HiveAuthAsync:
                     },
                 ),
             )
+            if "NewDeviceMetadata" in result["AuthenticationResult"]:
+                self.accessToken = result["AuthenticationResult"]["AccessToken"]
+                self.deviceGroupKey = result["AuthenticationResult"][
+                    "NewDeviceMetadata"
+                ]["DeviceGroupKey"]
+                self.deviceKey = result["AuthenticationResult"]["NewDeviceMetadata"][
+                    "DeviceKey"
+                ]
+            if autoDeviceRegistration:
+                self.confirmDevice(
+                    self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
+                )
+                self.updateDeviceStatus(self.accessToken, self.deviceKey)
         except botocore.exceptions.ClientError as err:
             if (
                 err.__class__.__name__ == "NotAuthorizedException"
@@ -298,23 +459,35 @@ class HiveAuthAsync:
 
         return result
 
-    async def confirmDevice(self, accessToken, deviceKey):
+    async def confirmDevice(
+        self,
+        accessToken: str,
+        deviceKey: str,
+        deviceGroupKey: str,
+        deviceName: str = None,
+    ):
         """Confirm Hive Device."""
-        if 'client' not in dir(self):
+        if "client" not in dir(self):
             await self.async_init()
+
+        if deviceName == None:
+            deviceName = socket.gethostname()
+
         result = None
         try:
+            (
+                device_password,
+                device_secret_verifier_config,
+            ) = await self.generate_hash_device(deviceGroupKey, deviceKey)
+            self.devicePassword = device_password
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
                     self.client.confirm_device,
                     AccessToken=accessToken,
                     DeviceKey=deviceKey,
-                    DeviceName="Home Assistant"
-                    #DeviceSecretVerifierConfig={
-                    #        'PasswordVerifier': 'string',
-                    #        'Salt': 'string'
-                    #    },
+                    DeviceName=deviceName,
+                    DeviceSecretVerifierConfig=device_secret_verifier_config,
                 ),
             )
         except botocore.exceptions.ClientError as err:
@@ -329,8 +502,11 @@ class HiveAuthAsync:
 
         return result
 
-    async def refreshToken(self, refresh_token):
-        """Refresh Hive Tokens."""
+    async def updateDeviceStatus(
+        self,
+        accessToken: str,
+    ):
+        """Update Device Hive."""
         if "client" not in dir(self):
             await self.async_init()
         result = None
@@ -338,10 +514,38 @@ class HiveAuthAsync:
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
+                    self.client.update_device_status,
+                    AccessToken=accessToken,
+                    DeviceKey=self.deviceKey,
+                    DeviceRememberedStatus="remembered",
+                ),
+            )
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "EndpointConnectionError":
+                raise HiveApiError
+
+        return result
+
+    async def getDeviceData(self):
+        return self.deviceGroupKey, self.deviceKey, self.devicePassword
+
+    async def refreshToken(self, refresh_token):
+        """Refresh Hive Tokens."""
+        if "client" not in dir(self):
+            await self.async_init()
+        result = None
+        auth_params = ({"REFRESH_TOKEN": refresh_token},)
+        if self.deviceKey != None:
+            auth_params = {"REFRESH_TOKEN": refresh_token, "DEVICE_KEY": self.deviceKey}
+
+        try:
+            result = await self.loop.run_in_executor(
+                None,
+                functools.partial(
                     self.client.initiate_auth,
                     ClientId=self.__client_id,
                     AuthFlow="REFRESH_TOKEN_AUTH",
-                    AuthParameters={"REFRESH_TOKEN": refresh_token},
+                    AuthParameters=auth_params,
                 ),
             )
         except botocore.exceptions.ClientError as err:

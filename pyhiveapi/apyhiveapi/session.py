@@ -17,6 +17,11 @@ from .helper.hive_exceptions import (
     HiveApiError,
     HiveReauthRequired,
     HiveUnknownConfiguration,
+    HiveInvalid2FACode,
+    HiveInvalidPassword,
+    HiveInvalidUsername,
+    HiveInvalidDeviceAuthentication,
+    HiveFailedToRefreshTokens,
     NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
@@ -40,7 +45,13 @@ class HiveSession:
     sessionType = "Session"
 
     def __init__(
-        self, username: str = None, password: str = None, websession: object = None
+        self,
+        username: str = None,
+        password: str = None,
+        deviceGroupKey: str = None,
+        deviceKey: str = None,
+        devicePassword: str = None,
+        websession: object = None,
     ):
         """Initialise the base variable values.
 
@@ -49,7 +60,13 @@ class HiveSession:
             password (str, optional): Hive Password. Defaults to None.
             websession (object, optional): Websession for api calls. Defaults to None.
         """
-        self.auth = Auth(username=username, password=password)
+        self.auth = Auth(
+            username=username,
+            password=password,
+            deviceGroupKey=deviceGroupKey,
+            deviceKey=deviceKey,
+            devicePassword=devicePassword,
+        )
         self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
@@ -192,6 +209,7 @@ class HiveSession:
             if "RefreshToken" in data:
                 self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
+            self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
             self.tokens.tokenData.update({"token": data["token"]})
@@ -210,27 +228,71 @@ class HiveSession:
             HiveUnknownConfiguration: Login information is unknown.
 
         Returns:
-            dict: result of the login request.
+            dict: result of the authentication request.
         """
+        result = None
         if not self.auth:
             raise HiveUnknownConfiguration
 
-        result = self.auth.login()
-        await self.updateTokens(result)
+        try:
+            result = self.auth.login()
+        except HiveInvalidUsername:
+            print("invalid_username")
+        except HiveInvalidPassword:
+            print("invalid_password")
+        except HiveApiError:
+            print("no_internet_available")
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
         return result
 
-    async def sms2FA(self, code: str, session: dict):
-        """Complete 2FA auth.
+    async def sms2fa(self, code, session, deviceName = None):
+        """Login to hive account with 2 factor authentication.
 
-        Args:
-            code (str): 2FA code to complete login.
-            session (dict): The session data from login.
+        Raises:
+            HiveUnknownConfiguration: Login information is unknown.
 
         Returns:
-            dict: result of the login request.
+            dict: result of the authentication request.
         """
-        result = self.auth.sms_2fa(code, session)
-        await self.updateTokens(result)
+        result = None
+        if not self.auth:
+            raise HiveUnknownConfiguration
+
+        try:
+            result = self.auth.sms_2fa(code, session, deviceName)
+        except HiveInvalid2FACode:
+            print("invalid_code")
+        except HiveApiError:
+            print("no_internet_available")
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
+        return result
+
+    async def deviceLogin(self):
+        """Login to hive account using device authentication.
+
+        Raises:
+            HiveUnknownConfiguration: Login information is unknown.
+            HiveInvalidDeviceAuthentication: Device information is unknown.
+
+        Returns:
+            dict: result of the authentication request.
+        """
+        result = None
+        if not self.auth:
+            raise HiveUnknownConfiguration
+
+        try:
+            result = self.auth.deviceLogin()
+        except:
+            raise HiveInvalidDeviceAuthentication
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
+            self.tokens.tokenExpiry = timedelta(seconds=0)
         return result
 
     async def hiveRefreshTokens(self):
@@ -249,8 +311,11 @@ class HiveSession:
                 result = await self.auth.refreshToken(
                     self.tokens.tokenData["refreshToken"]
                 )
-                await self.updateTokens(result)
-                self.tokens.tokenCreated = datetime.now()
+
+                if "AuthenticationResult" in result:
+                    await self.updateTokens(result)
+                else:
+                    raise HiveFailedToRefreshTokens
 
         return result
 

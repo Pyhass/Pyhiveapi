@@ -112,7 +112,7 @@ class HiveApiAsync:
         return loginData
 
     async def refreshTokens(self):
-        """Refresh tokens."""
+        """Refresh tokens. - DEPRECATED NOW BY AWS TOKEN MANAGEMENT"""
         url = self.urls["refresh"]
         if self.session is not None:
             tokens = self.session.tokens.tokenData
