@@ -63,3 +63,19 @@ class HiveInvalid2FACode(Exception):
     Args:
         Exception (object): Exception object to invoke
     """
+
+
+class HiveInvalidDeviceAuthentication(Exception):
+    """Raise invalid device authentication.
+
+    Args:
+        Exception (object): Exception object to invoke
+    """
+
+
+class HiveFailedToRefreshTokens(Exception):
+    """Raise invalid refresh tokens.
+
+    Args:
+        Exception (object): Exception object to invoke
+    """

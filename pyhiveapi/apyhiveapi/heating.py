@@ -236,7 +236,7 @@ class HiveHeating:
 
         try:
             data = self.session.data.products[device["hiveID"]]
-            state = HIVETOHA["Heating"][data["state"]["autoBoost"]]
+            state = data["props"]["autoBoost"]["active"]
         except KeyError as e:
             await self.session.log.error(e)
 

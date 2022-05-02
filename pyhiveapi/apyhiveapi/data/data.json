@@ -107,7 +107,14 @@
           },
           "scheduleOverride": true,
           "temperature": 20.28,
-          "zone": "parent-0000-0000-0000-000000000002"
+          "zone": "parent-0000-0000-0000-000000000002",
+          "autoBoost": {
+            "active": false,
+            "target": 21,
+            "duration": 30,
+            "trvs": ["509f4355-83ac-45d0-bce2-0f9727478ed3"]
+          },
+          "readyBy": false
         },
         "state": {
           "name": "Heating",
@@ -484,9 +491,7 @@
           "pmz": "OK",
           "temperature": 21,
           "working": false,
-          "trvs": [
-            "trv-0000-0000-0000-000000000001"
-          ],
+          "trvs": ["trv-0000-0000-0000-000000000001"],
           "previous": {
             "mode": "MANUAL",
             "target": 20.5
@@ -1134,11 +1139,7 @@
           "onSince": 1550266428863,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 1",
@@ -1303,11 +1304,7 @@
           "onSince": 1553134057795,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 2",
@@ -1515,11 +1512,7 @@
           "onSince": 1550266371454,
           "inUse": false,
           "deviceClass": "UNKNOWN",
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 3",
@@ -3001,12 +2994,7 @@
           },
           "deviceClass": "UNKNOWN",
           "statusChanged": 1550320252962,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE",
-            "MOTION_SENSOR"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "MOTION_SENSOR"]
         },
         "state": {
           "name": "Motion Sensor 1"
@@ -3027,12 +3015,7 @@
           "status": "CLOSED",
           "statusChanged": 1550319940352,
           "deviceClass": "UNKNOWN",
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE",
-            "CONTACT_SENSOR"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
         },
         "state": {
           "name": "Contact Sensor 1"
@@ -3053,12 +3036,7 @@
           "status": "CLOSED",
           "statusChanged": 1550310866196,
           "deviceClass": "UNKNOWN",
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE",
-            "CONTACT_SENSOR"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
         },
         "state": {
           "name": "Contact Sensor 2"
@@ -3078,12 +3056,7 @@
           "manufacturer": "HiveHome.com",
           "status": "OPEN",
           "statusChanged": 1547488095058,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE",
-            "CONTACT_SENSOR"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "CONTACT_SENSOR"]
         },
         "state": {
           "name": "Contact Sensor 3"
@@ -3107,10 +3080,7 @@
             "start": 1494063000000,
             "end": 1494167400000
           },
-          "capabilities": [
-            "BOOST",
-            "HOLIDAY_MODE"
-          ],
+          "capabilities": ["BOOST", "HOLIDAY_MODE"],
           "previous": {
             "mode": "OFF"
           },
@@ -3474,9 +3444,7 @@
           "zone": "parent-0000-0000-0000-000000000002",
           "tui": "thermostat-0000-0000-0000-000000000001",
           "modelVariant": "SLR1",
-          "capabilities": [
-            "INFORMATION"
-          ]
+          "capabilities": ["INFORMATION"]
         },
         "state": {
           "name": "Thermostat",
@@ -3535,11 +3503,7 @@
           },
           "power": "mains",
           "signal": 100,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "GEOLOCATION"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "GEOLOCATION"]
         },
         "state": {
           "name": "US Thermostat"
@@ -3573,12 +3537,7 @@
             "end": "2019-10-16T10: 31: 35.292+0000",
             "failureReason": "FAILED"
           },
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE",
-            "TRV_CALIBRATION"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE", "TRV_CALIBRATION"]
         },
         "state": {
           "name": "TRV 1",
@@ -4033,11 +3992,7 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 99,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 1"
@@ -4056,11 +4011,7 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 100,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 2"
@@ -4080,11 +4031,7 @@
           "manufacturer": "Computime",
           "power": "mains",
           "signal": 100,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Plug 3"
@@ -4267,11 +4214,7 @@
           "power": "battery",
           "signal": 99,
           "battery": 80,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Motion Sensor 1"
@@ -4292,11 +4235,7 @@
           "power": "battery",
           "signal": 100,
           "battery": 100,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Contact Sensor 1"
@@ -4317,11 +4256,7 @@
           "power": "battery",
           "signal": 100,
           "battery": 100,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Contact Sensor 2"
@@ -4342,11 +4277,7 @@
           "power": "battery",
           "signal": 100,
           "battery": 60,
-          "capabilities": [
-            "INFORMATION",
-            "RENAME",
-            "DELETE"
-          ]
+          "capabilities": ["INFORMATION", "RENAME", "DELETE"]
         },
         "state": {
           "name": "Contact Sensor 3"

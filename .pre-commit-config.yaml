@@ -5,7 +5,7 @@ repos:
       - id: pyupgrade
         args: [--py38-plus]
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: stable
     hooks:
       - id: black
         args:
@@ -49,10 +49,6 @@ repos:
     hooks:
       - id: prettier
         stages: [manual]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.812
-    hooks:
-      - id: mypy
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:

@@ -15,8 +15,14 @@ from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
+    HiveFailedToRefreshTokens,
+    HiveInvalid2FACode,
+    HiveInvalidDeviceAuthentication,
+    HiveInvalidPassword,
+    HiveInvalidUsername,
     HiveReauthRequired,
     HiveUnknownConfiguration,
+    NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
 from .helper.logger import Logger
@@ -39,7 +45,13 @@ class HiveSession:
     sessionType = "Session"
 
     def __init__(
-        self, username: str = None, password: str = None, websession: object = None
+        self,
+        username: str = None,
+        password: str = None,
+        deviceGroupKey: str = None,
+        deviceKey: str = None,
+        devicePassword: str = None,
+        websession: object = None,
     ):
         """Initialise the base variable values.
 
@@ -48,11 +60,14 @@ class HiveSession:
             password (str, optional): Hive Password. Defaults to None.
             websession (object, optional): Websession for api calls. Defaults to None.
         """
-        self.auth = None
+        self.auth = Auth(
+            username=username,
+            password=password,
+            deviceGroupKey=deviceGroupKey,
+            deviceKey=deviceKey,
+            devicePassword=devicePassword,
+        )
         self.api = API(hiveSession=self, websession=websession)
-        if None not in (username, password):
-            self.auth = Auth(username=username, password=password)
-
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
         self.log = Logger(self)
@@ -68,6 +83,7 @@ class HiveSession:
             {
                 "alarm": False,
                 "battery": [],
+                "camera": False,
                 "errorList": {},
                 "file": False,
                 "homeID": None,
@@ -87,6 +103,7 @@ class HiveSession:
                 "user": {},
                 "minMax": {},
                 "alarm": {},
+                "camera": {},
             }
         )
         self.devices = {}
@@ -192,6 +209,7 @@ class HiveSession:
             if "RefreshToken" in data:
                 self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
+            self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
             self.tokens.tokenData.update({"token": data["token"]})
@@ -210,27 +228,71 @@ class HiveSession:
             HiveUnknownConfiguration: Login information is unknown.
 
         Returns:
-            dict: result of the login request.
+            dict: result of the authentication request.
         """
+        result = None
         if not self.auth:
             raise HiveUnknownConfiguration
 
-        result = self.auth.login()
-        await self.updateTokens(result)
+        try:
+            result = await self.auth.login()
+        except HiveInvalidUsername:
+            print("invalid_username")
+        except HiveInvalidPassword:
+            print("invalid_password")
+        except HiveApiError:
+            print("no_internet_available")
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
         return result
 
-    async def sms2FA(self, code: str, session: dict):
-        """Complete 2FA auth.
+    async def sms2fa(self, code, session, deviceName=None):
+        """Login to hive account with 2 factor authentication.
 
-        Args:
-            code (str): 2FA code to complete login.
-            session (dict): The session data from login.
+        Raises:
+            HiveUnknownConfiguration: Login information is unknown.
 
         Returns:
-            dict: result of the login request.
+            dict: result of the authentication request.
         """
-        result = self.auth.sms_2fa(code, session)
-        await self.updateTokens(result)
+        result = None
+        if not self.auth:
+            raise HiveUnknownConfiguration
+
+        try:
+            result = await self.auth.sms_2fa(code, session, deviceName)
+        except HiveInvalid2FACode:
+            print("invalid_code")
+        except HiveApiError:
+            print("no_internet_available")
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
+        return result
+
+    async def deviceLogin(self):
+        """Login to hive account using device authentication.
+
+        Raises:
+            HiveUnknownConfiguration: Login information is unknown.
+            HiveInvalidDeviceAuthentication: Device information is unknown.
+
+        Returns:
+            dict: result of the authentication request.
+        """
+        result = None
+        if not self.auth:
+            raise HiveUnknownConfiguration
+
+        try:
+            result = await self.auth.deviceLogin()
+        except HiveInvalidDeviceAuthentication:
+            raise HiveInvalidDeviceAuthentication
+
+        if "AuthenticationResult" in result:
+            await self.updateTokens(result)
+            self.tokens.tokenExpiry = timedelta(seconds=0)
         return result
 
     async def hiveRefreshTokens(self):
@@ -249,8 +311,11 @@ class HiveSession:
                 result = await self.auth.refreshToken(
                     self.tokens.tokenData["refreshToken"]
                 )
-                self.updateTokens(result[0])
-                self.tokens.tokenCreated = datetime.now()
+
+                if "AuthenticationResult" in result:
+                    await self.updateTokens(result)
+                else:
+                    raise HiveFailedToRefreshTokens
 
         return result
 
@@ -269,6 +334,9 @@ class HiveSession:
             ep = self.config.lastUpdate + self.config.scanInterval
             if datetime.now() >= ep:
                 await self.getDevices(device["hiveID"])
+                if len(self.deviceList["camera"]) > 0:
+                    for camera in self.data.camera:
+                        await self.getCamera(self.devices[camera])
                 updated = True
         finally:
             self.updateLock.release()
@@ -292,6 +360,46 @@ class HiveSession:
                 raise HiveApiError
 
         self.data.alarm = api_resp_d["parsed"]
+
+    async def getCamera(self, device):
+        """Get camera data.
+
+        Raises:
+            HTTPException: HTTP error has occurred updating the devices.
+            HiveApiError: An API error code has been returned.
+        """
+        cameraImage = None
+        cameraRecording = None
+        if self.config.file:
+            cameraImage = self.openFile("camera.json")
+            cameraRecording = self.openFile("camera.json")
+        elif self.tokens is not None:
+            cameraImage = await self.api.getCameraImage(device)
+            if cameraImage["parsed"]["events"][0]["hasRecording"] is True:
+                cameraRecording = await self.api.getCameraRecording(
+                    device, cameraImage["parsed"]["events"][0]["eventId"]
+                )
+
+            if operator.contains(str(cameraImage["original"]), "20") is False:
+                raise HTTPException
+            elif cameraImage["parsed"] is None:
+                raise HiveApiError
+        else:
+            raise NoApiToken
+
+        self.data.camera[device["id"]] = {}
+        self.data.camera[device["id"]]["cameraImage"] = None
+        self.data.camera[device["id"]]["cameraRecording"] = None
+
+        if cameraImage is not None:
+            self.data.camera[device["id"]] = {}
+            self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
+                "events"
+            ][0]
+        if cameraRecording is not None:
+            self.data.camera[device["id"]]["cameraRecording"] = cameraRecording[
+                "parsed"
+            ]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
@@ -337,6 +445,8 @@ class HiveSession:
                         tmpDevices.update({aDevice["id"]: aDevice})
                         if aDevice["type"] == "siren":
                             self.config.alarm = True
+                        if aDevice["type"] == "hivecamera":
+                            await self.getCamera(aDevice)
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
@@ -405,6 +515,7 @@ class HiveSession:
         """
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
+        self.deviceList["camera"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
         self.deviceList["sensor"] = []

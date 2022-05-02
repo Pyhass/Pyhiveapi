@@ -1,0 +1,17 @@
+{
+    "cameraImage": {
+        "parsed": {
+            "events": [
+                {
+                    "thumbnailUrls": [
+                        "https://test.com/image"
+                    ],
+                    "hasRecording": true
+                }
+            ]
+        }
+    },
+    "camaeraRecording": {
+        "parsed": "https://test.com/video"
+    }
+}
