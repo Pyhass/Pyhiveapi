@@ -15,13 +15,13 @@ from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
-    HiveReauthRequired,
-    HiveUnknownConfiguration,
+    HiveFailedToRefreshTokens,
     HiveInvalid2FACode,
+    HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
-    HiveInvalidDeviceAuthentication,
-    HiveFailedToRefreshTokens,
+    HiveReauthRequired,
+    HiveUnknownConfiguration,
     NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
@@ -247,7 +247,7 @@ class HiveSession:
             await self.updateTokens(result)
         return result
 
-    async def sms2fa(self, code, session, deviceName = None):
+    async def sms2fa(self, code, session, deviceName=None):
         """Login to hive account with 2 factor authentication.
 
         Raises:
@@ -287,7 +287,7 @@ class HiveSession:
 
         try:
             result = self.auth.deviceLogin()
-        except:
+        except HiveInvalidDeviceAuthentication:
             raise HiveInvalidDeviceAuthentication
 
         if "AuthenticationResult" in result:

@@ -73,7 +73,6 @@ class HiveInvalidDeviceAuthentication(Exception):
     """
 
 
-
 class HiveFailedToRefreshTokens(Exception):
     """Raise invalid refresh tokens.
 

@@ -1,6 +1,5 @@
 """Hive API Module."""
 import json
-import uuid
 
 import requests
 import urllib3
@@ -48,7 +47,7 @@ class HiveApi:
                     "content-type": "application/json",
                     "Accept": "*/*",
                     "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData['token'],
+                    "x-jwt-token": self.session.tokens.tokenData["token"],
                 }
             else:
                 self.headers = {
@@ -62,7 +61,7 @@ class HiveApi:
                     "content-type": "application/json",
                     "Accept": "*/*",
                     "Authorization": f"Bearer {self.token}",
-                    "x-jwt-token": self.token
+                    "x-jwt-token": self.token,
                 }
             else:
                 self.headers = {
@@ -81,7 +80,7 @@ class HiveApi:
             )
 
     def refreshTokens(self, tokens={}):
-        """Get new session tokens. - DEPRECATED NOW BY AWS TOKEN MANAGEMENT"""
+        """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
             tokens = self.session.tokens.tokenData
@@ -168,11 +167,13 @@ class HiveApi:
             self.error()
 
         return json_return
-    
+
     def getCameraRecording(self, device=None, eventId=None):
         """Build and query camera endpoint."""
         json_return = {}
-        url = self.urls["cameraRecordings"].format(device["props"]["hardwareIdentifier"], eventId)
+        url = self.urls["cameraRecordings"].format(
+            device["props"]["hardwareIdentifier"], eventId
+        )
         try:
             info = self.request("GET", url, camera=True)
             json_return.update({"original": info.status_code})

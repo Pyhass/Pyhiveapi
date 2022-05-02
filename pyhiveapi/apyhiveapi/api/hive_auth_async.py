@@ -182,12 +182,13 @@ class HiveAuthAsync:
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
     async def generate_hash_device(self, device_group_key, device_key):
+        """Generate device hash key."""
         # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137
 
         # random device password, which will be used for DEVICE_SRP_AUTH flow
         device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
 
-        combined_string = "%s%s:%s" % (device_group_key, device_key, device_password)
+        combined_string = f"{device_group_key}{device_key}:{device_password}"
         combined_string_hash = hash_sha256(combined_string.encode("utf-8"))
         salt = pad_hex(get_random(16))
 
@@ -208,10 +209,11 @@ class HiveAuthAsync:
     async def get_device_authentication_key(
         self, device_group_key, device_key, device_password, server_b_value, salt
     ):
+        """Get device authentication key."""
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "%s%s:%s" % (device_group_key, device_key, device_password)
+        username_password = f"{device_group_key}{device_key}:{device_password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
@@ -225,6 +227,7 @@ class HiveAuthAsync:
         return hkdf
 
     async def process_device_challenge(self, challenge_parameters):
+        """Process device challenge."""
         username = challenge_parameters["USERNAME"]
         salt_hex = challenge_parameters["SALT"]
         srp_b_hex = challenge_parameters["SRP_B"]
@@ -371,8 +374,7 @@ class HiveAuthAsync:
             )
 
     async def deviceLogin(self):
-        """Perform device login instead"""
-
+        """Perform device login instead."""
         loginResult = await self.login()
         auth_params = await self.get_auth_params()
         auth_params["DEVICE_KEY"] = self.deviceKey
@@ -470,7 +472,7 @@ class HiveAuthAsync:
         if "client" not in dir(self):
             await self.async_init()
 
-        if deviceName == None:
+        if deviceName is None:
             deviceName = socket.gethostname()
 
         result = None
@@ -527,6 +529,7 @@ class HiveAuthAsync:
         return result
 
     async def getDeviceData(self):
+        """Get key device information for device authentication."""
         return self.deviceGroupKey, self.deviceKey, self.devicePassword
 
     async def refreshToken(self, refresh_token):
@@ -535,7 +538,7 @@ class HiveAuthAsync:
             await self.async_init()
         result = None
         auth_params = ({"REFRESH_TOKEN": refresh_token},)
-        if self.deviceKey != None:
+        if self.deviceKey is not None:
             auth_params = {"REFRESH_TOKEN": refresh_token, "DEVICE_KEY": self.deviceKey}
 
         try:

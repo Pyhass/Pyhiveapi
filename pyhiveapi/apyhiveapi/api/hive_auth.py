@@ -15,9 +15,9 @@ import botocore
 from ..helper.hive_exceptions import (
     HiveApiError,
     HiveInvalid2FACode,
+    HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
-    HiveInvalidDeviceAuthentication,
 )
 from .hive_api import HiveApi
 
@@ -200,12 +200,13 @@ class HiveAuth:
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
     def generate_hash_device(self, device_group_key, device_key):
+        """Generate the device hash."""
         # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137
 
         # random device password, which will be used for DEVICE_SRP_AUTH flow
         device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
 
-        combined_string = "%s%s:%s" % (device_group_key, device_key, device_password)
+        combined_string = f"{device_group_key}{device_key}:{device_password}"
         combined_string_hash = hash_sha256(combined_string.encode("utf-8"))
         salt = pad_hex(get_random(16))
 
@@ -226,10 +227,11 @@ class HiveAuth:
     def get_device_authentication_key(
         self, device_group_key, device_key, device_password, server_b_value, salt
     ):
+        """Get the device authentication key."""
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "%s%s:%s" % (device_group_key, device_key, device_password)
+        username_password = f"{device_group_key}{device_key}:{device_password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
@@ -243,6 +245,7 @@ class HiveAuth:
         return hkdf
 
     def process_device_challenge(self, challenge_parameters):
+        """Process the device challenge."""
         username = challenge_parameters["USERNAME"]
         salt_hex = challenge_parameters["SALT"]
         srp_b_hex = challenge_parameters["SRP_B"]
@@ -333,7 +336,7 @@ class HiveAuth:
             return self.file_response
 
         auth_params = self.get_auth_params()
-        if self.deviceKey != None:
+        if self.deviceKey is not None:
             auth_params["DEVICE_KEY"] = self.deviceKey
         response = None
         result = None
@@ -352,7 +355,7 @@ class HiveAuth:
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response["ChallengeParameters"])
-            if self.deviceKey != None:
+            if self.deviceKey is not None:
                 challenge_response["DEVICE_KEY"] = self.deviceKey
 
             try:
@@ -377,8 +380,7 @@ class HiveAuth:
             )
 
     def deviceLogin(self):
-        """Perform device login instead"""
-
+        """Perform device login instead."""
         loginResult = self.login()
         auth_params = self.get_auth_params()
         auth_params["DEVICE_KEY"] = self.deviceKey
@@ -460,7 +462,7 @@ class HiveAuth:
     ):
         """Confirm Device Hive."""
         result = None
-        if deviceName == None:
+        if deviceName is None:
             deviceName = socket.gethostname()
         try:
             device_password, device_secret_verifier_config = self.generate_hash_device(
@@ -503,6 +505,7 @@ class HiveAuth:
         return result
 
     def getDeviceData(self):
+        """Get key device information to use device authentication."""
         return self.deviceGroupKey, self.deviceKey, self.devicePassword
 
     def refreshToken(
@@ -512,7 +515,7 @@ class HiveAuth:
         """Refresh Hive Tokens."""
         result = None
         auth_params = ({"REFRESH_TOKEN": refresh_token},)
-        if self.deviceKey != None:
+        if self.deviceKey is not None:
             auth_params = {"REFRESH_TOKEN": refresh_token, "DEVICE_KEY": self.deviceKey}
         try:
             result = self.client.initiate_auth(
