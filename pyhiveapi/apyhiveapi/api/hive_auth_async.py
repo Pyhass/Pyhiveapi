@@ -445,10 +445,10 @@ class HiveAuthAsync:
                     "DeviceKey"
                 ]
             if autoDeviceRegistration:
-                self.confirmDevice(
+                await self.confirmDevice(
                     self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
                 )
-                self.updateDeviceStatus(self.accessToken, self.deviceKey)
+                await self.updateDeviceStatus(self.accessToken)
         except botocore.exceptions.ClientError as err:
             if (
                 err.__class__.__name__ == "NotAuthorizedException"

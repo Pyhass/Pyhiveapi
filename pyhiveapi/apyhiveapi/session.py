@@ -235,7 +235,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = self.auth.login()
+            result = await self.auth.login()
         except HiveInvalidUsername:
             print("invalid_username")
         except HiveInvalidPassword:
@@ -261,7 +261,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = self.auth.sms_2fa(code, session, deviceName)
+            result = await self.auth.sms_2fa(code, session, deviceName)
         except HiveInvalid2FACode:
             print("invalid_code")
         except HiveApiError:
@@ -286,7 +286,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = self.auth.deviceLogin()
+            result = await self.auth.deviceLogin()
         except HiveInvalidDeviceAuthentication:
             raise HiveInvalidDeviceAuthentication
 
@@ -368,6 +368,8 @@ class HiveSession:
             HTTPException: HTTP error has occurred updating the devices.
             HiveApiError: An API error code has been returned.
         """
+        cameraImage = None
+        cameraRecording = None
         if self.config.file:
             cameraImage = self.openFile("camera.json")
             cameraRecording = self.openFile("camera.json")

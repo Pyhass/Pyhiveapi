@@ -440,7 +440,7 @@ class HiveAuth:
                 self.confirmDevice(
                     self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
                 )
-                self.updateDeviceStatus(self.accessToken, self.deviceKey)
+                self.updateDeviceStatus(self.accessToken)
         except botocore.exceptions.ClientError as err:
             if (
                 err.__class__.__name__ == "NotAuthorizedException"
@@ -486,7 +486,6 @@ class HiveAuth:
     def updateDeviceStatus(
         self,
         accessToken: str,
-        deviceKey: str,
     ):
         """Update Device Hive."""
         result = None
@@ -494,7 +493,7 @@ class HiveAuth:
             result = (
                 self.client.update_device_status(
                     AccessToken=accessToken,
-                    DeviceKey=deviceKey,
+                    DeviceKey=self.deviceKey,
                     DeviceRememberedStatus="remembered",
                 ),
             )
