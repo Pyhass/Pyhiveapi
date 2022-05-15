@@ -1,6 +1,5 @@
 """Hive API Module."""
 import json
-from sqlite3 import paramstyle
 
 import requests
 import urllib3
