@@ -1,5 +1,6 @@
 """Hive API Module."""
 import json
+from sqlite3 import paramstyle
 
 import requests
 import urllib3
@@ -14,21 +15,22 @@ class HiveApi:
     def __init__(self, hiveSession=None, websession=None, token=None):
         """Hive API initialisation."""
         self.cameraBaseUrl = "prod.hcam.bgchtest.info"
+        self.baseUrl = "https://beekeeper.hivehome.com/1.0"
+
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
             "refresh": "https://beekeeper.hivehome.com/1.0/cognito/refresh-token",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
-            "base": "https://beekeeper-uk.hivehome.com/1.0",
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
-            "all": "/nodes/all?products=true&devices=true&actions=true",
-            "alarm": "/security-lite?homeId=",
+            "all": f"{self.baseUrl}/nodes/all",
+            "alarm": f"{self.baseUrl}/security-lite",
             "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
             "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
-            "devices": "/devices",
-            "products": "/products",
-            "actions": "/actions",
+            "devices": f"{self.baseUrl}/devices",
+            "products": f"{self.baseUrl}/products",
+            "actions": f"{self.baseUrl}/actions",
             "nodes": "/nodes/{0}/{1}",
         }
         self.timeout = 10
@@ -39,7 +41,23 @@ class HiveApi:
         self.session = hiveSession
         self.token = token
 
-    def request(self, type, url, jsc=None, camera=False):
+
+        self.homeID = None
+        if self.session is not None: 
+            self.homeID = self.session.config.homeID
+
+    def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
+        """Get parameters."""
+        params = {
+            "products": products,
+            "devices": devices,
+            "actions": actions,
+        }
+        if sendhomeID and self.homeID is not None:
+            params.update({"homeId": self.homeID}) 
+        return params
+
+    def request(self, type, url, jsc=None, camera=False, params={}):
         """Make API request."""
         if self.session is not None:
             if camera:
@@ -72,11 +90,11 @@ class HiveApi:
 
         if type == "GET":
             return requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
+                url=url, headers=self.headers, data=jsc, timeout=self.timeout, params=params
             )
         if type == "POST":
             return requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout
+                url=url, headers=self.headers, data=jsc, timeout=self.timeout, params=params
             )
 
     def refreshTokens(self, tokens={}):
@@ -96,8 +114,8 @@ class HiveApi:
             data = json.loads(info.text)
             if "token" in data and self.session:
                 self.session.updateTokens(data)
-                self.urls.update({"base": data["platform"]["endpoint"]})
-                self.urls.update({"camera": data["platform"]["cameraPlatform"]})
+                self.baseUrl = info["platform"]["endpoint"]
+                self.cameraBaseUrl = info["platform"]["cameraPlatform"]
             self.json_return.update({"original": info.status_code})
             self.json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -131,11 +149,27 @@ class HiveApi:
     def getAll(self):
         """Build and query all endpoint."""
         json_return = {}
-        url = self.urls["base"] + self.urls["all"]
+        url = self.urls["all"]
+        params = self.getParams(sendhomeID=True, products=True, devices=True, actions=True)
         try:
-            info = self.request("GET", url)
+            info = self.request("GET", url, params=params)
             json_return.update({"original": info.status_code})
             json_return.update({"parsed": info.json()})
+        except (OSError, RuntimeError, ZeroDivisionError):
+            self.error()
+
+        return json_return
+
+    def getHomes(self):
+        """Build and query all endpoint."""
+        json_return = {}
+        url = self.urls["all"]
+        params = self.getParams(sendhomeID=True)
+        try:
+            info = self.request("GET", url, params=params)
+            all = info.json()
+            json_return.update({"original": info.status_code})
+            json_return.update({"parsed": all["homes"]})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
@@ -145,9 +179,15 @@ class HiveApi:
         """Build and query alarm endpoint."""
         if self.session is not None:
             homeID = self.session.config.homeID
-        url = self.urls["base"] + self.urls["alarm"] + homeID
+        url = self.urls["alarm"]
+        params = {}
+        if homeID:
+            params = {"homeID": homeID}
+        if self.homeID:
+            # ignore homeID if set in session
+            params.update({"homeID": self.homeID}) 
         try:
-            info = self.request("GET", url)
+            info = self.request("GET", url, params=params)
             self.json_return.update({"original": info.status_code})
             self.json_return.update({"parsed": info.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -185,9 +225,10 @@ class HiveApi:
 
     def getDevices(self):
         """Call the get devices endpoint."""
-        url = self.urls["base"] + self.urls["devices"]
+        url = self.urls["devices"]
+        params = self.getParams(sendhomeID=True, devices=True)
         try:
-            response = self.request("GET", url)
+            response = self.request("GET", url, params=params) 
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -197,9 +238,10 @@ class HiveApi:
 
     def getProducts(self):
         """Call the get products endpoint."""
-        url = self.urls["base"] + self.urls["products"]
+        url = self.urls["products"] 
+        params = self.getParams(sendhomeID=True, products=True)
         try:
-            response = self.request("GET", url)
+            response = self.request("GET", url, params=params)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -209,11 +251,13 @@ class HiveApi:
 
     def getActions(self):
         """Call the get actions endpoint."""
-        url = self.urls["base"] + self.urls["actions"]
+        url = self.urls["all"]
+        params = self.getParams(sendhomeID=True, actions=True)
         try:
-            response = self.request("GET", url)
+            response = self.request("GET", url, sendhomeID=True) 
+            all = response.json()
             self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
+            self.json_return.update({"parsed": all["actions"]})
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
@@ -254,6 +298,9 @@ class HiveApi:
             self.error()
 
         return self.json_return
+
+    def setHome(self, homeID):
+        self.homeID = homeID
 
     def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""

@@ -28,7 +28,8 @@ class HiveApiAsync:
             "refresh": f"{self.baseUrl}/cognito/refresh-token",
             "holiday_mode": f"{self.baseUrl}/holiday-mode",
             "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
-            "alarm": f"{self.baseUrl}/security-lite?homeId=",
+            "homes" : f"{self.baseUrl}/nodes/all?devices=false&products=false&actions=false",
+            "alarm": f"{self.baseUrl}/security-lite",
             "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
             "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": f"{self.baseUrl}/devices",
@@ -44,10 +45,24 @@ class HiveApiAsync:
             "parsed": "No response to Hive API request",
         }
         self.session = hiveSession
+        self.homeID = None
+        if self.session is not None:
+            self.homeID = self.session.config.homeID
         self.websession = ClientSession() if websession is None else websession
 
+    def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
+        """Get parameters."""
+        params = {
+            "products": products,
+            "devices": devices,
+            "actions": actions,
+        }
+        if sendhomeID and self.homeID:
+            params.update({"homeId": self.homeID}) 
+        return params
+
     async def request(
-        self, method: str, url: str, camera: bool = False, **kwargs
+        self, method: str, url: str, camera: bool = False, params={}, **kwargs
     ) -> ClientResponse:
         """Make a request."""
         data = kwargs.get("data", None)
@@ -73,7 +88,7 @@ class HiveApiAsync:
                 raise NoApiToken
 
         async with self.websession.request(
-            method, url, headers=headers, data=data
+            method, url, headers=headers, data=data, params=params
         ) as resp:
             await resp.text()
             if operator.contains(str(resp.status), "20"):
@@ -142,10 +157,26 @@ class HiveApiAsync:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
+        params = self.getParams(sendhomeID=True, products=True, devices=True, actions=True)
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
+        except (OSError, RuntimeError, ZeroDivisionError):
+            await self.error()
+
+        return json_return
+
+    async def getHomes(self):
+        """Build and query all endpoint for homes."""
+        json_return = {}
+        url = self.urls["all"]
+        params = self.getParams()
+        try:
+            resp = await self.request("get", url)
+            all = await resp.json(content_type=None)
+            json_return.update({"original": resp.status})
+            json_return.update({"parsed": all["homes"]})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -154,9 +185,9 @@ class HiveApiAsync:
     async def getAlarm(self):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["alarm"] + self.session.config.homeID
+        url = self.urls["alarm"] 
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params={"homeID": self.homeID})
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -197,8 +228,9 @@ class HiveApiAsync:
         """Call the get devices endpoint."""
         json_return = {}
         url = self.urls["devices"]
+        params = self.getParams(sendhomeID=True, devices=True)
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -210,10 +242,11 @@ class HiveApiAsync:
         """Call the get products endpoint."""
         json_return = {}
         url = self.urls["products"]
+        params = self.getParams(sendhomeID=True, products=True)
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
+            json_return.update({"parsed":  await resp.json(content_type=None)})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -222,11 +255,13 @@ class HiveApiAsync:
     async def getActions(self):
         """Call the get actions endpoint."""
         json_return = {}
-        url = self.urls["actions"]
+        url = self.urls["all"]
+        params = self.getParams(sendhomeID=True, actions=True)
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params=params)
+            all = await resp.json(content_type=None)
             json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
+            json_return.update({"parsed": all["actions"]})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -269,6 +304,10 @@ class HiveApiAsync:
             await self.error()
 
         return json_return
+    
+    def setHome(self, homeID):
+        """Set the home ID."""
+        self.homeID = homeID
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
@@ -302,10 +341,10 @@ class HiveApiAsync:
             + "}"
         )
 
-        url = f"{self.urls['alarm']}{self.session.config.homeID}"
+        url = self.urls['alarm']
         try:
             await self.isFileBeingUsed()
-            await self.request("post", url, data=jsc)
+            await self.request("post", url, data=jsc, params={'homeID': self.homeID})
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}

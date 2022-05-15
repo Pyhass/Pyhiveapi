@@ -451,7 +451,8 @@ class HiveSession:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
                 if hiveType == "homes":
-                    self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
+                    if self.config.homeID is None:
+                        self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
 
             if len(tmpProducts) > 0:
                 self.data.products = copy.deepcopy(tmpProducts)
