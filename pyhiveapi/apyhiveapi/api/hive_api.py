@@ -40,9 +40,8 @@ class HiveApi:
         self.session = hiveSession
         self.token = token
 
-
         self.homeID = None
-        if self.session is not None: 
+        if self.session is not None:
             self.homeID = self.session.config.homeID
 
     def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
@@ -53,9 +52,9 @@ class HiveApi:
             "actions": actions,
         }
         if sendhomeID and self.homeID is not None:
-            params.update({"homeId": self.homeID}) 
+            params.update({"homeId": self.homeID})
         return params
-    
+
     def getHomeIdParam(self):
         """Get homeId parameter if set."""
         if self.homeID is not None:
@@ -95,11 +94,19 @@ class HiveApi:
 
         if type == "GET":
             return requests.get(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout, params=params
+                url=url,
+                headers=self.headers,
+                data=jsc,
+                timeout=self.timeout,
+                params=params,
             )
         if type == "POST":
             return requests.post(
-                url=url, headers=self.headers, data=jsc, timeout=self.timeout, params=params
+                url=url,
+                headers=self.headers,
+                data=jsc,
+                timeout=self.timeout,
+                params=params,
             )
 
     def refreshTokens(self, tokens={}):
@@ -155,7 +162,9 @@ class HiveApi:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
-        params = self.getParams(sendhomeID=True, products=True, devices=True, actions=True)
+        params = self.getParams(
+            sendhomeID=True, products=True, devices=True, actions=True
+        )
         try:
             info = self.request("GET", url, params=params)
             json_return.update({"original": info.status_code})
@@ -190,7 +199,7 @@ class HiveApi:
             params = {"homeID": homeID}
         if self.homeID:
             # ignore homeID if set in session
-            params = self.getHomeIdParam() 
+            params = self.getHomeIdParam()
         try:
             info = self.request("GET", url, params=params)
             self.json_return.update({"original": info.status_code})
@@ -233,7 +242,7 @@ class HiveApi:
         url = self.urls["devices"]
         params = self.getParams(sendhomeID=True, devices=True)
         try:
-            response = self.request("GET", url, params=params) 
+            response = self.request("GET", url, params=params)
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": response.json()})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -243,7 +252,7 @@ class HiveApi:
 
     def getProducts(self):
         """Call the get products endpoint."""
-        url = self.urls["products"] 
+        url = self.urls["products"]
         params = self.getParams(sendhomeID=True, products=True)
         try:
             response = self.request("GET", url, params=params)
@@ -259,7 +268,7 @@ class HiveApi:
         url = self.urls["all"]
         params = self.getHomeIdParam()
         try:
-            response = self.request("GET", url, params=params) 
+            response = self.request("GET", url, params=params)
             all = response.json()
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": all["actions"]})

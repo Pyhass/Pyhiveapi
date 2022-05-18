@@ -28,7 +28,7 @@ class HiveApiAsync:
             "refresh": f"{self.baseUrl}/cognito/refresh-token",
             "holiday_mode": f"{self.baseUrl}/holiday-mode",
             "all": f"{self.baseUrl}/nodes/all",
-            "homes" : f"{self.baseUrl}/nodes/all",
+            "homes": f"{self.baseUrl}/nodes/all",
             "alarm": f"{self.baseUrl}/security-lite",
             "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
             "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
@@ -58,7 +58,7 @@ class HiveApiAsync:
             "actions": actions,
         }
         if sendhomeID and self.homeID:
-            params.update({"homeId": self.homeID}) 
+            params.update({"homeId": self.homeID})
         return params
 
     def getHomeIdParam(self):
@@ -163,7 +163,9 @@ class HiveApiAsync:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
-        params = self.getParams(sendhomeID=True, products=True, devices=True, actions=True)
+        params = self.getParams(
+            sendhomeID=True, products=True, devices=True, actions=True
+        )
         try:
             resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
@@ -191,7 +193,7 @@ class HiveApiAsync:
     async def getAlarm(self):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["alarm"] 
+        url = self.urls["alarm"]
         params = self.getHomeIdParam()
         try:
             resp = await self.request("get", url, params=params)
@@ -253,7 +255,7 @@ class HiveApiAsync:
         try:
             resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
-            json_return.update({"parsed":  await resp.json(content_type=None)})
+            json_return.update({"parsed": await resp.json(content_type=None)})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -311,7 +313,7 @@ class HiveApiAsync:
             await self.error()
 
         return json_return
-    
+
     def setHome(self, homeID):
         """Set the home ID."""
         self.homeID = homeID
@@ -348,7 +350,7 @@ class HiveApiAsync:
             + "}"
         )
 
-        url = self.urls['alarm']
+        url = self.urls["alarm"]
         params = self.getHomeIdParam()
 
         try:
