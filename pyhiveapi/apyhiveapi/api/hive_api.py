@@ -314,6 +314,7 @@ class HiveApi:
         return self.json_return
 
     def setHome(self, homeID):
+        """Set the homeID."""
         self.homeID = homeID
 
     def setState(self, n_type, n_id, **kwargs):
