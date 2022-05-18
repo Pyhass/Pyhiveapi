@@ -61,6 +61,12 @@ class HiveApiAsync:
             params.update({"homeId": self.homeID}) 
         return params
 
+    def getHomeIdParam(self):
+        """Get homeId parameter if set."""
+        if self.homeID is not None:
+            return {"homeId": self.homeID}
+        return {}
+
     async def request(
         self, method: str, url: str, camera: bool = False, params={}, **kwargs
     ) -> ClientResponse:
@@ -173,7 +179,7 @@ class HiveApiAsync:
         url = self.urls["all"]
         params = self.getParams()
         try:
-            resp = await self.request("get", url)
+            resp = await self.request("get", url, params=params)
             all = await resp.json(content_type=None)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": all["homes"]})
@@ -186,8 +192,9 @@ class HiveApiAsync:
         """Build and query alarm endpoint."""
         json_return = {}
         url = self.urls["alarm"] 
+        params = self.getHomeIdParam()
         try:
-            resp = await self.request("get", url, params={"homeID": self.homeID})
+            resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
         except (OSError, RuntimeError, ZeroDivisionError):
@@ -342,9 +349,11 @@ class HiveApiAsync:
         )
 
         url = self.urls['alarm']
+        params = self.getHomeIdParam()
+
         try:
             await self.isFileBeingUsed()
-            await self.request("post", url, data=jsc, params={'homeID': self.homeID})
+            await self.request("post", url, data=jsc, params=params)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}

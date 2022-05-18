@@ -55,6 +55,12 @@ class HiveApi:
         if sendhomeID and self.homeID is not None:
             params.update({"homeId": self.homeID}) 
         return params
+    
+    def getHomeIdParam(self):
+        """Get homeId parameter if set."""
+        if self.homeID is not None:
+            return {"homeId": self.homeID}
+        return {}
 
     def request(self, type, url, jsc=None, camera=False, params={}):
         """Make API request."""
@@ -184,7 +190,7 @@ class HiveApi:
             params = {"homeID": homeID}
         if self.homeID:
             # ignore homeID if set in session
-            params.update({"homeID": self.homeID}) 
+            params = self.getHomeIdParam() 
         try:
             info = self.request("GET", url, params=params)
             self.json_return.update({"original": info.status_code})
@@ -251,9 +257,9 @@ class HiveApi:
     def getActions(self):
         """Call the get actions endpoint."""
         url = self.urls["all"]
-        params = self.getParams(sendhomeID=True, actions=True)
+        params = self.getHomeIdParam()
         try:
-            response = self.request("GET", url, sendhomeID=True) 
+            response = self.request("GET", url, params=params) 
             all = response.json()
             self.json_return.update({"original": response.status_code})
             self.json_return.update({"parsed": all["actions"]})
