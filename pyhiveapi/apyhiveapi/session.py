@@ -125,7 +125,7 @@ class HiveSession:
 
         return data
 
-    def addList(self, type: str, data: dict, **kwargs: dict):
+    def addList(self, entityType: str, data: dict, **kwargs: dict):
         """Add entity to the list.
 
         Args:
@@ -150,7 +150,7 @@ class HiveSession:
                     "hiveID": data.get("id", ""),
                     "hiveName": device_name,
                     "hiveType": data.get("type", ""),
-                    "haType": type,
+                    "haType": entityType,
                     "deviceData": device.get("props", data.get("props", {})),
                     "parentDevice": data.get("parent", None),
                     "isGroup": data.get("isGroup", False),
@@ -166,7 +166,7 @@ class HiveSession:
             except KeyError as e:
                 self.logger.error(e)
 
-            self.deviceList[type].append(formatted_data)
+            self.deviceList[entityType].append(formatted_data)
         return add
 
     async def updateInterval(self, new_interval: timedelta):
@@ -193,11 +193,12 @@ class HiveSession:
         if using_file:
             self.config.file = True
 
-    async def updateTokens(self, tokens: dict):
+    async def updateTokens(self, tokens: dict, update_expiry_time: bool = True):
         """Update session tokens.
 
         Args:
             tokens (dict): Tokens from API response.
+            refresh_interval (Boolean): Should the refresh internval be updated
 
         Returns:
             dict: Parsed dictionary of tokens
@@ -209,7 +210,8 @@ class HiveSession:
             if "RefreshToken" in data:
                 self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
-            self.tokens.tokenCreated = datetime.now()
+            if update_expiry_time:
+                self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
             self.tokens.tokenData.update({"token": data["token"]})
@@ -328,18 +330,18 @@ class HiveSession:
         Returns:
             boolean: True/False if update was successful
         """
-        await self.updateLock.acquire()
         updated = False
-        try:
-            ep = self.config.lastUpdate + self.config.scanInterval
-            if datetime.now() >= ep:
+        ep = self.config.lastUpdate + self.config.scanInterval
+        if datetime.now() >= ep and not self.updateLock.locked():
+            try:
+                await self.updateLock.acquire()
                 await self.getDevices(device["hiveID"])
                 if len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
                 updated = True
-        finally:
-            self.updateLock.release()
+            finally:
+                self.updateLock.release()
 
         return updated
 
@@ -493,7 +495,7 @@ class HiveSession:
 
         if config != {}:
             if config["tokens"] is not None and not self.config.file:
-                await self.updateTokens(config["tokens"])
+                await self.updateTokens(config["tokens"], False)
             elif not self.config.file:
                 raise HiveUnknownConfiguration
 
