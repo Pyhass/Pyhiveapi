@@ -48,9 +48,6 @@ class HiveSession:
         self,
         username: str = None,
         password: str = None,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
         websession: object = None,
     ):
         """Initialise the base variable values.
@@ -63,9 +60,6 @@ class HiveSession:
         self.auth = Auth(
             username=username,
             password=password,
-            deviceGroupKey=deviceGroupKey,
-            deviceKey=deviceKey,
-            devicePassword=devicePassword,
         )
         self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
@@ -249,7 +243,7 @@ class HiveSession:
             await self.updateTokens(result)
         return result
 
-    async def sms2fa(self, code, session, deviceName=None):
+    async def sms2fa(self, code, session):
         """Login to hive account with 2 factor authentication.
 
         Raises:
@@ -263,7 +257,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = await self.auth.sms_2fa(code, session, deviceName)
+            result = await self.auth.sms_2fa(code, session)
         except HiveInvalid2FACode:
             print("invalid_code")
         except HiveApiError:
@@ -496,7 +490,13 @@ class HiveSession:
         if config != {}:
             if config["tokens"] is not None and not self.config.file:
                 await self.updateTokens(config["tokens"], False)
-            elif not self.config.file:
+
+            if config["device_data"] is not None and not self.config.file:
+                self.auth.deviceGroupKey = config["device_data"][0]
+                self.auth.deviceKey = config["device_data"][1]
+                self.auth.devicePassword = config["device_data"][2]
+
+            if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
 
         try:

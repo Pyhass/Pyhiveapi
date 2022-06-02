@@ -61,9 +61,9 @@ class HiveAuthAsync:
         self,
         username: str,
         password: str,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
+        device_group_key: str = None,
+        device_key: str = None,
+        device_password: str = None,
         pool_region: str = None,
         client_secret: str = None,
     ):
@@ -77,9 +77,9 @@ class HiveAuthAsync:
         self.loop = asyncio.get_event_loop()
         self.username = username
         self.password = password
-        self.deviceGroupKey = deviceGroupKey
-        self.deviceKey = deviceKey
-        self.devicePassword = devicePassword
+        self.deviceGroupKey = device_group_key
+        self.deviceKey = device_key
+        self.devicePassword = device_password
         self.accessToken = None
         self.api = HiveApi()
         self.user_id = "user_id"
@@ -415,8 +415,6 @@ class HiveAuthAsync:
         self,
         entered_code,
         challenge_parameters,
-        deviceName=None,
-        autoDeviceRegistration=True,
     ):
         """Send sms code for auth."""
         session = challenge_parameters.get("Session")
@@ -444,11 +442,6 @@ class HiveAuthAsync:
                 self.deviceKey = result["AuthenticationResult"]["NewDeviceMetadata"][
                     "DeviceKey"
                 ]
-            if autoDeviceRegistration:
-                await self.confirmDevice(
-                    self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
-                )
-                await self.updateDeviceStatus(self.accessToken)
         except botocore.exceptions.ClientError as err:
             if (
                 err.__class__.__name__ == "NotAuthorizedException"
@@ -461,34 +454,36 @@ class HiveAuthAsync:
 
         return result
 
-    async def confirmDevice(
+    async def device_registration(self, device_name: str = None):
+        """Register device with Hive."""
+        await self.confirm_device(device_name)
+        await self.update_device_status()
+
+    async def confirm_device(
         self,
-        accessToken: str,
-        deviceKey: str,
-        deviceGroupKey: str,
-        deviceName: str = None,
+        device_name: str = None,
     ):
         """Confirm Hive Device."""
         if "client" not in dir(self):
             await self.async_init()
 
-        if deviceName is None:
-            deviceName = socket.gethostname()
+        if device_name is None:
+            device_name = socket.gethostname()
 
         result = None
         try:
             (
                 device_password,
                 device_secret_verifier_config,
-            ) = await self.generate_hash_device(deviceGroupKey, deviceKey)
+            ) = await self.generate_hash_device(self.deviceGroupKey, self.deviceKey)
             self.devicePassword = device_password
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
                     self.client.confirm_device,
-                    AccessToken=accessToken,
-                    DeviceKey=deviceKey,
-                    DeviceName=deviceName,
+                    AccessToken=self.accessToken,
+                    DeviceKey=self.deviceKey,
+                    DeviceName=device_name,
                     DeviceSecretVerifierConfig=device_secret_verifier_config,
                 ),
             )
@@ -504,10 +499,7 @@ class HiveAuthAsync:
 
         return result
 
-    async def updateDeviceStatus(
-        self,
-        accessToken: str,
-    ):
+    async def update_device_status(self):
         """Update Device Hive."""
         if "client" not in dir(self):
             await self.async_init()
@@ -517,7 +509,7 @@ class HiveAuthAsync:
                 None,
                 functools.partial(
                     self.client.update_device_status,
-                    AccessToken=accessToken,
+                    AccessToken=self.accessToken,
                     DeviceKey=self.deviceKey,
                     DeviceRememberedStatus="remembered",
                 ),
