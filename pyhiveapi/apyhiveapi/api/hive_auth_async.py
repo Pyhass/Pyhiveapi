@@ -476,7 +476,7 @@ class HiveAuthAsync:
             device_secret_verifier_config = await self.generate_hash_device(
                 self.deviceGroupKey, self.deviceKey
             )
-            asyncio.sleep(3)
+            await asyncio.sleep(3)
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
