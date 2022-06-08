@@ -156,7 +156,7 @@ class HiveSession:
         except KeyError as error:
             self.logger.error(error)
 
-            self.deviceList[entityType].append(formatted_data)
+        self.deviceList[entityType].append(formatted_data)
         return formatted_data
 
     async def updateInterval(self, new_interval: timedelta):
