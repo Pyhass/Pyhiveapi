@@ -5,7 +5,6 @@ import json
 import operator
 import os
 import time
-import traceback
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
@@ -84,7 +83,6 @@ class HiveSession:
                 "lastUpdated": datetime.now(),
                 "mode": [],
                 "scanInterval": timedelta(seconds=120),
-                "sensors": False,
                 "userID": None,
                 "username": username,
             }
@@ -129,7 +127,6 @@ class HiveSession:
         Returns:
             dict: Entity.
         """
-        add = False if kwargs.get("custom") and not self.config.sensors else True
         device = self.helper.getDeviceData(data)
         device_name = (
             device["state"]["name"]
@@ -138,30 +135,29 @@ class HiveSession:
         )
         formatted_data = {}
 
-        if add:
-            try:
-                formatted_data = {
-                    "hiveID": data.get("id", ""),
-                    "hiveName": device_name,
-                    "hiveType": data.get("type", ""),
-                    "haType": entityType,
-                    "deviceData": device.get("props", data.get("props", {})),
-                    "parentDevice": data.get("parent", None),
-                    "isGroup": data.get("isGroup", False),
-                    "device_id": device["id"],
-                    "device_name": device_name,
-                }
+        try:
+            formatted_data = {
+                "hiveID": data.get("id", ""),
+                "hiveName": device_name,
+                "hiveType": data.get("type", ""),
+                "haType": entityType,
+                "deviceData": device.get("props", data.get("props", {})),
+                "parentDevice": data.get("parent", None),
+                "isGroup": data.get("isGroup", False),
+                "device_id": device["id"],
+                "device_name": device_name,
+            }
 
-                if kwargs.get("haName", "FALSE")[0] == " ":
-                    kwargs["haName"] = device_name + kwargs["haName"]
-                else:
-                    formatted_data["haName"] = device_name
-                formatted_data.update(kwargs)
-            except KeyError as e:
-                self.logger.error(e)
+            if kwargs.get("haName", "FALSE")[0] == " ":
+                kwargs["haName"] = device_name + kwargs["haName"]
+            else:
+                formatted_data["haName"] = device_name
+            formatted_data.update(kwargs)
+        except KeyError as error:
+            self.logger.error(error)
 
             self.deviceList[entityType].append(formatted_data)
-        return add
+        return formatted_data
 
     async def updateInterval(self, new_interval: timedelta):
         """Update the scan interval.
@@ -476,22 +472,16 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        custom_component = False
-        for file, line, w1, w2 in traceback.extract_stack():
-            if "/custom_components/" in file:
-                custom_component = True
-
-        self.config.sensors = custom_component
         await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
             config.get("options", {}).get("scan_interval", self.config.scanInterval)
         )
 
         if config != {}:
-            if config["tokens"] is not None and not self.config.file:
+            if "tokens" in config and not self.config.file:
                 await self.updateTokens(config["tokens"], False)
 
-            if config["device_data"] is not None and not self.config.file:
+            if "device_data" in config and not self.config.file:
                 self.auth.deviceGroupKey = config["device_data"][0]
                 self.auth.deviceKey = config["device_data"][1]
                 self.auth.devicePassword = config["device_data"][2]

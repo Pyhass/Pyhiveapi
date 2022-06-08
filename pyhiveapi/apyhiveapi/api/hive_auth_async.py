@@ -204,7 +204,8 @@ class HiveAuthAsync:
             ).decode("utf-8"),
             "Salt": base64.standard_b64encode(bytearray.fromhex(salt)).decode("utf-8"),
         }
-        return device_password, device_secret_verifier_config
+        self.password = device_password
+        return device_secret_verifier_config
 
     async def get_device_authentication_key(
         self, device_group_key, device_key, device_password, server_b_value, salt
@@ -472,11 +473,10 @@ class HiveAuthAsync:
 
         result = None
         try:
-            (
-                device_password,
-                device_secret_verifier_config,
-            ) = await self.generate_hash_device(self.deviceGroupKey, self.deviceKey)
-            self.devicePassword = device_password
+            device_secret_verifier_config = await self.generate_hash_device(
+                self.deviceGroupKey, self.deviceKey
+            )
+            asyncio.sleep(3)
             result = await self.loop.run_in_executor(
                 None,
                 functools.partial(
