@@ -204,7 +204,7 @@ class HiveAuthAsync:
             ).decode("utf-8"),
             "Salt": base64.standard_b64encode(bytearray.fromhex(salt)).decode("utf-8"),
         }
-        self.password = device_password
+        self.devicePassword = device_password
         return device_secret_verifier_config
 
     async def get_device_authentication_key(
