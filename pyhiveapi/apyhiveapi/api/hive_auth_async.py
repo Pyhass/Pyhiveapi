@@ -99,7 +99,15 @@ class HiveAuthAsync:
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
         self.client = await self.loop.run_in_executor(
-            None, boto3.client, "cognito-idp", self.__region
+            None,
+            functools.partial(
+                boto3.client,
+                "cognito-idp",
+                self.__region,
+                aws_access_key_id="ACCESS_KEY",
+                aws_secret_access_key="SECRET_KEY",
+                aws_session_token="SESSION_TOKEN",
+            ),
         )
 
     def generate_random_small_a(self):
