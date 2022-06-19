@@ -5,7 +5,6 @@ import json
 import operator
 import os
 import time
-import traceback
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
@@ -48,9 +47,6 @@ class HiveSession:
         self,
         username: str = None,
         password: str = None,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
         websession: object = None,
     ):
         """Initialise the base variable values.
@@ -63,9 +59,6 @@ class HiveSession:
         self.auth = Auth(
             username=username,
             password=password,
-            deviceGroupKey=deviceGroupKey,
-            deviceKey=deviceKey,
-            devicePassword=devicePassword,
         )
         self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
@@ -90,7 +83,6 @@ class HiveSession:
                 "lastUpdated": datetime.now(),
                 "mode": [],
                 "scanInterval": timedelta(seconds=120),
-                "sensors": False,
                 "userID": None,
                 "username": username,
             }
@@ -125,7 +117,7 @@ class HiveSession:
 
         return data
 
-    def addList(self, type: str, data: dict, **kwargs: dict):
+    def addList(self, entityType: str, data: dict, **kwargs: dict):
         """Add entity to the list.
 
         Args:
@@ -135,7 +127,6 @@ class HiveSession:
         Returns:
             dict: Entity.
         """
-        add = False if kwargs.get("custom") and not self.config.sensors else True
         device = self.helper.getDeviceData(data)
         device_name = (
             device["state"]["name"]
@@ -144,30 +135,29 @@ class HiveSession:
         )
         formatted_data = {}
 
-        if add:
-            try:
-                formatted_data = {
-                    "hiveID": data.get("id", ""),
-                    "hiveName": device_name,
-                    "hiveType": data.get("type", ""),
-                    "haType": type,
-                    "deviceData": device.get("props", data.get("props", {})),
-                    "parentDevice": data.get("parent", None),
-                    "isGroup": data.get("isGroup", False),
-                    "device_id": device["id"],
-                    "device_name": device_name,
-                }
+        try:
+            formatted_data = {
+                "hiveID": data.get("id", ""),
+                "hiveName": device_name,
+                "hiveType": data.get("type", ""),
+                "haType": entityType,
+                "deviceData": device.get("props", data.get("props", {})),
+                "parentDevice": data.get("parent", None),
+                "isGroup": data.get("isGroup", False),
+                "device_id": device["id"],
+                "device_name": device_name,
+            }
 
-                if kwargs.get("haName", "FALSE")[0] == " ":
-                    kwargs["haName"] = device_name + kwargs["haName"]
-                else:
-                    formatted_data["haName"] = device_name
-                formatted_data.update(kwargs)
-            except KeyError as e:
-                self.logger.error(e)
+            if kwargs.get("haName", "FALSE")[0] == " ":
+                kwargs["haName"] = device_name + kwargs["haName"]
+            else:
+                formatted_data["haName"] = device_name
+            formatted_data.update(kwargs)
+        except KeyError as error:
+            self.logger.error(error)
 
-            self.deviceList[type].append(formatted_data)
-        return add
+        self.deviceList[entityType].append(formatted_data)
+        return formatted_data
 
     async def updateInterval(self, new_interval: timedelta):
         """Update the scan interval.
@@ -193,11 +183,12 @@ class HiveSession:
         if using_file:
             self.config.file = True
 
-    async def updateTokens(self, tokens: dict):
+    async def updateTokens(self, tokens: dict, update_expiry_time: bool = True):
         """Update session tokens.
 
         Args:
             tokens (dict): Tokens from API response.
+            refresh_interval (Boolean): Should the refresh internval be updated
 
         Returns:
             dict: Parsed dictionary of tokens
@@ -209,7 +200,8 @@ class HiveSession:
             if "RefreshToken" in data:
                 self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
             self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
-            self.tokens.tokenCreated = datetime.now()
+            if update_expiry_time:
+                self.tokens.tokenCreated = datetime.now()
         elif "token" in tokens:
             data = tokens
             self.tokens.tokenData.update({"token": data["token"]})
@@ -247,7 +239,7 @@ class HiveSession:
             await self.updateTokens(result)
         return result
 
-    async def sms2fa(self, code, session, deviceName=None):
+    async def sms2fa(self, code, session):
         """Login to hive account with 2 factor authentication.
 
         Raises:
@@ -261,7 +253,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = await self.auth.sms_2fa(code, session, deviceName)
+            result = await self.auth.sms_2fa(code, session)
         except HiveInvalid2FACode:
             print("invalid_code")
         except HiveApiError:
@@ -328,18 +320,18 @@ class HiveSession:
         Returns:
             boolean: True/False if update was successful
         """
-        await self.updateLock.acquire()
         updated = False
-        try:
-            ep = self.config.lastUpdate + self.config.scanInterval
-            if datetime.now() >= ep:
+        ep = self.config.lastUpdate + self.config.scanInterval
+        if datetime.now() >= ep and not self.updateLock.locked():
+            try:
+                await self.updateLock.acquire()
                 await self.getDevices(device["hiveID"])
                 if len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
                 updated = True
-        finally:
-            self.updateLock.release()
+            finally:
+                self.updateLock.release()
 
         return updated
 
@@ -480,21 +472,21 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        custom_component = False
-        for file, line, w1, w2 in traceback.extract_stack():
-            if "/custom_components/" in file:
-                custom_component = True
-
-        self.config.sensors = custom_component
         await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
             config.get("options", {}).get("scan_interval", self.config.scanInterval)
         )
 
         if config != {}:
-            if config["tokens"] is not None and not self.config.file:
-                await self.updateTokens(config["tokens"])
-            elif not self.config.file:
+            if "tokens" in config and not self.config.file:
+                await self.updateTokens(config["tokens"], False)
+
+            if "device_data" in config and not self.config.file:
+                self.auth.deviceGroupKey = config["device_data"][0]
+                self.auth.deviceKey = config["device_data"][1]
+                self.auth.devicePassword = config["device_data"][2]
+
+            if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
 
         try:
