@@ -117,7 +117,13 @@ class HiveAuth:
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
-        self.client = boto3.client("cognito-idp", self.__region)
+        self.client = boto3.client(
+            "cognito-idp", 
+            self.__region, 
+            aws_access_key_id="ACCESS_KEY", 
+            aws_secret_access_key="SECRET_KEY", 
+            aws_session_token="SESSION_TOKEN"
+        )
 
     def generate_random_small_a(self):
         """Helper function to generate a random big integer.
@@ -410,9 +416,7 @@ class HiveAuth:
     def sms_2fa(
         self,
         entered_code: str,
-        challenge_parameters: dict,
-        deviceName=None,
-        autoDeviceRegistration=True,
+        challenge_parameters: dict
     ):
         """Process 2FA sms verification."""
         session = challenge_parameters.get("Session")
@@ -436,11 +440,6 @@ class HiveAuth:
                 self.deviceKey = result["AuthenticationResult"]["NewDeviceMetadata"][
                     "DeviceKey"
                 ]
-            if autoDeviceRegistration:
-                self.confirmDevice(
-                    self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
-                )
-                self.updateDeviceStatus(self.accessToken)
         except botocore.exceptions.ClientError as err:
             if (
                 err.__class__.__name__ == "NotAuthorizedException"
@@ -453,27 +452,29 @@ class HiveAuth:
 
         return result
 
+    def device_registration(self, device_name: str = None):
+        """Register Device."""
+        self.confirmDevice(device_name)
+        self.updateDeviceStatus()
+
     def confirmDevice(
         self,
-        accessToken: str,
-        deviceKey: str,
-        deviceGroupKey: str,
-        deviceName: str = None,
+        device_name: str = None,
     ):
         """Confirm Device Hive."""
         result = None
-        if deviceName is None:
-            deviceName = socket.gethostname()
+        if device_name is None:
+            device_name = socket.gethostname()
         try:
             device_password, device_secret_verifier_config = self.generate_hash_device(
-                deviceGroupKey, deviceKey
+                self.deviceGroupKey, self.deviceKey
             )
             self.devicePassword = device_password
             result = (
                 self.client.confirm_device(
-                    AccessToken=accessToken,
-                    DeviceKey=deviceKey,
-                    DeviceName=deviceName,
+                    AccessToken=self.accessToken,
+                    DeviceKey=self.deviceKey,
+                    DeviceName=device_name,
                     DeviceSecretVerifierConfig=device_secret_verifier_config,
                 ),
             )
@@ -483,16 +484,13 @@ class HiveAuth:
 
         return result
 
-    def updateDeviceStatus(
-        self,
-        accessToken: str,
-    ):
+    def updateDeviceStatus(self):
         """Update Device Hive."""
         result = None
         try:
             result = (
                 self.client.update_device_status(
-                    AccessToken=accessToken,
+                    AccessToken=self.accessToken,
                     DeviceKey=self.deviceKey,
                     DeviceRememberedStatus="remembered",
                 ),
