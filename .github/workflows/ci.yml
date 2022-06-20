@@ -476,25 +476,43 @@ jobs:
   pylint:
     name: Check pylint
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v3.0.2
-      - name: Restore full Python ${{ matrix.python-version }} virtual environment
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ env.DEFAULT_PYTHON }}
+        uses: actions/setup-python@v2.2.1
+        id: python
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON }}
+      - name: Restore base Python virtual environment
         id: cache-venv
-        uses: actions/cache@v3.0.4
+        uses: actions/cache@v2.1.4
         with:
           path: venv
-          key: ${{ runner.os }}-${{ matrix.python-version }}-${{
-            needs.prepare-tests.outputs.python-key }}
+          key: >-
+            ${{ env.CACHE_VERSION}}-${{ runner.os }}-base-venv-${{
+            steps.python.outputs.python-version }}-${{
+            hashFiles('requirements.txt') }}-${{
+            hashFiles('requirements_test.txt') }}
       - name: Fail job if Python cache restore failed
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
           echo "Failed to restore Python virtual environment from cache"
           exit 1
-      - name: Run pylint (fully)
+      - name: Restore pre-commit environment from cache
+        id: cache-precommit
+        uses: actions/cache@v2.1.4
+        with:
+          path: ${{ env.PRE_COMMIT_HOME }}
+          key: |
+            ${{ env.CACHE_VERSION}}-${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Fail job if cache restore failed
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          echo "Failed to restore Python virtual environment from cache"
+          exit 1
+      - name: Run pylint
         run: |
           . venv/bin/activate
-          python --version
-          pylint homeassistant
+          pre-commit run --hook-stage manual pylint --all-files --show-diff-on-failure
