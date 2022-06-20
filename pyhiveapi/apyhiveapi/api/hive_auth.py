@@ -1,5 +1,5 @@
 """Sync version of HiveAuth."""
-
+# pylint: skip-file
 import base64
 import binascii
 import datetime
@@ -22,7 +22,7 @@ from ..helper.hive_exceptions import (
 from .hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
-n_hex = (
+N_HEX = (
     "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     + "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     + "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -41,8 +41,8 @@ n_hex = (
     + "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
 )
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
-g_hex = "2"
-info_bits = bytearray("Caldera Derived Key", "utf-8")
+G_HEX = "2"
+INFO_BITS = bytearray("Caldera Derived Key", "utf-8")
 
 
 class HiveAuth:
@@ -105,12 +105,12 @@ class HiveAuth:
         self.access_token = None
         self.user_id = "user_id"
         self.client_secret = client_secret
-        self.big_n = hex_to_long(n_hex)
-        self.g = hex_to_long(g_hex)
-        self.k = hex_to_long(hex_hash("00" + n_hex + "0" + g_hex))
+        self.big_n = hex_to_long(N_HEX)
+        self.g_value = hex_to_long(G_HEX)
+        self.k = hex_to_long(hex_hash("00" + N_HEX + "0" + G_HEX))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
-        self.use_file = True if self.username == "use@file.com" else False
+        self.use_file = bool(self.username == "use@file.com")
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         self.api = HiveApi()
         self.data = self.api.getLoginInfo()
@@ -143,7 +143,7 @@ class HiveAuth:
         Returns:
             int: {Long integer} Computed large A.
         """
-        big_a = pow(self.g, self.small_a_value, self.big_n)
+        big_a = pow(self.g_value, self.small_a_value, self.big_n)
         # safety check
         if (big_a % self.big_n) == 0:
             raise ValueError("Safety check for A failed")
@@ -173,7 +173,7 @@ class HiveAuth:
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
@@ -207,7 +207,7 @@ class HiveAuth:
 
     def generate_hash_device(self, device_group_key, device_key):
         """Generate the device hash."""
-        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137
+        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137 # pylint: disable=line-too-long
 
         # random device password, which will be used for DEVICE_SRP_AUTH flow
         device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
@@ -217,9 +217,9 @@ class HiveAuth:
         salt = pad_hex(get_random(16))
 
         x_value = hex_to_long(hex_hash(salt + combined_string_hash))
-        g = hex_to_long(g_hex)
-        big_n = hex_to_long(n_hex)
-        verifier_device_not_padded = pow(g, x_value, big_n)
+        g_value = hex_to_long(G_HEX)
+        big_n = hex_to_long(N_HEX)
+        verifier_device_not_padded = pow(g_value, x_value, big_n)
         verifier = pad_hex(verifier_device_not_padded)
 
         device_secret_verifier_config = {
@@ -241,7 +241,7 @@ class HiveAuth:
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
@@ -380,10 +380,9 @@ class HiveAuth:
                     raise HiveApiError from err
 
             return result
-        else:
-            raise NotImplementedError(
-                "The %s challenge is not supported" % response["ChallengeName"]
-            )
+        raise NotImplementedError(
+            "The %s challenge is not supported" % response["ChallengeName"]
+        )
 
     def device_login(self):
         """Perform device login instead."""
@@ -399,13 +398,13 @@ class HiveAuth:
                     ChallengeResponses=auth_params,
                 )
 
-                cr = self.process_device_challenge(
+                device_challenge_response = self.process_device_challenge(
                     initial_result["ChallengeParameters"]
                 )
                 result = self.client.respond_to_auth_challenge(
                     ClientId=self.__client_id,
                     ChallengeName="DEVICE_PASSWORD_VERIFIER",
-                    ChallengeResponses=cr,
+                    ChallengeResponses=device_challenge_response,
                 )
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
@@ -439,9 +438,9 @@ class HiveAuth:
                     "DeviceKey"
                 ]
         except botocore.exceptions.ClientError as err:
-            if (
-                err.__class__.__name__ == "NotAuthorizedException"
-                or err.__class__.__name__ == "CodeMismatchException"
+            if err.__class__.__name__ in (
+                "NotAuthorizedException",
+                "CodeMismatchException",
             ):
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
@@ -538,8 +537,8 @@ def get_random(nbytes):
 
 def hash_sha256(buf):
     """Authentication Helper hash."""
-    a = hashlib.sha256(buf).hexdigest()
-    return (64 - len(a)) * "0" + a
+    a_value = hashlib.sha256(buf).hexdigest()
+    return (64 - len(a_value)) * "0" + a_value
 
 
 def hex_hash(hex_string):
@@ -592,6 +591,6 @@ def compute_hkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    info_bits_update = info_bits + bytearray(chr(1), "utf-8")
+    info_bits_update = INFO_BITS + bytearray(chr(1), "utf-8")
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]

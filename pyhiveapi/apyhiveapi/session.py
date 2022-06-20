@@ -1,4 +1,5 @@
 """Hive Session Module."""
+# pylint: skip-file
 import asyncio
 import copy
 import json
