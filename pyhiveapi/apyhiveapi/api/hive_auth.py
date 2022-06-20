@@ -74,9 +74,9 @@ class HiveAuth:
         self,
         username: str,
         password: str,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
+        device_group_key: str = None,
+        device_key: str = None,
+        device_password: str = None,
         pool_region: str = None,
         client_secret: str = None,
     ):
@@ -99,10 +99,10 @@ class HiveAuth:
 
         self.username = username
         self.password = password
-        self.deviceGroupKey = deviceGroupKey
-        self.deviceKey = deviceKey
-        self.devicePassword = devicePassword
-        self.accessToken = None
+        self.device_group_key = device_group_key
+        self.device_key = device_key
+        self.device_password = device_password
+        self.access_token = None
         self.user_id = "user_id"
         self.client_secret = client_secret
         self.big_n = hex_to_long(n_hex)
@@ -110,7 +110,7 @@ class HiveAuth:
         self.k = hex_to_long(hex_hash("00" + n_hex + "0" + g_hex))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
-        self.useFile = True if self.username == "use@file.com" else False
+        self.use_file = True if self.username == "use@file.com" else False
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         self.api = HiveApi()
         self.data = self.api.getLoginInfo()
@@ -118,11 +118,11 @@ class HiveAuth:
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
         self.client = boto3.client(
-            "cognito-idp", 
-            self.__region, 
-            aws_access_key_id="ACCESS_KEY", 
-            aws_secret_access_key="SECRET_KEY", 
-            aws_session_token="SESSION_TOKEN"
+            "cognito-idp",
+            self.__region,
+            aws_access_key_id="ACCESS_KEY",
+            aws_secret_access_key="SECRET_KEY",
+            aws_session_token="SESSION_TOKEN",
         )
 
     def generate_random_small_a(self):
@@ -263,16 +263,16 @@ class HiveAuth:
             datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
         )
         hkdf = self.get_device_authentication_key(
-            self.deviceGroupKey,
-            self.deviceKey,
-            self.devicePassword,
+            self.device_group_key,
+            self.device_key,
+            self.device_password,
             hex_to_long(srp_b_hex),
             salt_hex,
         )
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = (
-            bytearray(self.deviceGroupKey, "utf-8")
-            + bytearray(self.deviceKey, "utf-8")
+            bytearray(self.device_group_key, "utf-8")
+            + bytearray(self.device_key, "utf-8")
             + bytearray(secret_block_bytes)
             + bytearray(timestamp, "utf-8")
         )
@@ -283,7 +283,7 @@ class HiveAuth:
             "USERNAME": username,
             "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
             "PASSWORD_CLAIM_SIGNATURE": signature_string.decode("utf-8"),
-            "DEVICE_KEY": self.deviceKey,
+            "DEVICE_KEY": self.device_key,
         }
         if self.client_secret is not None:
             response.update(
@@ -338,12 +338,12 @@ class HiveAuth:
 
     def login(self):
         """Login into a Hive account."""
-        if self.useFile:
+        if self.use_file:
             return self.file_response
 
         auth_params = self.get_auth_params()
-        if self.deviceKey is not None:
-            auth_params["DEVICE_KEY"] = self.deviceKey
+        if self.device_key is not None:
+            auth_params["DEVICE_KEY"] = self.device_key
         response = None
         result = None
         try:
@@ -354,15 +354,15 @@ class HiveAuth:
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
-                raise HiveInvalidUsername
+                raise HiveInvalidUsername from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response["ChallengeParameters"])
-            if self.deviceKey is not None:
-                challenge_response["DEVICE_KEY"] = self.deviceKey
+            if self.device_key is not None:
+                challenge_response["DEVICE_KEY"] = self.device_key
 
             try:
                 result = self.client.respond_to_auth_challenge(
@@ -372,12 +372,12 @@ class HiveAuth:
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
-                    raise HiveInvalidPassword
+                    raise HiveInvalidPassword from err
                 if err.__class__.__name__ == "ResourceNotFoundException":
-                    raise HiveInvalidDeviceAuthentication
+                    raise HiveInvalidDeviceAuthentication from err
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    raise HiveApiError
+                    raise HiveApiError from err
 
             return result
         else:
@@ -385,21 +385,23 @@ class HiveAuth:
                 "The %s challenge is not supported" % response["ChallengeName"]
             )
 
-    def deviceLogin(self):
+    def device_login(self):
         """Perform device login instead."""
-        loginResult = self.login()
+        login_result = self.login()
         auth_params = self.get_auth_params()
-        auth_params["DEVICE_KEY"] = self.deviceKey
+        auth_params["DEVICE_KEY"] = self.device_key
 
-        if loginResult.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
+        if login_result.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
             try:
-                initialResult = self.client.respond_to_auth_challenge(
+                initial_result = self.client.respond_to_auth_challenge(
                     ClientId=self.__client_id,
                     ChallengeName=self.DEVICE_VERIFIER_CHALLENGE,
                     ChallengeResponses=auth_params,
                 )
 
-                cr = self.process_device_challenge(initialResult["ChallengeParameters"])
+                cr = self.process_device_challenge(
+                    initial_result["ChallengeParameters"]
+                )
                 result = self.client.respond_to_auth_challenge(
                     ClientId=self.__client_id,
                     ChallengeName="DEVICE_PASSWORD_VERIFIER",
@@ -407,17 +409,13 @@ class HiveAuth:
                 )
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    raise HiveApiError
+                    raise HiveApiError from err
         else:
             raise HiveInvalidDeviceAuthentication
 
         return result
 
-    def sms_2fa(
-        self,
-        entered_code: str,
-        challenge_parameters: dict
-    ):
+    def sms_2fa(self, entered_code: str, challenge_parameters: dict):
         """Process 2FA sms verification."""
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -433,11 +431,11 @@ class HiveAuth:
                 },
             )
             if "NewDeviceMetadata" in result["AuthenticationResult"]:
-                self.accessToken = result["AuthenticationResult"]["AccessToken"]
-                self.deviceGroupKey = result["AuthenticationResult"][
+                self.access_token = result["AuthenticationResult"]["AccessToken"]
+                self.device_group_key = result["AuthenticationResult"][
                     "NewDeviceMetadata"
                 ]["DeviceGroupKey"]
-                self.deviceKey = result["AuthenticationResult"]["NewDeviceMetadata"][
+                self.device_key = result["AuthenticationResult"]["NewDeviceMetadata"][
                     "DeviceKey"
                 ]
         except botocore.exceptions.ClientError as err:
@@ -445,19 +443,19 @@ class HiveAuth:
                 err.__class__.__name__ == "NotAuthorizedException"
                 or err.__class__.__name__ == "CodeMismatchException"
             ):
-                raise HiveInvalid2FACode
+                raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
     def device_registration(self, device_name: str = None):
         """Register Device."""
-        self.confirmDevice(device_name)
-        self.updateDeviceStatus()
+        self.confirm_device(device_name)
+        self.update_device_status()
 
-    def confirmDevice(
+    def confirm_device(
         self,
         device_name: str = None,
     ):
@@ -467,53 +465,53 @@ class HiveAuth:
             device_name = socket.gethostname()
         try:
             device_password, device_secret_verifier_config = self.generate_hash_device(
-                self.deviceGroupKey, self.deviceKey
+                self.device_group_key, self.device_key
             )
-            self.devicePassword = device_password
+            self.device_password = device_password
             result = (
                 self.client.confirm_device(
-                    AccessToken=self.accessToken,
-                    DeviceKey=self.deviceKey,
+                    AccessToken=self.access_token,
+                    DeviceKey=self.device_key,
                     DeviceName=device_name,
                     DeviceSecretVerifierConfig=device_secret_verifier_config,
                 ),
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
-    def updateDeviceStatus(self):
+    def update_device_status(self):
         """Update Device Hive."""
         result = None
         try:
             result = (
                 self.client.update_device_status(
-                    AccessToken=self.accessToken,
-                    DeviceKey=self.deviceKey,
+                    AccessToken=self.access_token,
+                    DeviceKey=self.device_key,
                     DeviceRememberedStatus="remembered",
                 ),
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
-    def getDeviceData(self):
+    def get_device_data(self):
         """Get key device information to use device authentication."""
-        return self.deviceGroupKey, self.deviceKey, self.devicePassword
+        return self.device_group_key, self.device_key, self.device_password
 
-    def refreshToken(
+    def refresh_token(
         self,
-        refresh_token: str,
+        token: str,
     ):
         """Refresh Hive Tokens."""
         result = None
-        auth_params = ({"REFRESH_TOKEN": refresh_token},)
-        if self.deviceKey is not None:
-            auth_params = {"REFRESH_TOKEN": refresh_token, "DEVICE_KEY": self.deviceKey}
+        auth_params = ({"REFRESH_TOKEN": token},)
+        if self.device_key is not None:
+            auth_params = {"REFRESH_TOKEN": token, "DEVICE_KEY": self.device_key}
         try:
             result = self.client.initiate_auth(
                 ClientId=self.__client_id,
@@ -522,7 +520,7 @@ class HiveAuth:
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
