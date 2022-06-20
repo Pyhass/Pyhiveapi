@@ -478,7 +478,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up ${{ env.DEFAULT_PYTHON }}
+    - name: Set up python ${{ env.DEFAULT_PYTHON }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ env.DEFAULT_PYTHON }}
@@ -488,5 +488,5 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        find . -name '*.py' -exec pylint {} \;
+        find . -name '*.py' -exec pylint --fail-under=10 {} \;
 
