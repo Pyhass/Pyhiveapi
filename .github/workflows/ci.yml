@@ -473,3 +473,28 @@ jobs:
         run: |
           . venv/bin/activate
           pre-commit run --hook-stage manual yamllint --all-files --show-diff-on-failure
+  pylint:
+    name: Check pylint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: prepare-base
+    steps:
+      - name: Check out code from GitHub
+        uses: actions/checkout@v3.0.2
+      - name: Restore full Python ${{ matrix.python-version }} virtual environment
+        id: cache-venv
+        uses: actions/cache@v3.0.4
+        with:
+          path: venv
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{
+            needs.prepare-tests.outputs.python-key }}
+      - name: Fail job if Python cache restore failed
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          echo "Failed to restore Python virtual environment from cache"
+          exit 1
+      - name: Run pylint (fully)
+        run: |
+          . venv/bin/activate
+          python --version
+          pylint homeassistant
