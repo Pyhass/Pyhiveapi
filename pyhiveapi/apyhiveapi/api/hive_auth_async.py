@@ -1,5 +1,5 @@
 """Auth file for logging in."""
-# pylint: skip-file
+
 import asyncio
 import base64
 import binascii
@@ -153,11 +153,8 @@ class HiveAuthAsync:
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "{}{}:{}".format(
-            self.__pool_id.split("_")[1],
-            username,
-            password,
-        )
+        pool_id = self.__pool_id.split("_")[1]
+        username_password = f"{pool_id}{username}:{password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
@@ -337,7 +334,7 @@ class HiveAuthAsync:
         if self.use_file:
             return self.file_response
 
-        if "client" not in dir(self):
+        if self.client is None:
             await self.async_init()
         auth_params = await self.get_auth_params()
         response = None
@@ -383,9 +380,8 @@ class HiveAuthAsync:
                     raise HiveApiError from err
 
             return result
-        raise NotImplementedError(
-            "The %s challenge is not supported" % response["ChallengeName"]
-        )
+        challenge_name = response["ChallengeName"]
+        raise NotImplementedError(f"The {challenge_name} challenge is not supported")
 
     async def device_login(self):
         """Perform device login instead."""
@@ -478,7 +474,7 @@ class HiveAuthAsync:
         device_name: str = None,
     ):
         """Confirm Hive Device."""
-        if "client" not in dir(self):
+        if self.client is None:
             await self.async_init()
 
         if device_name is None:
@@ -513,7 +509,7 @@ class HiveAuthAsync:
 
     async def update_device_status(self):
         """Update Device Hive."""
-        if "client" not in dir(self):
+        if self.client is None:
             await self.async_init()
         result = None
         try:
@@ -532,13 +528,13 @@ class HiveAuthAsync:
 
         return result
 
-    async def getDeviceData(self):
+    async def get_device_data(self):
         """Get key device information for device authentication."""
         return self.device_group_key, self.device_key, self.device_password
 
     async def refresh_token(self, token):
         """Refresh Hive Tokens."""
-        if "client" not in dir(self):
+        if self.client is None:
             await self.async_init()
         result = None
         auth_params = ({"REFRESH_TOKEN": token},)
@@ -571,8 +567,8 @@ class HiveAuthAsync:
         return result
 
     async def forget_device(self, access_token, device_key):
-        """Refresh Hive Tokens."""
-        if "client" not in dir(self):
+        """Forget device registered with Hive."""
+        if self.client is None:
             await self.async_init()
         result = None
 
@@ -631,7 +627,7 @@ def calculate_u(big_a, big_b):
 
 def long_to_hex(long_num):
     """Convert long number to hex."""
-    return "%x" % long_num
+    return "%x" % long_num  # pylint: disable=consider-using-f-string
 
 
 def pad_hex(long_int):
@@ -641,9 +637,9 @@ def pad_hex(long_int):
     else:
         hash_str = long_int
     if len(hash_str) % 2 == 1:
-        hash_str = "0%s" % hash_str
+        hash_str = "0%s" % hash_str  # pylint: disable=consider-using-f-string
     elif hash_str[0] in "89ABCDEFabcdef":
-        hash_str = "00%s" % hash_str
+        hash_str = "00%s" % hash_str  # pylint: disable=consider-using-f-string
     return hash_str
 
 
