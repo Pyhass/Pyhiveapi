@@ -1,5 +1,5 @@
 """Auth file for logging in."""
-
+# pylint: skip-file
 import asyncio
 import base64
 import binascii
