@@ -1,5 +1,5 @@
 """Sync version of HiveAuth."""
-# pylint: skip-file
+
 import base64
 import binascii
 import datetime
@@ -80,7 +80,7 @@ class HiveAuth:
         pool_region: str = None,
         client_secret: str = None,
     ):
-        """Intilaise Sync Hive Auth.
+        """Initialise Sync Hive Auth.
 
         Args:
             username (str): [description]
@@ -165,11 +165,8 @@ class HiveAuth:
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "{}{}:{}".format(
-            self.__pool_id.split("_")[1],
-            username,
-            password,
-        )
+        pool_id = self.__pool_id.split("_")[1]
+        username_password = f"{pool_id}{username}:{password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
@@ -380,9 +377,8 @@ class HiveAuth:
                     raise HiveApiError from err
 
             return result
-        raise NotImplementedError(
-            "The %s challenge is not supported" % response["ChallengeName"]
-        )
+        challenge_name = response["ChallengeName"]
+        raise NotImplementedError(f"The {challenge_name} challenge is not supported")
 
     def device_login(self):
         """Perform device login instead."""
@@ -523,6 +519,25 @@ class HiveAuth:
 
         return result
 
+    def forget_device(self, access_token, device_key):
+        """Forget device registered with Hive."""
+        result = None
+
+        try:
+            result = self.client.forget_device(
+                AccessToken=access_token,
+                DeviceKey=device_key,
+            )
+
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "NotAuthorizedException":
+                raise HiveInvalid2FACode from err
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "ResourceNotFoundException":
+                raise HiveApiError from err
+
+        return result
+
 
 def hex_to_long(hex_string: str):
     """Convert hex to long."""
@@ -560,7 +575,7 @@ def calculate_u(big_a, big_b):
 
 def long_to_hex(long_num):
     """Convert long number to hex."""
-    return "%x" % long_num
+    return "%x" % long_num  # pylint: disable=consider-using-f-string
 
 
 def pad_hex(long_int):
@@ -575,9 +590,9 @@ def pad_hex(long_int):
     else:
         hash_str = long_int
     if len(hash_str) % 2 == 1:
-        hash_str = "0%s" % hash_str
+        hash_str = "0%s" % hash_str  # pylint: disable=consider-using-f-string
     elif hash_str[0] in "89ABCDEFabcdef":
-        hash_str = "00%s" % hash_str
+        hash_str = "00%s" % hash_str  # pylint: disable=consider-using-f-string
     return hash_str
 
 

@@ -301,7 +301,7 @@ class HiveSession:
         else:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
-                result = await self.auth.refreshToken(
+                result = await self.auth.refresh_token(
                     self.tokens.tokenData["refreshToken"]
                 )
 
