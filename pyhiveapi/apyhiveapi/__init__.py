@@ -1,4 +1,5 @@
 """__init__.py."""
+# pylint: skip-file
 if __name__ == "pyhiveapi":
     from .api.hive_api import HiveApi as API  # noqa: F401
     from .api.hive_auth import HiveAuth as Auth  # noqa: F401

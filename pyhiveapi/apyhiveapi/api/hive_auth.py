@@ -22,7 +22,7 @@ from ..helper.hive_exceptions import (
 from .hive_api import HiveApi
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
-n_hex = (
+N_HEX = (
     "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     + "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     + "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -41,8 +41,8 @@ n_hex = (
     + "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
 )
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
-g_hex = "2"
-info_bits = bytearray("Caldera Derived Key", "utf-8")
+G_HEX = "2"
+INFO_BITS = bytearray("Caldera Derived Key", "utf-8")
 
 
 class HiveAuth:
@@ -74,13 +74,13 @@ class HiveAuth:
         self,
         username: str,
         password: str,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
+        device_group_key: str = None,
+        device_key: str = None,
+        device_password: str = None,
         pool_region: str = None,
         client_secret: str = None,
     ):
-        """Intilaise Sync Hive Auth.
+        """Initialise Sync Hive Auth.
 
         Args:
             username (str): [description]
@@ -99,25 +99,31 @@ class HiveAuth:
 
         self.username = username
         self.password = password
-        self.deviceGroupKey = deviceGroupKey
-        self.deviceKey = deviceKey
-        self.devicePassword = devicePassword
-        self.accessToken = None
+        self.device_group_key = device_group_key
+        self.device_key = device_key
+        self.device_password = device_password
+        self.access_token = None
         self.user_id = "user_id"
         self.client_secret = client_secret
-        self.big_n = hex_to_long(n_hex)
-        self.g = hex_to_long(g_hex)
-        self.k = hex_to_long(hex_hash("00" + n_hex + "0" + g_hex))
+        self.big_n = hex_to_long(N_HEX)
+        self.g_value = hex_to_long(G_HEX)
+        self.k = hex_to_long(hex_hash("00" + N_HEX + "0" + G_HEX))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
-        self.useFile = True if self.username == "use@file.com" else False
+        self.use_file = bool(self.username == "use@file.com")
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         self.api = HiveApi()
         self.data = self.api.getLoginInfo()
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
-        self.client = boto3.client("cognito-idp", self.__region)
+        self.client = boto3.client(
+            "cognito-idp",
+            self.__region,
+            aws_access_key_id="ACCESS_KEY",
+            aws_secret_access_key="SECRET_KEY",
+            aws_session_token="SESSION_TOKEN",
+        )
 
     def generate_random_small_a(self):
         """Helper function to generate a random big integer.
@@ -137,7 +143,7 @@ class HiveAuth:
         Returns:
             int: {Long integer} Computed large A.
         """
-        big_a = pow(self.g, self.small_a_value, self.big_n)
+        big_a = pow(self.g_value, self.small_a_value, self.big_n)
         # safety check
         if (big_a % self.big_n) == 0:
             raise ValueError("Safety check for A failed")
@@ -159,15 +165,12 @@ class HiveAuth:
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        username_password = "{}{}:{}".format(
-            self.__pool_id.split("_")[1],
-            username,
-            password,
-        )
+        pool_id = self.__pool_id.split("_")[1]
+        username_password = f"{pool_id}{username}:{password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
@@ -201,7 +204,7 @@ class HiveAuth:
 
     def generate_hash_device(self, device_group_key, device_key):
         """Generate the device hash."""
-        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137
+        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137 # pylint: disable=line-too-long
 
         # random device password, which will be used for DEVICE_SRP_AUTH flow
         device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
@@ -211,9 +214,9 @@ class HiveAuth:
         salt = pad_hex(get_random(16))
 
         x_value = hex_to_long(hex_hash(salt + combined_string_hash))
-        g = hex_to_long(g_hex)
-        big_n = hex_to_long(n_hex)
-        verifier_device_not_padded = pow(g, x_value, big_n)
+        g_value = hex_to_long(G_HEX)
+        big_n = hex_to_long(N_HEX)
+        verifier_device_not_padded = pow(g_value, x_value, big_n)
         verifier = pad_hex(verifier_device_not_padded)
 
         device_secret_verifier_config = {
@@ -235,7 +238,7 @@ class HiveAuth:
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g, x_value, self.big_n)
+        g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
         int_value2 = server_b_value - self.k * g_mod_pow_xn
         s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
         hkdf = compute_hkdf(
@@ -257,16 +260,16 @@ class HiveAuth:
             datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
         )
         hkdf = self.get_device_authentication_key(
-            self.deviceGroupKey,
-            self.deviceKey,
-            self.devicePassword,
+            self.device_group_key,
+            self.device_key,
+            self.device_password,
             hex_to_long(srp_b_hex),
             salt_hex,
         )
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = (
-            bytearray(self.deviceGroupKey, "utf-8")
-            + bytearray(self.deviceKey, "utf-8")
+            bytearray(self.device_group_key, "utf-8")
+            + bytearray(self.device_key, "utf-8")
             + bytearray(secret_block_bytes)
             + bytearray(timestamp, "utf-8")
         )
@@ -277,7 +280,7 @@ class HiveAuth:
             "USERNAME": username,
             "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
             "PASSWORD_CLAIM_SIGNATURE": signature_string.decode("utf-8"),
-            "DEVICE_KEY": self.deviceKey,
+            "DEVICE_KEY": self.device_key,
         }
         if self.client_secret is not None:
             response.update(
@@ -332,12 +335,12 @@ class HiveAuth:
 
     def login(self):
         """Login into a Hive account."""
-        if self.useFile:
+        if self.use_file:
             return self.file_response
 
         auth_params = self.get_auth_params()
-        if self.deviceKey is not None:
-            auth_params["DEVICE_KEY"] = self.deviceKey
+        if self.device_key is not None:
+            auth_params["DEVICE_KEY"] = self.device_key
         response = None
         result = None
         try:
@@ -348,15 +351,15 @@ class HiveAuth:
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
-                raise HiveInvalidUsername
+                raise HiveInvalidUsername from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
             challenge_response = self.process_challenge(response["ChallengeParameters"])
-            if self.deviceKey is not None:
-                challenge_response["DEVICE_KEY"] = self.deviceKey
+            if self.device_key is not None:
+                challenge_response["DEVICE_KEY"] = self.device_key
 
             try:
                 result = self.client.respond_to_auth_challenge(
@@ -366,54 +369,48 @@ class HiveAuth:
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
-                    raise HiveInvalidPassword
+                    raise HiveInvalidPassword from err
                 if err.__class__.__name__ == "ResourceNotFoundException":
-                    raise HiveInvalidDeviceAuthentication
+                    raise HiveInvalidDeviceAuthentication from err
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    raise HiveApiError
+                    raise HiveApiError from err
 
             return result
-        else:
-            raise NotImplementedError(
-                "The %s challenge is not supported" % response["ChallengeName"]
-            )
+        challenge_name = response["ChallengeName"]
+        raise NotImplementedError(f"The {challenge_name} challenge is not supported")
 
-    def deviceLogin(self):
+    def device_login(self):
         """Perform device login instead."""
-        loginResult = self.login()
+        login_result = self.login()
         auth_params = self.get_auth_params()
-        auth_params["DEVICE_KEY"] = self.deviceKey
+        auth_params["DEVICE_KEY"] = self.device_key
 
-        if loginResult.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
+        if login_result.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
             try:
-                initialResult = self.client.respond_to_auth_challenge(
+                initial_result = self.client.respond_to_auth_challenge(
                     ClientId=self.__client_id,
                     ChallengeName=self.DEVICE_VERIFIER_CHALLENGE,
                     ChallengeResponses=auth_params,
                 )
 
-                cr = self.process_device_challenge(initialResult["ChallengeParameters"])
+                device_challenge_response = self.process_device_challenge(
+                    initial_result["ChallengeParameters"]
+                )
                 result = self.client.respond_to_auth_challenge(
                     ClientId=self.__client_id,
                     ChallengeName="DEVICE_PASSWORD_VERIFIER",
-                    ChallengeResponses=cr,
+                    ChallengeResponses=device_challenge_response,
                 )
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
-                    raise HiveApiError
+                    raise HiveApiError from err
         else:
             raise HiveInvalidDeviceAuthentication
 
         return result
 
-    def sms_2fa(
-        self,
-        entered_code: str,
-        challenge_parameters: dict,
-        deviceName=None,
-        autoDeviceRegistration=True,
-    ):
+    def sms_2fa(self, entered_code: str, challenge_parameters: dict):
         """Process 2FA sms verification."""
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -429,93 +426,87 @@ class HiveAuth:
                 },
             )
             if "NewDeviceMetadata" in result["AuthenticationResult"]:
-                self.accessToken = result["AuthenticationResult"]["AccessToken"]
-                self.deviceGroupKey = result["AuthenticationResult"][
+                self.access_token = result["AuthenticationResult"]["AccessToken"]
+                self.device_group_key = result["AuthenticationResult"][
                     "NewDeviceMetadata"
                 ]["DeviceGroupKey"]
-                self.deviceKey = result["AuthenticationResult"]["NewDeviceMetadata"][
+                self.device_key = result["AuthenticationResult"]["NewDeviceMetadata"][
                     "DeviceKey"
                 ]
-            if autoDeviceRegistration:
-                self.confirmDevice(
-                    self.accessToken, self.deviceKey, self.deviceGroupKey, deviceName
-                )
-                self.updateDeviceStatus(self.accessToken)
         except botocore.exceptions.ClientError as err:
-            if (
-                err.__class__.__name__ == "NotAuthorizedException"
-                or err.__class__.__name__ == "CodeMismatchException"
+            if err.__class__.__name__ in (
+                "NotAuthorizedException",
+                "CodeMismatchException",
             ):
-                raise HiveInvalid2FACode
+                raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
-    def confirmDevice(
+    def device_registration(self, device_name: str = None):
+        """Register Device."""
+        self.confirm_device(device_name)
+        self.update_device_status()
+
+    def confirm_device(
         self,
-        accessToken: str,
-        deviceKey: str,
-        deviceGroupKey: str,
-        deviceName: str = None,
+        device_name: str = None,
     ):
         """Confirm Device Hive."""
         result = None
-        if deviceName is None:
-            deviceName = socket.gethostname()
+        if device_name is None:
+            device_name = socket.gethostname()
         try:
             device_password, device_secret_verifier_config = self.generate_hash_device(
-                deviceGroupKey, deviceKey
+                self.device_group_key, self.device_key
             )
-            self.devicePassword = device_password
+            self.device_password = device_password
             result = (
                 self.client.confirm_device(
-                    AccessToken=accessToken,
-                    DeviceKey=deviceKey,
-                    DeviceName=deviceName,
+                    AccessToken=self.access_token,
+                    DeviceKey=self.device_key,
+                    DeviceName=device_name,
                     DeviceSecretVerifierConfig=device_secret_verifier_config,
                 ),
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
-    def updateDeviceStatus(
-        self,
-        accessToken: str,
-    ):
+    def update_device_status(self):
         """Update Device Hive."""
         result = None
         try:
             result = (
                 self.client.update_device_status(
-                    AccessToken=accessToken,
-                    DeviceKey=self.deviceKey,
+                    AccessToken=self.access_token,
+                    DeviceKey=self.device_key,
                     DeviceRememberedStatus="remembered",
                 ),
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
 
         return result
 
-    def getDeviceData(self):
+    def get_device_data(self):
         """Get key device information to use device authentication."""
-        return self.deviceGroupKey, self.deviceKey, self.devicePassword
+        return self.device_group_key, self.device_key, self.device_password
 
-    def refreshToken(
+    def refresh_token(
         self,
-        refresh_token: str,
+        token: str,
     ):
         """Refresh Hive Tokens."""
         result = None
-        auth_params = ({"REFRESH_TOKEN": refresh_token},)
-        if self.deviceKey is not None:
-            auth_params = {"REFRESH_TOKEN": refresh_token, "DEVICE_KEY": self.deviceKey}
+        auth_params = ({"REFRESH_TOKEN": token},)
+        if self.device_key is not None:
+            auth_params = {"REFRESH_TOKEN": token, "DEVICE_KEY": self.device_key}
         try:
             result = self.client.initiate_auth(
                 ClientId=self.__client_id,
@@ -524,7 +515,26 @@ class HiveAuth:
             )
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError
+                raise HiveApiError from err
+
+        return result
+
+    def forget_device(self, access_token, device_key):
+        """Forget device registered with Hive."""
+        result = None
+
+        try:
+            result = self.client.forget_device(
+                AccessToken=access_token,
+                DeviceKey=device_key,
+            )
+
+        except botocore.exceptions.ClientError as err:
+            if err.__class__.__name__ == "NotAuthorizedException":
+                raise HiveInvalid2FACode from err
+        except botocore.exceptions.EndpointConnectionError as err:
+            if err.__class__.__name__ == "ResourceNotFoundException":
+                raise HiveApiError from err
 
         return result
 
@@ -542,8 +552,8 @@ def get_random(nbytes):
 
 def hash_sha256(buf):
     """Authentication Helper hash."""
-    a = hashlib.sha256(buf).hexdigest()
-    return (64 - len(a)) * "0" + a
+    a_value = hashlib.sha256(buf).hexdigest()
+    return (64 - len(a_value)) * "0" + a_value
 
 
 def hex_hash(hex_string):
@@ -565,7 +575,7 @@ def calculate_u(big_a, big_b):
 
 def long_to_hex(long_num):
     """Convert long number to hex."""
-    return "%x" % long_num
+    return "%x" % long_num  # pylint: disable=consider-using-f-string
 
 
 def pad_hex(long_int):
@@ -580,9 +590,9 @@ def pad_hex(long_int):
     else:
         hash_str = long_int
     if len(hash_str) % 2 == 1:
-        hash_str = "0%s" % hash_str
+        hash_str = "0%s" % hash_str  # pylint: disable=consider-using-f-string
     elif hash_str[0] in "89ABCDEFabcdef":
-        hash_str = "00%s" % hash_str
+        hash_str = "00%s" % hash_str  # pylint: disable=consider-using-f-string
     return hash_str
 
 
@@ -596,6 +606,6 @@ def compute_hkdf(ikm, salt):
     @private
     """
     prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    info_bits_update = info_bits + bytearray(chr(1), "utf-8")
+    info_bits_update = INFO_BITS + bytearray(chr(1), "utf-8")
     hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
     return hmac_hash[:16]
