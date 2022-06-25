@@ -4,13 +4,13 @@ import asyncio
 import copy
 import json
 import operator
-import os
 import time
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
 from apyhiveapi import API, Auth
 
+from . import PATH
 from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
@@ -111,8 +111,7 @@ class HiveSession:
         Returns:
             dict: Data from the chosen file.
         """
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
-        path = path.replace("/pyhiveapi/", "/apyhiveapi/")
+        path = PATH + file
         with open(path) as j:
             data = json.loads(j.read())
 
@@ -364,8 +363,8 @@ class HiveSession:
         cameraImage = None
         cameraRecording = None
         if self.config.file:
-            cameraImage = self.openFile("camera.json")
-            cameraRecording = self.openFile("camera.json")
+            cameraImage = self.openFile("cameraImage.json")
+            cameraRecording = self.openFile("cameraRecording.json")
         elif self.tokens is not None:
             cameraImage = await self.api.getCameraImage(device)
             if cameraImage["parsed"]["events"][0]["hasRecording"] is True:

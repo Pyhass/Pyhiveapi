@@ -1,0 +1,12 @@
+{
+    "parsed": {
+        "events": [
+            {
+                "thumbnailUrls": [
+                    "https://test.com/image"
+                ],
+                "hasRecording": true
+            }
+        ]
+    }
+}

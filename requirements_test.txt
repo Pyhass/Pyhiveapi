@@ -1,1 +1,2 @@
+pyhiveapi
 tox
