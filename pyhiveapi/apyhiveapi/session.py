@@ -510,7 +510,7 @@ class HiveSession:
             current_product = self.data.products[product]
             if current_product.get("isGroup", False):
                 continue
-            self.helper.call_products_to_add(
+            await self.helper.call_products_to_add(
                 self.data.products[product]["type"], current_product
             )
 
@@ -520,7 +520,7 @@ class HiveSession:
         hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
         for device in self.data["devices"]:
             current_device = self.data.devices[device]
-            self.helper.call_devices_to_add(
+            await self.helper.call_devices_to_add(
                 self.data.devices[device]["type"], current_device
             )
 
@@ -530,7 +530,7 @@ class HiveSession:
         if "action" in HIVE_TYPES["Switch"]:
             for action in self.data["actions"]:
                 current_action = self.data["actions"][action]
-                self.helper.call_action_to_add(current_action)
+                await self.helper.call_action_to_add(current_action)
 
         return self.device_list
 

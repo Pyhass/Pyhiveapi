@@ -260,7 +260,9 @@ class HiveHelper:
             )
         if entity_type == "heating":
             self.session.add_list(
-                "climate", product, temperatureunit=self.data["user"]["temperatureUnit"]
+                "climate",
+                product,
+                temperatureunit=self.session.data["user"]["temperatureUnit"],
             )
             self.session.add_list(
                 "switch",
@@ -306,7 +308,9 @@ class HiveHelper:
             )
         if entity_type == "trvcontrol":
             self.session.add_list(
-                "climate", product, temperatureunit=self.data["user"]["temperatureUnit"]
+                "climate",
+                product,
+                temperatureunit=self.session.data["user"]["temperatureUnit"],
             )
             self.session.add_list(
                 "sensor",
