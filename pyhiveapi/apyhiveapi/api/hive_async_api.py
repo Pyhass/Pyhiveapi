@@ -129,7 +129,7 @@ class HiveApiAsync:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    await self.session.updateTokens(info)
+                    await self.session.update_tokens(info)
                     self.baseUrl = info["platform"]["endpoint"]
                     self.cameraBaseUrl = info["platform"]["cameraPlatform"]
                 return True
@@ -154,7 +154,7 @@ class HiveApiAsync:
     async def getAlarm(self):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["alarm"] + self.session.config.homeID
+        url = self.urls["alarm"] + self.session.config.home_id
         try:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
@@ -306,7 +306,7 @@ class HiveApiAsync:
             + "}"
         )
 
-        url = f"{self.urls['alarm']}{self.session.config.homeID}"
+        url = f"{self.urls['alarm']}{self.session.config.home_id}"
         try:
             await self.isFileBeingUsed()
             resp = await self.request("post", url, data=jsc)

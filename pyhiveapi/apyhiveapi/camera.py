@@ -90,11 +90,11 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
                 final = True
-                await self.session.getCamera()
+                await self.session.get_camera()
 
         return final
 
@@ -113,11 +113,11 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
                 final = True
-                await self.session.getCamera()
+                await self.session.get_camera()
 
         return final
 

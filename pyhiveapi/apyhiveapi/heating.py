@@ -261,21 +261,21 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
-        await self.session.hiveRefreshTokens()
+        await self.session.hive_refresh_tokens()
         final = False
 
         if (
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], target=new_temp
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
                 final = True
 
         return final
@@ -290,7 +290,7 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
-        await self.session.hiveRefreshTokens()
+        await self.session.hive_refresh_tokens()
         final = False
 
         if (
@@ -303,7 +303,7 @@ class HiveHeating:
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
                 final = True
 
         return final
@@ -321,7 +321,7 @@ class HiveHeating:
         """
         if mins > 0 and temp >= await self.getMinTemperature(device):
             if temp <= await self.getMaxTemperature(device):
-                await self.session.hiveRefreshTokens()
+                await self.session.hive_refresh_tokens()
                 final = False
 
                 if (
@@ -338,7 +338,7 @@ class HiveHeating:
                     )
 
                     if resp["original"] == 200:
-                        await self.session.getDevices(device["hiveID"])
+                        await self.session.get_devices()
                         final = True
 
                 return final
@@ -359,9 +359,9 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
-            await self.session.getDevices(device["hiveID"])
+            await self.session.get_devices()
             if await self.getBoostStatus(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode == "MANUAL" or prev_mode == "OFF":
@@ -377,7 +377,7 @@ class HiveHeating:
                         data["type"], device["hiveID"], mode=prev_mode
                     )
                 if resp["original"] == 200:
-                    await self.session.getDevices(device["hiveID"])
+                    await self.session.get_devices()
                     final = True
 
         return final
@@ -399,13 +399,13 @@ class HiveHeating:
             and device["deviceData"]["online"]
         ):
             data = self.session.data.products[device["hiveID"]]
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], autoBoost=state
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
                 final = True
 
         return final

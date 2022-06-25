@@ -10,7 +10,7 @@ def test_switch_turn_on_success():
     hive = MockSession()
     hive.sync_start_session()
     hive_session = hive.sync_hive
-    switch = hive_session.session.deviceList["switch"][1]
+    switch = hive_session.session.device_list["switch"][1]
 
     with patch(
         "pyhiveapi.api.hive_api.HiveApi.setState",

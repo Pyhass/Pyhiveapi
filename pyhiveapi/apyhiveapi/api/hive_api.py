@@ -96,7 +96,7 @@ class HiveApi:
             info = self.request("POST", url, jsc)
             data = json.loads(info.text)
             if "token" in data and self.session:
-                self.session.updateTokens(data)
+                self.session.update_tokens(data)
                 self.urls.update({"base": data["platform"]["endpoint"]})
                 self.urls.update({"camera": data["platform"]["cameraPlatform"]})
             self.json_return.update({"original": info.status_code})
@@ -142,11 +142,11 @@ class HiveApi:
 
         return json_return
 
-    def getAlarm(self, homeID=None):
+    def getAlarm(self, home_id=None):
         """Build and query alarm endpoint."""
         if self.session is not None:
-            homeID = self.session.config.homeID
-        url = self.urls["base"] + self.urls["alarm"] + homeID
+            home_id = self.session.config.home_id
+        url = self.urls["base"] + self.urls["alarm"] + home_id
         try:
             info = self.request("GET", url)
             self.json_return.update({"original": info.status_code})
