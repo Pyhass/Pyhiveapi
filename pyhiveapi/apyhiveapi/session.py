@@ -483,9 +483,9 @@ class HiveSession:
                 await self.updateTokens(config["tokens"], False)
 
             if "device_data" in config and not self.config.file:
-                self.auth.deviceGroupKey = config["device_data"][0]
-                self.auth.deviceKey = config["device_data"][1]
-                self.auth.devicePassword = config["device_data"][2]
+                self.auth.device_group_key = config["device_data"][0]
+                self.auth.device_key = config["device_data"][1]
+                self.auth.device_password = config["device_data"][2]
 
             if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
