@@ -1,7 +1,9 @@
 """Tests for the session object."""
 
-from tests.common import MockSession
 import pytest
+
+from tests.common import MockSession
+
 
 @pytest.mark.asyncio
 async def test_start_session():

@@ -1,2 +1,0 @@
-pyhiveapi
-tox

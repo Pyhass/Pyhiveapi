@@ -46,10 +46,6 @@ class MockSession:
         self.async_hive = None
         self.sync_hive = None
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Exit the mock session."""
-        self.loop.close()
-
     def sync_start_session(self):
         """Start a sync session."""
         self.sync_hive = HiveSync(username=USERNAME, password=PASSWORD)
