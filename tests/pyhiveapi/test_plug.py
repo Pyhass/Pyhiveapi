@@ -27,6 +27,18 @@ def test_switch_get_plug_state():
     assert state in (True, False)
 
 
+def test_switch_get_plug_state_with_key_error():
+    """Test a session can be started."""
+    hive = MockSession()
+    hive.sync_start_session()
+    hive_session = hive.sync_hive
+    switch = hive_session.session.device_list["switch"][1]
+    hive_session.session.data.products.pop(switch["hiveID"])
+    state = hive_session.switch.getState(switch)
+
+    assert state is None
+
+
 def test_switch_get_heat_on_demand_state():
     """Test a session can be started."""
     hive = MockSession()

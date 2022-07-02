@@ -32,6 +32,19 @@ async def test_switch_get_plug_state():
 
 
 @pytest.mark.asyncio
+async def test_switch_get_plug_state_with_key_error():
+    """Test a session can be started."""
+    hive = MockSession()
+    await hive.async_start_session()
+    hive_session = hive.async_hive
+    switch = hive_session.session.device_list["switch"][1]
+    hive_session.session.data.products.pop(switch["hiveID"])
+    state = await hive_session.switch.getState(switch)
+
+    assert state is None
+
+
+@pytest.mark.asyncio
 async def test_switch_get_heat_on_demand_state():
     """Test a session can be started."""
     hive = MockSession()
