@@ -2,3 +2,4 @@
 source = src
 omit =
     */__init__.py
+    */debugger.py
