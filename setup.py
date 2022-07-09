@@ -16,7 +16,7 @@ def requirements_from_file(filename="requirements.txt"):
 
 
 setup(
-    version="0.5.13",
+    version="0.5.14",
     package_data={"data": ["*.json"]},
     include_package_data=True,
     cmdclass={
@@ -33,5 +33,5 @@ setup(
         )
     },
     install_requires=requirements_from_file(),
-    extras_require={"dev": requirements_from_file("requirements_test.txt")},
+    extras_require={"dev": requirements_from_file("requirements_test_all.txt")},
 )
