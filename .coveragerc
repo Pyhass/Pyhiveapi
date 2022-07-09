@@ -1,0 +1,4 @@
+[run]
+source = src
+omit =
+    */__init__.py

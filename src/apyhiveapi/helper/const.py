@@ -1,11 +1,5 @@
 """Constants for Pyhiveapi."""
-
-SYNC_PACKAGE_NAME = "pyhiveapi"
-SYNC_PACKAGE_DIR = "/pyhiveapi/"
-ASYNC_PACKAGE_NAME = "apyhiveapi"
-ASYNC_PACKAGE_DIR = "/apyhiveapi/"
 SMS_REQUIRED = "SMS_MFA"
-
 
 # HTTP return codes.
 HTTP_OK = 200
