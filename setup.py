@@ -7,7 +7,7 @@ import unasync
 from setuptools import setup
 
 
-def requirements_from_file(filename="requirements.txt"):
+def requirements_from_file(filename="requirements_all.txt"):
     """Get requirements from file."""
     with open(os.path.join(os.path.dirname(__file__), filename)) as r:
         reqs = r.read().strip().split("\n")
