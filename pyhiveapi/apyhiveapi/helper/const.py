@@ -1,4 +1,5 @@
 """Constants for Pyhiveapi."""
+# pylint: skip-file
 SYNC_PACKAGE_NAME = "pyhiveapi"
 SYNC_PACKAGE_DIR = "/pyhiveapi/"
 ASYNC_PACKAGE_NAME = "apyhiveapi"
@@ -83,52 +84,52 @@ PRODUCTS = {
     "heating": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
         'addList("switch", p, haName=" Heat on Demand", hiveType="Heating_Heat_On_Demand", category="config")',
-        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" State", hiveType="Heating_State", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", category="diagnostic")',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", category="diagnostic")',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", category="diagnostic")',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", category="diagnostic")',
     ],
     "trvcontrol": [
         'addList("climate", p, temperatureunit=self.data["user"]["temperatureUnit"])',
-        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" State", hiveType="Heating_State", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Heating_Current_Temperature", category="diagnostic")',
+        'addList("sensor", p, haName=" Target Temperature", hiveType="Heating_Target_Temperature", category="diagnostic")',
+        'addList("sensor", p, haName=" State", hiveType="Heating_State", category="diagnostic")',
+        'addList("sensor", p, haName=" Mode", hiveType="Heating_Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Boost", hiveType="Heating_Boost", category="diagnostic")',
     ],
     "hotwater": [
         'addList("water_heater", p,)',
-        'addList("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", category="diagnostic")',
+        'addList("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", category="diagnostic")',
+        'addList("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", category="diagnostic")',
     ],
     "activeplug": [
         'addList("switch", p)',
-        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Power", hiveType="Power", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
+        'addList("sensor", p, haName=" Power", hiveType="Power", category="diagnostic")',
     ],
     "warmwhitelight": [
         'addList("light", p)',
-        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     "tuneablelight": [
         'addList("light", p)',
-        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     "colourtuneablelight": [
         'addList("light", p)',
-        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
-        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
+        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     #    "hivecamera": [
     #        'addList("camera", p)',
-    #        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic", custom=False)',
-    #        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
-    #        'addList("sensor", p, haName=" Temperature", hiveType="Camera_Temp", category="diagnostic", custom=False)',
+    #        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
+    #        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
+    #        'addList("sensor", p, haName=" Temperature", hiveType="Camera_Temp", category="diagnostic")',
     #    ],
     "motionsensor": [
         'addList("binary_sensor", p)',
@@ -139,26 +140,26 @@ PRODUCTS = {
 DEVICES = {
     "contactsensor": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     "hub": [
         'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity", category="diagnostic")',
     ],
     "motionsensor": [
         'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic")',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     "sense": [
         'addList("binary_sensor", d, haName="Hive Hub Status", hiveType="Connectivity")',
     ],
     "siren": ['addList("alarm_control_panel", d)'],
     "thermostatui": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic", )',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
     "trv": [
-        'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic",)',
-        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic", custom=False)',
+        'addList("sensor", d, haName=" Battery Level", hiveType="Battery", category="diagnostic")',
+        'addList("sensor", d, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
 }
 

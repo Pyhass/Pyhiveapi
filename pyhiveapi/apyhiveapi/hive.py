@@ -1,4 +1,5 @@
 """Start Hive Session."""
+# pylint: skip-file
 import sys
 import traceback
 from os.path import expanduser
@@ -99,9 +100,6 @@ class Hive(HiveSession):
         websession: Optional[ClientSession] = None,
         username: str = None,
         password: str = None,
-        deviceGroupKey: str = None,
-        deviceKey: str = None,
-        devicePassword: str = None,
     ):
         """Generate a Hive session.
 
@@ -113,9 +111,7 @@ class Hive(HiveSession):
             deviceKey (str, optional): This is the Hive device key used for trusted devices. Defaults to None.
             devicePassword (str, optional): This is the Hive device password used for trusted devices. Defaults to None.
         """
-        super().__init__(
-            username, password, deviceGroupKey, deviceKey, devicePassword, websession
-        )
+        super().__init__(username, password, websession)
         self.session = self
         self.action = HiveAction(self.session)
         self.alarm = Alarm(self.session)

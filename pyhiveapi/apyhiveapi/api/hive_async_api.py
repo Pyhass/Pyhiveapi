@@ -1,5 +1,5 @@
 """Hive API Module."""
-
+# pylint: skip-file
 import json
 import operator
 from typing import Optional
@@ -320,6 +320,7 @@ class HiveApiAsync:
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
+        json_return = {}
         jsc = (
             "{"
             + ",".join(
@@ -331,17 +332,20 @@ class HiveApiAsync:
         url = self.urls["nodes"].format(n_type, n_id)
         try:
             await self.isFileBeingUsed()
-            await self.request("post", url, data=jsc)
+            resp = await self.request("post", url, data=jsc)
+            json_return["original"] = resp.status
+            json_return["parsed"] = await resp.json(content_type=None)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
             else:
                 await self.error()
 
-        return self.json_return
+        return json_return
 
     async def setAlarm(self, **kwargs):
         """Set the state of the alarm."""
+        json_return = {}
         jsc = (
             "{"
             + ",".join(
@@ -355,14 +359,16 @@ class HiveApiAsync:
 
         try:
             await self.isFileBeingUsed()
-            await self.request("post", url, data=jsc, params=params)
+            resp = await self.request("post", url, data=jsc, params=params)
+            json_return["original"] = resp.status
+            json_return["parsed"] = await resp.json(content_type=None)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
             else:
                 await self.error()
 
-        return self.json_return
+        return json_return
 
     async def setAction(self, n_id, data):
         """Set the state of a Action."""
