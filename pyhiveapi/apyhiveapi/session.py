@@ -61,7 +61,6 @@ class HiveSession:
             username=username,
             password=password,
         )
-        self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
         self.log = Logger(self)
@@ -101,6 +100,8 @@ class HiveSession:
         )
         self.devices = {}
         self.deviceList = {}
+        self.api = API(hiveSession=self, websession=websession)
+
 
     def openFile(self, file: str):
         """Open a file.

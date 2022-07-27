@@ -53,9 +53,9 @@ class HiveApiAsync:
     def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
         """Get parameters."""
         params = {
-            "products": products,
-            "devices": devices,
-            "actions": actions,
+            "products": 'true' if products else 'false',
+            "devices": 'true' if devices else 'false',
+            "actions": 'true' if actions else 'false',
         }
         if sendhomeID and self.homeID:
             params.update({"homeId": self.homeID})
