@@ -50,14 +50,14 @@ class HiveApiAsync:
             self.homeID = self.session.config.homeID
         self.websession = ClientSession() if websession is None else websession
 
-    def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
+    def getParams(self, products=False, devices=False, actions=False):
         """Get parameters."""
         params = {
             "products": 'true' if products else 'false',
             "devices": 'true' if devices else 'false',
             "actions": 'true' if actions else 'false',
         }
-        if sendhomeID and self.homeID:
+        if self.homeID:
             params.update({"homeId": self.homeID})
         return params
 
@@ -164,7 +164,7 @@ class HiveApiAsync:
         json_return = {}
         url = self.urls["all"]
         params = self.getParams(
-            sendhomeID=True, products=True, devices=True, actions=True
+            , products=True, devices=True, actions=True
         )
         try:
             resp = await self.request("get", url, params=params)
@@ -237,7 +237,7 @@ class HiveApiAsync:
         """Call the get devices endpoint."""
         json_return = {}
         url = self.urls["devices"]
-        params = self.getParams(sendhomeID=True, devices=True)
+        params = self.getParams(devices=True)
         try:
             resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
@@ -251,7 +251,7 @@ class HiveApiAsync:
         """Call the get products endpoint."""
         json_return = {}
         url = self.urls["products"]
-        params = self.getParams(sendhomeID=True, products=True)
+        params = self.getParams(products=True)
         try:
             resp = await self.request("get", url, params=params)
             json_return.update({"original": resp.status})
@@ -265,7 +265,7 @@ class HiveApiAsync:
         """Call the get actions endpoint."""
         json_return = {}
         url = self.urls["all"]
-        params = self.getParams(sendhomeID=True, actions=True)
+        params = self.getParams(actions=True)
         try:
             resp = await self.request("get", url, params=params)
             all = await resp.json(content_type=None)

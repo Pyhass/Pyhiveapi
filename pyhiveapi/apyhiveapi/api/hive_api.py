@@ -45,14 +45,14 @@ class HiveApi:
         if self.session is not None:
             self.homeID = self.session.config.homeID
 
-    def getParams(self, sendhomeID=False, products=False, devices=False, actions=False):
+    def getParams(self, products=False, devices=False, actions=False):
         """Get parameters."""
         params = {
             "products": products,
             "devices": devices,
             "actions": actions,
         }
-        if sendhomeID and self.homeID is not None:
+        if self.homeID is not None:
             params.update({"homeId": self.homeID})
         return params
 
@@ -164,7 +164,7 @@ class HiveApi:
         json_return = {}
         url = self.urls["all"]
         params = self.getParams(
-            sendhomeID=True, products=True, devices=True, actions=True
+            products=True, devices=True, actions=True
         )
         try:
             info = self.request("GET", url, params=params)
@@ -179,7 +179,7 @@ class HiveApi:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
-        params = self.getParams(sendhomeID=True)
+        params = self.getParams()
         try:
             info = self.request("GET", url, params=params)
             all = info.json()
@@ -241,7 +241,7 @@ class HiveApi:
     def getDevices(self):
         """Call the get devices endpoint."""
         url = self.urls["devices"]
-        params = self.getParams(sendhomeID=True, devices=True)
+        params = self.getParams(devices=True)
         try:
             response = self.request("GET", url, params=params)
             self.json_return.update({"original": response.status_code})
@@ -254,7 +254,7 @@ class HiveApi:
     def getProducts(self):
         """Call the get products endpoint."""
         url = self.urls["products"]
-        params = self.getParams(sendhomeID=True, products=True)
+        params = self.getParams(products=True)
         try:
             response = self.request("GET", url, params=params)
             self.json_return.update({"original": response.status_code})
