@@ -164,7 +164,7 @@ class HiveApiAsync:
         json_return = {}
         url = self.urls["all"]
         params = self.getParams(
-            , products=True, devices=True, actions=True
+            products=True, devices=True, actions=True
         )
         try:
             resp = await self.request("get", url, params=params)
