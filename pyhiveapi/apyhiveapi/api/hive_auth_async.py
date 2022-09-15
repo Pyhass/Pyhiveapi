@@ -537,7 +537,7 @@ class HiveAuthAsync:
         if self.client is None:
             await self.async_init()
         result = None
-        auth_params = ({"REFRESH_TOKEN": token},)
+        auth_params = {"REFRESH_TOKEN": token}
         if self.device_key is not None:
             auth_params = {
                 "REFRESH_TOKEN": token,
