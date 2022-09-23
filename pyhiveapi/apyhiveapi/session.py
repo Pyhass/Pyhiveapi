@@ -491,6 +491,9 @@ class HiveSession:
 
             if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
+                
+            if "house" in config:
+                self.api.setHome(config["house"])
 
         try:
             await self.getDevices("No_ID")
