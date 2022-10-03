@@ -363,12 +363,19 @@ class HiveSession:
         """
         cameraImage = None
         cameraRecording = None
+        hasCameraImage = False
+        hasCameraRecording = False
+
         if self.config.file:
             cameraImage = self.openFile("camera.json")
             cameraRecording = self.openFile("camera.json")
         elif self.tokens is not None:
             cameraImage = await self.api.getCameraImage(device)
-            if cameraImage["parsed"]["events"][0]["hasRecording"] is True:
+            hasCameraRecording = bool(["parsed"]["events"][0]["hasRecording"])
+            if (
+                cameraImage["parsed"]["events"][0]["hasRecording"] is True
+                and hasCameraRecording
+            ):
                 cameraRecording = await self.api.getCameraRecording(
                     device, cameraImage["parsed"]["events"][0]["eventId"]
                 )
@@ -380,16 +387,18 @@ class HiveSession:
         else:
             raise NoApiToken
 
+        hasCameraImage = bool(cameraImage["parsed"]["events"][0])
+
         self.data.camera[device["id"]] = {}
         self.data.camera[device["id"]]["cameraImage"] = None
         self.data.camera[device["id"]]["cameraRecording"] = None
 
-        if cameraImage is not None:
+        if cameraImage is not None and hasCameraImage:
             self.data.camera[device["id"]] = {}
             self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
                 "events"
             ][0]
-        if cameraRecording is not None:
+        if cameraRecording is not None and hasCameraRecording:
             self.data.camera[device["id"]]["cameraRecording"] = cameraRecording[
                 "parsed"
             ]
@@ -438,8 +447,8 @@ class HiveSession:
                         tmpDevices.update({aDevice["id"]: aDevice})
                         if aDevice["type"] == "siren":
                             self.config.alarm = True
-                        if aDevice["type"] == "hivecamera":
-                            await self.getCamera(aDevice)
+                        # if aDevice["type"] == "hivecamera":
+                        #    await self.getCamera(aDevice)
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
