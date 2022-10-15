@@ -356,6 +356,9 @@ class HiveSession:
         """
         camera_image = None
         camera_recording = None
+        has_camera_image = False
+        has_camera_recording = False
+
         if self.config.file:
             camera_image = self.open_file("cameraImage.json")
             camera_recording = self.open_file("cameraRecording.json")
@@ -373,16 +376,18 @@ class HiveSession:
         else:
             raise NoApiToken
 
+        has_camera_image = bool(camera_image["parsed"]["events"][0])
+
         self.data.camera[device["id"]] = {}
         self.data.camera[device["id"]]["cameraImage"] = None
         self.data.camera[device["id"]]["cameraRecording"] = None
 
-        if camera_image is not None:
+        if camera_image is not None and has_camera_image:
             self.data.camera[device["id"]] = {}
             self.data.camera[device["id"]]["cameraImage"] = camera_image["parsed"][
                 "events"
             ][0]
-        if camera_recording is not None:
+        if camera_recording is not None and has_camera_recording:
             self.data.camera[device["id"]]["cameraRecording"] = camera_recording[
                 "parsed"
             ]
