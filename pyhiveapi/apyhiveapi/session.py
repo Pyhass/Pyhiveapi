@@ -279,7 +279,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = await self.auth.deviceLogin()
+            result = await self.auth.device_login()
         except HiveInvalidDeviceAuthentication:
             raise HiveInvalidDeviceAuthentication
 
