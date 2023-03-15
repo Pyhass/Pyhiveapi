@@ -235,8 +235,8 @@ class HiveSession:
             print("invalid_password")
         except HiveApiError:
             print("no_internet_available")
-
-        if "AuthenticationResult" in result:
+        #tweak: avoid exception if result is None
+        if result and "AuthenticationResult" in result:
             await self.updateTokens(result)
         return result
 
@@ -423,10 +423,18 @@ class HiveSession:
             if self.config.file:
                 api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
-                await self.hiveRefreshTokens()
+                """tweak: the api is not generating valid refresh tokens so removing requirement to check for them 
+                -- use fresh login instead when token expires"""
+                #await self.hiveRefreshTokens()
                 api_resp_d = await self.api.getAll()
-                if operator.contains(str(api_resp_d["original"]), "20") is False:
-                    raise HTTPException
+                """tweak: if no response or request not successful (e.g. 404 not authorised) then 
+                >>>try logging in again"""
+                if not api_resp_d or operator.contains(str(api_resp_d["original"]), "20") is False:
+                    self.login()
+                    """have one more try to get data, or else quit with exception"""
+                    api_resp_d = await self.api.getAll()
+                    if not api_resp_d or operator.contains(str(api_resp_d["original"]), "20") is False:
+                        raise HTTPException
                 elif api_resp_d["parsed"] is None:
                     raise HiveApiError
 

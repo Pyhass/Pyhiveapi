@@ -1,0 +1,10 @@
+{
+  "USER":"",
+  "PASS":"",
+  "DEVICE_ID":"",
+  "HUB_ID":"",
+  "INFLUX_URL":"http://***:8086",
+  "BUCKET":"",
+  "ORG":"l",
+  "INFLUX_TOKEN":"",
+}
