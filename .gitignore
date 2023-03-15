@@ -19,3 +19,6 @@ custom_tests/*
 
 # virtual environment folder
 .venv/
+pyhiveapi/.DS_Store
+.DS_Store
+hive_configs.json

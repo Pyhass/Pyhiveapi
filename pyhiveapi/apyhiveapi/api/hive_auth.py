@@ -504,7 +504,7 @@ class HiveAuth:
     ):
         """Refresh Hive Tokens."""
         result = None
-        auth_params = ({"REFRESH_TOKEN": token},)
+        auth_params = {"REFRESH_TOKEN": token}
         if self.device_key is not None:
             auth_params = {"REFRESH_TOKEN": token, "DEVICE_KEY": self.device_key}
         try:
