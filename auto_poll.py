@@ -95,7 +95,7 @@ class OwnHive(Hive):
 				if not self.getDevices(self.hive_ID):
 					raise Exception("Failed to update devices")		
 				self.get_latest()
-				print(self.latest)
+				#print(self.latest)
 				self.save_latest()
 				time.sleep(DELAY)
 			except Exception as e:
