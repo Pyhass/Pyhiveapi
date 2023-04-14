@@ -527,6 +527,8 @@ class HiveSession:
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
+            if "error" in p:
+                continue
             if p.get("isGroup", False):
                 continue
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
