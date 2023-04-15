@@ -10,7 +10,7 @@ from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
-from ..helper.hive_exceptions import FileInUse, NoApiToken
+from ..helper.hive_exceptions import FileInUse, NoApiToken, HiveApiError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -76,7 +76,7 @@ class HiveApiAsync:
             method, url, headers=headers, data=data
         ) as resp:
             await resp.text()
-            if operator.contains(str(resp.status), "20"):
+            if str(resp.status).startswith("20"):
                 return resp
 
         if resp.status == HTTP_UNAUTHORIZED:
@@ -89,6 +89,8 @@ class HiveApiAsync:
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
+        
+        raise HiveApiError
 
     def getLoginInfo(self):
         """Get login properties to make the login request."""
