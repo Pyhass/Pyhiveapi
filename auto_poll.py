@@ -49,6 +49,11 @@ class OwnHive(Hive):
 				self.this_name=self.this_device['device_name']
 				self.hive_ID=self.this_device['hiveID']
 				return
+				
+	def list_sensors(self):
+		for d in o.sensors():
+			print(f"HiveID: {d['hiveID']} HiveName: {d['hiveName']}, HiveType: {d['hiveType']}, DeviceID: {d['device_id']}, DeviceName{d['device_name']},{d['haName']}")
+	
 		
 	def get_latest(self):
 		self.latest={}
