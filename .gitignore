@@ -22,3 +22,4 @@ custom_tests/*
 pyhiveapi/.DS_Store
 .DS_Store
 hive_configs.json
+hive_configs2.json

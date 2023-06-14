@@ -279,7 +279,7 @@ class HiveSession:
             raise HiveUnknownConfiguration
 
         try:
-            result = await self.auth.deviceLogin()
+            result = await self.auth.device_login()
         except HiveInvalidDeviceAuthentication:
             raise HiveInvalidDeviceAuthentication
 
@@ -326,7 +326,7 @@ class HiveSession:
         if datetime.now() >= ep and not self.updateLock.locked():
             try:
                 await self.updateLock.acquire()
-                await self.getDevices(device["hiveID"])
+                self.getDevices(device["hiveID"])
                 if len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
