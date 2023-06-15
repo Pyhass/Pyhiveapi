@@ -1,4 +1,4 @@
-from pyhiveapi import Hive, SMS_REQUIRED
+from apyhiveapi import Hive, SMS_REQUIRED
 import time,sys
 import traceback, botocore, json
 import requests
@@ -119,7 +119,7 @@ def getConfigValue(key, defaultValue):
     return defaultValue
 
 def load_config(configFilename):
-    global INFLUX_URL, BUCKET, ORG, INFLUX_TOKEN,USER,PASSWORD,DEVICE_ID,HUB_ID,config
+    global INFLUX_URL, BUCKET, ORG, INFLUX_TOKEN,USER,PASSWORD,DEVICE_ID,HUB_ID,config,DEVICE_GROUP_KEY,DEVICE_LOGIN_KEY,DEVICE_PASSWORD
     config = {}
     with open(configFilename) as configFile:
         config = json.load(configFile)
@@ -132,6 +132,16 @@ def load_config(configFilename):
     BUCKET=getConfigValue("BUCKET",None)
     ORG=getConfigValue("ORG",None)
     INFLUX_TOKEN=getConfigValue("INFLUX_TOKEN",None)
+    DEVICE_GROUP_KEY=getConfigValue("DEVICE_GROUP_KEY",None)
+    DEVICE_LOGIN_KEY=getConfigValue("DEVICE_LOGIN_KEY",None)
+    DEVICE_PASSWORD=getConfigValue("DEVICE_PASSWORD",None)
+    
+
+def load_device_login(session):
+    session.auth.device_group_key=DEVICE_GROUP_KEY
+    session.auth.device_key=DEVICE_LOGIN_KEY
+    session.auth.device_password=DEVICE_PASSWORD
+
 
 def influx_write2(tags,fields):
 	with InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=ORG) as client:
