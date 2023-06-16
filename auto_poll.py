@@ -1,11 +1,11 @@
-from apyhiveapi import Hive, SMS_REQUIRED
+from pyhiveapi import Hive, SMS_REQUIRED
 import time,sys
 import traceback, botocore, json
 import requests
 from influxdb_client import InfluxDBClient,Point,WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS,ASYNCHRONOUS
 from urllib3.exceptions import NewConnectionError,ConnectTimeoutError
-
+DEVICE_REQUIRED = "DEVICE_SRP_AUTH"
 """
 Code to test pyhiveapi running autonomously, i.e. not inside Home Assistant
 The hive is polled every 60 seconds by default , set by DELAY constant
@@ -18,24 +18,42 @@ python hivetest.py hive_configs.json
 
 """
 DELAY=60  #delay in seconds between polling the Hive
-
 			
 class OwnHive(Hive):
 	def __init__(
 		self,
 		username=None,
 		password=None,
-		device_id=None
+		device_id=None,
+		device_group_key=None,
+		device_login_key=None,
+		device_password=None,
 			):
 		super().__init__(username=username,password=password)
+		if device_login_key and device_password:
+			self.auth.device_group_key =device_group_key
+			self.auth.device_key=device_login_key
+			self.auth.device_password=device_password
 		self.this_device,self.this_name,self.hive_ID=None,None,None
 		self.device_id=device_id
-		self.startup()
-	
+
 	def startup(self):
-		self.login()
-		self.startSession()
-		self.get_device()		
+		login=self.login()
+		if login.get("ChallengeName") == SMS_REQUIRED:
+			print(login)
+			raise Exception("SMS required - You need to authenticate with these credentials")
+		else:
+			if login.get("ChallengeName") == DEVICE_REQUIRED:
+				response=self.deviceLogin()
+			self.startSession()
+			self.get_device()		
+	
+	def mflogin(self,pin,login_response):
+		self.sms2fa(pin, login_response)
+		self.auth.device_registration('New Device')
+		deviceData = self.auth.get_device_data()
+		print("Store these Device credentials:")
+		print(deviceData) # save this info for next time you login
 	
 	def sensors(self):
 		self.createDevices()
@@ -163,5 +181,6 @@ if __name__ == "__main__":
 	    configFilename = sys.argv[1]
 	    load_config(configFilename)
 	    
-	    o=OwnHive(username=USER,password=PASSWORD,device_id=DEVICE_ID)
+	    o=OwnHive(username=USER,password=PASSWORD,device_id=DEVICE_ID,device_group_key=DEVICE_GROUP_KEY,device_login_key=DEVICE_LOGIN_KEY,device_password=DEVICE_PASSWORD)
+	    o.startup()
 	    o.live_run()
