@@ -7,4 +7,9 @@
   "BUCKET":"",
   "ORG":"l",
   "INFLUX_TOKEN":"",
+  "SHELLY_URL":"",
+  "SHELLY_TOKEN":"",
+  "DEVICE_GROUP_KEY":"",
+  "DEVICE_LOGIN_KEY":"",
+  "DEVICE_PASSWORD":""
 }
