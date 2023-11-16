@@ -528,7 +528,11 @@ class HiveSession:
             p = self.data.products[aProduct]
             if "error" in p:
                 continue
-            if p.get("isGroup", False):
+            # Only consider single items or heating groups
+            if (
+                p.get("isGroup", False)
+                and self.data.products[aProduct]["type"] not in HIVE_TYPES["Heating"]
+            ):
                 continue
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
             for code in product_list:
