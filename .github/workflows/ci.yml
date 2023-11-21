@@ -18,7 +18,7 @@ jobs:
   # This prevent upcoming jobs to do the same individually
   prepare-base:
     name: Prepare base dependencies
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Check out code from GitHub
         uses: actions/checkout@v2
@@ -65,7 +65,7 @@ jobs:
 
   lint-bandit:
     name: Check bandit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -109,7 +109,7 @@ jobs:
 
   lint-black:
     name: Check black
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -153,7 +153,7 @@ jobs:
 
   lint-codespell:
     name: Check codespell
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -200,7 +200,7 @@ jobs:
 
   lint-executable-shebangs:
     name: Check executables
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -247,7 +247,7 @@ jobs:
 
   lint-flake8:
     name: Check flake8
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -294,7 +294,7 @@ jobs:
 
   lint-isort:
     name: Check isort
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -338,7 +338,7 @@ jobs:
 
   lint-json:
     name: Check JSON
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -385,7 +385,7 @@ jobs:
 
   lint-pyupgrade:
     name: Check pyupgrade
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -429,7 +429,7 @@ jobs:
 
   lint-yaml:
     name: Check YAML
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
@@ -475,7 +475,7 @@ jobs:
           pre-commit run --hook-stage manual yamllint --all-files --show-diff-on-failure
   pylint:
     name: Check pylint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Set up python ${{ env.DEFAULT_PYTHON }}
