@@ -9,7 +9,7 @@ from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
-from ..helper.hive_exceptions import FileInUse, NoApiToken, HiveApiError
+from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

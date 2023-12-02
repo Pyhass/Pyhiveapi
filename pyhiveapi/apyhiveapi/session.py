@@ -371,7 +371,9 @@ class HiveSession:
             cameraRecording = self.openFile("camera.json")
         elif self.tokens is not None:
             cameraImage = await self.api.getCameraImage(device)
-            hasCameraRecording = bool(cameraImage["parsed"]["events"][0]["hasRecording"])
+            hasCameraRecording = bool(
+                cameraImage["parsed"]["events"][0]["hasRecording"]
+            )
             if hasCameraRecording:
                 cameraRecording = await self.api.getCameraRecording(
                     device, cameraImage["parsed"]["events"][0]["eventId"]
