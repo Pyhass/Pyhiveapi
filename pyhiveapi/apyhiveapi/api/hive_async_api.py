@@ -1,7 +1,6 @@
 """Hive API Module."""
 # pylint: skip-file
 import json
-import operator
 from typing import Optional
 
 import requests
@@ -89,7 +88,7 @@ class HiveApiAsync:
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
-        
+
         raise HiveApiError
 
     def getLoginInfo(self):
