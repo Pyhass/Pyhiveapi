@@ -60,6 +60,7 @@ sensor_commands = {
     "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
     "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
     "Camera_Temp": "self.session.camera.getCameraTemperature(device)",
+    "Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",
     "Heating_State": "self.session.heating.getState(device)",
@@ -133,6 +134,7 @@ PRODUCTS = {
     #    ],
     "motionsensor": [
         'addList("binary_sensor", p)',
+        'addList("sensor", p, haName=" Current Temperature", hiveType="Current_Temperature", category="diagnostic")',
     ],
     "contactsensor": ['addList("binary_sensor", p)'],
 }
