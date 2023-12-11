@@ -166,7 +166,7 @@ class HiveSession:
         Args:
             new_interval (int): New interval for polling.
         """
-        if type(new_interval) == int:
+        if isinstance(new_interval, int):
             new_interval = timedelta(seconds=new_interval)
 
         interval = new_interval
@@ -371,11 +371,10 @@ class HiveSession:
             cameraRecording = self.openFile("camera.json")
         elif self.tokens is not None:
             cameraImage = await self.api.getCameraImage(device)
-            hasCameraRecording = bool(["parsed"]["events"][0]["hasRecording"])
-            if (
-                cameraImage["parsed"]["events"][0]["hasRecording"] is True
-                and hasCameraRecording
-            ):
+            hasCameraRecording = bool(
+                cameraImage["parsed"]["events"][0]["hasRecording"]
+            )
+            if hasCameraRecording:
                 cameraRecording = await self.api.getCameraRecording(
                     device, cameraImage["parsed"]["events"][0]["eventId"]
                 )
@@ -529,7 +528,11 @@ class HiveSession:
             p = self.data.products[aProduct]
             if "error" in p:
                 continue
-            if p.get("isGroup", False):
+            # Only consider single items or heating groups
+            if (
+                p.get("isGroup", False)
+                and self.data.products[aProduct]["type"] not in HIVE_TYPES["Heating"]
+            ):
                 continue
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
             for code in product_list:
