@@ -101,9 +101,9 @@ PRODUCTS = {
     ],
     "hotwater": [
         'addList("water_heater", p,)',
-        'addList("sensor", p, haName="Hotwater State", hiveType="Hotwater_State", category="diagnostic")',
-        'addList("sensor", p, haName="Hotwater Mode", hiveType="Hotwater_Mode", category="diagnostic")',
-        'addList("sensor", p, haName="Hotwater Boost", hiveType="Hotwater_Boost", category="diagnostic")',
+        'addList("sensor", p, haName="Hot Water State", hiveType="Hotwater_State", category="diagnostic")',
+        'addList("sensor", p, haName="Hot Water Mode", hiveType="Hotwater_Mode", category="diagnostic")',
+        'addList("sensor", p, haName="Hot Water Boost", hiveType="Hotwater_Boost", category="diagnostic")',
     ],
     "activeplug": [
         'addList("switch", p)',
