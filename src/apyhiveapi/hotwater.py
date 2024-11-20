@@ -151,7 +151,7 @@ class HiveHotwater:
         final = False
 
         if (
-            mins > 0
+            int(mins) > 0
             and device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
