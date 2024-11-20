@@ -16,7 +16,7 @@ def requirements_from_file(filename="requirements.txt"):
 
 
 setup(
-    version="0.5.15",
+    version="0.5.16",
     package_data={"data": ["*.json"]},
     include_package_data=True,
     cmdclass={
@@ -27,8 +27,16 @@ setup(
                     "/pyhiveapi/",
                     additional_replacements={
                         "apyhiveapi": "pyhiveapi",
+                        "asyncio": "threading",
                     },
-                )
+                ),
+                unasync.Rule(
+                    "/apyhiveapi/api/",
+                    "/pyhiveapi/api/",
+                    additional_replacements={
+                        "apyhiveapi": "pyhiveapi",
+                    },
+                ),
             ]
         )
     },
