@@ -127,14 +127,14 @@ class HiveHotwater:
         final = False
 
         if device["hiveID"] in self.session.data.products:
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode=new_mode
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
 
         return final
 
@@ -155,14 +155,14 @@ class HiveHotwater:
             and device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode="BOOST", boost=mins
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
 
         return final
 
@@ -182,14 +182,14 @@ class HiveHotwater:
             and await self.getBoost(device) == "ON"
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode=prev_mode
             )
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
                 final = True
 
         return final

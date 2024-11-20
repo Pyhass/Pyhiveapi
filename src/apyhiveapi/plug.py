@@ -66,14 +66,14 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="ON"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
 
         return final
 
@@ -92,14 +92,14 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="OFF"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.get_devices()
 
         return final
 

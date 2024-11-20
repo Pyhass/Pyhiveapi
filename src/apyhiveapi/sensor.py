@@ -1,6 +1,6 @@
 """Hive Sensor Module."""
 # pylint: skip-file
-from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
+from .helper.const import HIVE_TYPES, HIVETOHA
 
 
 class HiveSensor:
@@ -108,17 +108,11 @@ class Sensor(HiveSensor):
             elif device["hiveID"] in self.session.data.products:
                 data = self.session.data.products.get(device["hiveID"], {})
 
-            if (
-                dev_data["hiveType"] in sensor_commands
-                or dev_data.get("custom", None) in sensor_commands
-            ):
-                code = sensor_commands.get(
-                    dev_data["hiveType"],
-                    sensor_commands.get(dev_data["custom"]),
-                )
+            sensor_state = self.session.helper.call_sensor_function(dev_data)
+            if sensor_state is not None:
                 dev_data.update(
                     {
-                        "status": {"state": await eval(code)},
+                        "status": {"state": sensor_state},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                     }

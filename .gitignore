@@ -10,11 +10,11 @@ __pycache__/
 build
 dist
 pyhiveapi.egg-info
+*.coverage
 
 # due to using tox and pytest
 .tox
 .cache
-test*
 custom_tests/*
 
 # virtual environment folder

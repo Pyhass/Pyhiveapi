@@ -1,0 +1,4 @@
+pyhiveapi
+pytest
+pytest-cov
+tox

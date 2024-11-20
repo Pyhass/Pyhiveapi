@@ -1,0 +1,115 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Pytest",
+        "detail": "Execute pytest tests for pyhiveapi/apyhiveapi",
+        "type": "shell",
+        "command": "pytest --timeout=10 tests",
+        "dependsOn": ["Install all Test Requirements", "Install Package Locally"],
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Flake8",
+        "detail": "Run flake8 checks on the libary",
+        "type": "shell",
+        "command": "pre-commit run flake8 --all-files",
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Pylint",
+        "detail": "Run pylint checks on the libary",
+        "type": "shell",
+        "command": "pylint src",
+        "dependsOn": ["Install all Requirements"],
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Code Coverage",
+        "detail": "Generate local code coverage report.",
+        "type": "shell",
+        "command": "pytest --cov-report html --cov=apyhiveapi tests/apyhiveapi && pytest --cov-report html --cov=pyhiveapi  --cov-append tests/pyhiveapi",
+        "dependsOn": ["Install all Test Requirements", "Install Package Locally"],
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install all Requirements",
+        "detail": "Install all requirements needed to run pyhiveapi/apyihiveapi ",
+        "type": "shell",
+        "command": "pip3 install --use-deprecated=legacy-resolver -r requirements_all.txt",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install all Test Requirements",
+        "detail": "Install all test requirement for pytest.",
+        "type": "shell",
+        "command": "pip3 install --use-deprecated=legacy-resolver -r requirements_test_all.txt",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Install Package Locally",
+        "detail": "Install pyhiveapi/apyhiveapi locally.",
+        "type": "shell",
+        "command": "pip3 install --upgrade --use-deprecated=legacy-resolver .",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "problemMatcher": []
+      },
+    ],
+    "inputs": []
+  }
+  
