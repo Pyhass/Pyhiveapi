@@ -22,15 +22,15 @@ class Logger:
     async def error_check(self, n_id, n_type, error_type, **kwargs):
         """Error has occurred."""
         message = None
-        name = self.session.helper.getDeviceName(n_id)
+        name = self.session.helper.get_device_name(n_id)
 
         if error_type is False:
             message = "Device offline could not update entity - " + name
-            if n_id not in self.session.config.errorList:
+            if n_id not in self.session.config.error_list:
                 self.session.logger.warning(message)
-                self.session.config.errorList.update({n_id: datetime.now()})
+                self.session.config.error_list.update({n_id: datetime.now()})
         elif error_type == "Failed":
             message = "ERROR - No data found for device - " + name
-            if n_id not in self.session.config.errorList:
+            if n_id not in self.session.config.error_list:
                 self.session.logger.error(message)
-                self.session.config.errorList.update({n_id: datetime.now()})
+                self.session.config.error_list.update({n_id: datetime.now()})

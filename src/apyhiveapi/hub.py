@@ -10,8 +10,8 @@ class HiveHub:
         object: Returns a hub object.
     """
 
-    hubType = "Hub"
-    logType = "Sensor"
+    hub_type = "Hub"
+    log_type = "Sensor"
 
     def __init__(self, session: object = None):
         """Initialise hub.
@@ -34,9 +34,9 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
-            final = HIVETOHA[self.hubType]["Smoke"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Smoke"].get(state, state)
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -55,9 +55,9 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
-            final = HIVETOHA[self.hubType]["Dog"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Dog"].get(state, state)
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -76,9 +76,9 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
-            final = HIVETOHA[self.hubType]["Glass"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Glass"].get(state, state)
         except KeyError as e:
             await self.session.log.error(e)
 

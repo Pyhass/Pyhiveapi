@@ -14,7 +14,7 @@ async def test_switch_update_switch_online():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    device_data = await hive_session.switch.getSwitch(switch)
+    device_data = await hive_session.switch.get_switch(switch)
 
     assert device_data != {}
 
@@ -26,10 +26,10 @@ async def test_switch_update_switch_offline():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    switch["deviceData"]["online"] = False
-    device_data = await hive_session.switch.getSwitch(switch)
+    switch["device_data"]["online"] = False
+    device_data = await hive_session.switch.get_switch(switch)
 
-    assert device_data["hiveID"] in hive_session.session.config.errorList
+    assert device_data["hive_id"] in hive_session.session.config.error_list
 
 
 @pytest.mark.asyncio
@@ -39,7 +39,7 @@ async def test_switch_get_plug_state():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    state = await hive_session.switch.getSwitchState(switch)
+    state = await hive_session.switch.get_switchState(switch)
 
     assert state in (True, False)
 
@@ -51,8 +51,8 @@ async def test_switch_get_plug_state_with_key_error():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    hive_session.session.data.products.pop(switch["hiveID"])
-    state = await hive_session.switch.getState(switch)
+    hive_session.session.data.products.pop(switch["hive_id"])
+    state = await hive_session.switch.get_state(switch)
 
     assert state is None
 
@@ -64,7 +64,7 @@ async def test_switch_get_heat_on_demand_state():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][0]
-    state = await hive_session.switch.getSwitchState(switch)
+    state = await hive_session.switch.get_switchState(switch)
 
     assert state in (True, False)
 
@@ -81,7 +81,7 @@ async def test_switch_turn_on_successfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOn(switch)
+        result = await hive_session.switch.turn_on(switch)
 
     assert result is True
     assert len(api_call.mock_calls) == 1
@@ -99,7 +99,7 @@ async def test_switch_turn_on_unsuccessfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOn(switch)
+        result = await hive_session.switch.turn_on(switch)
 
     assert result is False
     assert len(api_call.mock_calls) == 1
@@ -117,7 +117,7 @@ async def test_switch_turn_off_successfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOff(switch)
+        result = await hive_session.switch.turn_off(switch)
 
     assert result is True
     assert len(api_call.mock_calls) == 1
@@ -135,7 +135,7 @@ async def test_switch_turn_off_unsuccessfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOff(switch)
+        result = await hive_session.switch.turn_off(switch)
 
     assert result is False
     assert len(api_call.mock_calls) == 1
@@ -153,7 +153,7 @@ async def test_switch_heat_on_demand_turn_on_successfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOn(switch)
+        result = await hive_session.switch.turn_on(switch)
 
     assert result is True
     assert len(api_call.mock_calls) == 1
@@ -171,7 +171,7 @@ async def test_switch_heat_on_demand_turn_on_unsuccessfully():
         "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
-        result = await hive_session.switch.turnOff(switch)
+        result = await hive_session.switch.turn_off(switch)
 
     assert result is False
     assert len(api_call.mock_calls) == 1
@@ -184,7 +184,7 @@ async def test_plug_get_power_usage():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    power_usage = await hive_session.switch.getPowerUsage(switch)
+    power_usage = await hive_session.switch.get_power_usage(switch)
 
     assert power_usage is not None
 
@@ -196,7 +196,7 @@ async def test_plug_get_power_usage_with_key_error():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    hive_session.session.data.products.pop(switch["hiveID"])
-    state = await hive_session.switch.getPowerUsage(switch)
+    hive_session.session.data.products.pop(switch["hive_id"])
+    state = await hive_session.switch.get_power_usage(switch)
 
     assert state is None

@@ -9,7 +9,7 @@ class HiveCamera:
         object: Hive camera
     """
 
-    cameraType = "Camera"
+    camera_type = "Camera"
 
     async def get_camera_temperature(self, device: dict):
         """Get the camera state.
@@ -20,7 +20,7 @@ class HiveCamera:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
+            data = self.session.data.devices[device["hive_id"]]
             state = data["props"]["temperature"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -36,7 +36,7 @@ class HiveCamera:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
+            data = self.session.data.devices[device["hive_id"]]
             state = True if data["state"]["mode"] == "ARMED" else False
         except KeyError as e:
             await self.session.log.error(e)
@@ -52,7 +52,7 @@ class HiveCamera:
         state = None
 
         try:
-            state = self.session.data.camera[device["hiveID"]]["cameraImage"][
+            state = self.session.data.camera[device["hive_id"]]["camera_image"][
                 "thumbnailUrls"
             ][0]
         except KeyError as e:
@@ -69,7 +69,7 @@ class HiveCamera:
         state = None
 
         try:
-            state = self.session.data.camera[device["hiveID"]]["cameraRecording"]
+            state = self.session.data.camera[device["hive_id"]]["camera_recording"]
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -87,8 +87,8 @@ class HiveCamera:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.devices
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.devices
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
             resp = await self.session.api.set_state(mode=mode)
@@ -110,8 +110,8 @@ class HiveCamera:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.devices
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.devices
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
             resp = await self.session.api.set_state(mode=mode)
@@ -146,40 +146,40 @@ class Camera(HiveCamera):
         Returns:
             dict: Updated device.
         """
-        device["deviceData"].update(
+        device["device_data"].update(
             {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device["device_data"]["online"]:
             self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
-                "haType": device["haType"],
+                "hive_id": device["hive_id"],
+                "hive_name": device["hive_name"],
+                "hive_type": device["hive_type"],
+                "ha_name": device["ha_name"],
+                "ha_type": device["ha_type"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
                     "temperature": await self.get_camera_temperature(device),
                     "state": await self.get_camera_state(device),
-                    "imageURL": await self.get_camera_image_url(device),
-                    "recordingURL": await self.get_camera_recording_url(device),
+                    "image_url": await self.get_camera_image_url(device),
+                    "recording_url": await self.get_camera_recording_url(device),
                 },
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
+                "device_data": data.get("props", None),
+                "parent_device": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.session.attr.state_attributes(
-                    device["device_id"], device["hiveType"]
+                    device["device_id"], device["hive_type"]
                 ),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device["hive_id"]: dev_data})
+            return self.session.devices[device["hive_id"]]
         else:
             await self.session.log.error_check(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device["device_data"]["online"]
             )
             return device

@@ -10,7 +10,7 @@ class HiveSmartPlug:
         object: Returns Plug object
     """
 
-    plugType = "Switch"
+    plug_type = "Switch"
 
     async def get_state(self, device: dict):
         """Get smart plug state.
@@ -24,7 +24,7 @@ class HiveSmartPlug:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["state"]["status"]
             state = HIVETOHA["Switch"].get(state, state)
         except KeyError as e:
@@ -44,7 +44,7 @@ class HiveSmartPlug:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["powerConsumption"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -63,11 +63,11 @@ class HiveSmartPlug:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             resp = await self.session.api.set_state(
                 data["type"], data["id"], status="ON"
             )
@@ -89,11 +89,11 @@ class HiveSmartPlug:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             resp = await self.session.api.set_state(
                 data["type"], data["id"], status="OFF"
             )
@@ -128,32 +128,32 @@ class Switch(HiveSmartPlug):
         Returns:
             dict: Return device after update is complete.
         """
-        device["deviceData"].update(
+        device["device_data"].update(
             {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device["device_data"]["online"]:
             self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
-                "haType": device["haType"],
+                "hive_id": device["hive_id"],
+                "hive_name": device["hive_name"],
+                "hive_type": device["hive_type"],
+                "ha_name": device["ha_name"],
+                "ha_type": device["ha_type"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
                     "state": await self.get_switch_state(device),
                 },
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
+                "device_data": data.get("props", None),
+                "parent_device": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": {},
             }
 
-            if device["hiveType"] == "activeplug":
+            if device["hive_type"] == "activeplug":
                 dev_data.update(
                     {
                         "status": {
@@ -161,16 +161,16 @@ class Switch(HiveSmartPlug):
                             "power_usage": await self.get_power_usage(device),
                         },
                         "attributes": await self.session.attr.state_attributes(
-                            device["device_id"], device["hiveType"]
+                            device["device_id"], device["hive_type"]
                         ),
                     }
                 )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device["hive_id"]: dev_data})
+            return self.session.devices[device["hive_id"]]
         else:
             await self.session.log.error_check(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device["device_data"]["online"]
             )
             return device
 
@@ -183,7 +183,7 @@ class Switch(HiveSmartPlug):
         Returns:
             boolean: Return True or False for the state.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.get_heat_on_demand(device)
         else:
             return await self.get_state(device)
@@ -197,7 +197,7 @@ class Switch(HiveSmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.set_heat_on_demand(device, "ENABLED")
         else:
             return await self.set_status_on(device)
@@ -211,7 +211,7 @@ class Switch(HiveSmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.set_heat_on_demand(device, "DISABLED")
         else:
             return await self.set_status_off(device)

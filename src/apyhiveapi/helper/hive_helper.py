@@ -52,8 +52,8 @@ class HiveHelper:
             n_id (str): ID of the device.
         """
         # name = HiveHelper.get_device_name(n_id)
-        if n_id in self.session.config.errorList:
-            self.session.config.errorList.pop(n_id)
+        if n_id in self.session.config.error_list:
+            self.session.config.error_list.pop(n_id)
 
     def get_device_from_id(self, n_id: str):
         """Get product/device data from ID.
@@ -84,14 +84,14 @@ class HiveHelper:
         device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
-            for aDevice in self.session.data.devices:
-                if self.session.data.devices[aDevice]["type"] in HIVE_TYPES["Thermo"]:
+            for a_device in self.session.data.devices:
+                if self.session.data.devices[a_device]["type"] in HIVE_TYPES["Thermo"]:
                     try:
                         if (
                             product["props"]["zone"]
-                            == self.session.data.devices[aDevice]["props"]["zone"]
+                            == self.session.data.devices[a_device]["props"]["zone"]
                         ):
-                            device = self.session.data.devices[aDevice]
+                            device = self.session.data.devices[a_device]
                     except KeyError:
                         pass
         elif type == "trvcontrol":
@@ -204,40 +204,40 @@ class HiveHelper:
         Returns:
             [dictionary]: [Gets the thermostat device linked to TRV.]
         """
-        trv = self.session.data.products.get(device["HiveID"])
+        trv = self.session.data.products.get(device["hive_id"])
         thermostat = self.session.data.products.get(trv["state"]["zone"])
         return thermostat
 
     async def call_sensor_function(self, device):
         """Helper to decide which function to call."""
-        if device["hiveType"] == "SMOKE_CO":
+        if device["hive_type"] == "SMOKE_CO":
             return await self.session.hub.get_smoke_status(device)
-        if device["hiveType"] == "DOG_BARK":
+        if device["hive_type"] == "DOG_BARK":
             return await self.session.hub.get_dog_bark_status(device)
-        if device["hiveType"] == "GLASS_BREAK":
+        if device["hive_type"] == "GLASS_BREAK":
             return await self.session.hub.get_glass_break_status(device)
-        if device["hiveType"] == "Camera_Temp":
-            return await self.session.camera.getCameraTemperature(device)
-        if device["hiveType"] == "Heating_Current_Temperature":
+        if device["hive_type"] == "Camera_Temp":
+            return await self.session.camera.get_camera_temperature(device)
+        if device["hive_type"] == "Heating_Current_Temperature":
             return await self.session.heating.get_current_temperature(device)
-        if device["hiveType"] == "Heating_Target_Temperature":
+        if device["hive_type"] == "Heating_Target_Temperature":
             return await self.session.heating.get_target_temperature(device)
-        if device["hiveType"] == "Heating_State":
-            return await self.session.heating.getState(device)
-        if device["hiveType"] in ("Heating_Mode", "Hotwater_Mode", "Mode"):
+        if device["hive_type"] == "Heating_State":
+            return await self.session.heating.get_state(device)
+        if device["hive_type"] in ("Heating_Mode", "Hotwater_Mode", "Mode"):
             return await self.session.heating.get_mode(device)
-        if device["hiveType"] == "Heating_Boost":
+        if device["hive_type"] == "Heating_Boost":
             return await self.session.heating.get_boost_status(device)
-        if device["hiveType"] == "Hotwater_State":
-            return await self.session.hotwater.getState(device)
-        if device["hiveType"] == "Hotwater_Boost":
-            return await self.session.hotwater.getBoost(device)
-        if device["hiveType"] == "Battery":
-            return await self.session.attr.getBattery(device["device_id"])
-        if device["hiveType"] in ("Availability", "Connectivity"):
+        if device["hive_type"] == "Hotwater_State":
+            return await self.session.hotwater.get_state(device)
+        if device["hive_type"] == "Hotwater_Boost":
+            return await self.session.hotwater.get_boost(device)
+        if device["hive_type"] == "Battery":
+            return await self.session.attr.get_battery(device["device_id"])
+        if device["hive_type"] in ("Availability", "Connectivity"):
             return await self.online(device)
-        if device["hiveType"] == "Power":
-            return await self.session.switch.getPowerUsage(device)
+        if device["hive_type"] == "Power":
+            return await self.session.switch.get_power_usage(device)
         return None
 
     async def call_products_to_add(self, entity_type, product):
@@ -246,17 +246,17 @@ class HiveHelper:
             self.session.add_list(
                 "binary_sensor",
                 product,
-                haName="Glass Detection",
-                hiveType="GLASS_BREAK",
+                ha_name="Glass Detection",
+                hive_type="GLASS_BREAK",
             )
             self.session.add_list(
-                "binary_sensor", product, haName="Smoke Detection", hiveType="SMOKE_CO"
+                "binary_sensor", product, ha_name="Smoke Detection", hive_type="SMOKE_CO"
             )
             self.session.add_list(
                 "binary_sensor",
                 product,
-                haName="Dog Bark Detection",
-                hiveType="DOG_BARK",
+                ha_name="Dog Bark Detection",
+                hive_type="DOG_BARK",
             )
         if entity_type == "heating":
             self.session.add_list(
@@ -267,43 +267,43 @@ class HiveHelper:
             self.session.add_list(
                 "switch",
                 product,
-                haName=" Heat on Demand",
-                hiveType="Heating_Heat_On_Demand",
+                ha_name=" Heat on Demand",
+                hive_type="Heating_Heat_On_Demand",
                 category="config",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Current Temperature",
-                hiveType="Heating_Current_Temperature",
+                ha_name=" Current Temperature",
+                hive_type="Heating_Current_Temperature",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Target Temperature",
-                hiveType="Heating_Target_Temperature",
+                ha_name=" Target Temperature",
+                hive_type="Heating_Target_Temperature",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" State",
-                hiveType="Heating_State",
+                ha_name=" State",
+                hive_type="Heating_State",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Heating_Mode",
+                ha_name=" Mode",
+                hive_type="Heating_Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Boost",
-                hiveType="Heating_Boost",
+                ha_name=" Boost",
+                hive_type="Heating_Boost",
                 category="diagnostic",
             )
         if entity_type == "trvcontrol":
@@ -315,36 +315,36 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Current Temperature",
-                hiveType="Heating_Current_Temperature",
+                ha_name=" Current Temperature",
+                hive_type="Heating_Current_Temperature",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Target Temperature",
-                hiveType="Heating_Target_Temperature",
+                ha_name=" Target Temperature",
+                hive_type="Heating_Target_Temperature",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" State",
-                hiveType="Heating_State",
+                ha_name=" State",
+                hive_type="Heating_State",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Heating_Mode",
+                ha_name=" Mode",
+                hive_type="Heating_Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Boost",
-                hiveType="Heating_Boost",
+                ha_name=" Boost",
+                hive_type="Heating_Boost",
                 category="diagnostic",
             )
         if entity_type == "hotwater":
@@ -355,22 +355,22 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName="Hotwater State",
-                hiveType="Hotwater_State",
+                ha_name="Hotwater State",
+                hive_type="Hotwater_State",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName="Hotwater Mode",
-                hiveType="Hotwater_Mode",
+                ha_name="Hotwater Mode",
+                hive_type="Hotwater_Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName="Hotwater Boost",
-                hiveType="Hotwater_Boost",
+                ha_name="Hotwater Boost",
+                hive_type="Hotwater_Boost",
                 category="diagnostic",
             )
         if entity_type == "activeplug":
@@ -378,22 +378,22 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Mode",
+                ha_name=" Mode",
+                hive_type="Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Power",
-                hiveType="Power",
+                ha_name=" Power",
+                hive_type="Power",
                 category="diagnostic",
             )
         if entity_type == "warmwhitelight":
@@ -401,15 +401,15 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Mode",
+                ha_name=" Mode",
+                hive_type="Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "tuneablelight":
@@ -417,15 +417,15 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Mode",
+                ha_name=" Mode",
+                hive_type="Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "colourtuneablelight":
@@ -433,15 +433,15 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Mode",
+                ha_name=" Mode",
+                hive_type="Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "hivecamera":
@@ -449,22 +449,22 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Mode",
-                hiveType="Mode",
+                ha_name=" Mode",
+                hive_type="Mode",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 product,
-                haName=" Temperature",
-                hiveType="Camera_Temp",
+                ha_name=" Temperature",
+                hive_type="Camera_Temp",
                 category="diagnostic",
             )
         if entity_type == "motionsensor":
@@ -479,46 +479,46 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Battery Level",
-                hiveType="Battery",
+                ha_name=" Battery Level",
+                hive_type="Battery",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "hub":
             self.session.add_list(
                 "binary_sensor",
                 device,
-                haName="Hive Hub Status",
-                hiveType="Connectivity",
+                ha_name="Hive Hub Status",
+                hive_type="Connectivity",
                 category="diagnostic",
             )
         if entity_type == "motionsensor":
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Battery Level",
-                hiveType="Battery",
+                ha_name=" Battery Level",
+                hive_type="Battery",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "sense":
             self.session.add_list(
                 "binary_sensor",
                 device,
-                haName="Hive Hub Status",
-                hiveType="Connectivity",
+                ha_name="Hive Hub Status",
+                hive_type="Connectivity",
             )
         if entity_type == "siren":
             self.session.add_list("alarm_control_panel", device)
@@ -526,30 +526,30 @@ class HiveHelper:
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Battery Level",
-                hiveType="Battery",
+                ha_name=" Battery Level",
+                hive_type="Battery",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
         if entity_type == "trv":
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Battery Level",
-                hiveType="Battery",
+                ha_name=" Battery Level",
+                hive_type="Battery",
                 category="diagnostic",
             )
             self.session.add_list(
                 "sensor",
                 device,
-                haName=" Availability",
-                hiveType="Availability",
+                ha_name=" Availability",
+                hive_type="Availability",
                 category="diagnostic",
             )
 
@@ -558,7 +558,7 @@ class HiveHelper:
         await self.session.add_list(
             "switch",
             action,
-            hiveName=action["name"],
-            haName=action["name"],
-            hiveType="action",
+            hive_name=action["name"],
+            ha_name=action["name"],
+            hive_type="action",
         )

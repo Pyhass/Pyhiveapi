@@ -49,9 +49,9 @@ class MockSession:
     def sync_start_session(self):
         """Start a sync session."""
         self.sync_hive = HiveSync(username=USERNAME, password=PASSWORD)
-        return self.sync_hive.startSession(TEMP_CONFIG)
+        return self.sync_hive.start_session(TEMP_CONFIG)
 
     async def async_start_session(self):
         """Start a async session."""
         self.async_hive = HiveAsync(username=USERNAME, password=PASSWORD)
-        return await self.async_hive.startSession(TEMP_CONFIG)
+        return await self.async_hive.start_session(TEMP_CONFIG)

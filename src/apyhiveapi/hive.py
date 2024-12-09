@@ -123,7 +123,7 @@ class Hive(hive_session):
         if debug:
             sys.settrace(trace_debug)
 
-    def setDebugging(self, debugger: list):
+    def set_debugging(self, debugger: list):
         """Set function to debug.
 
         Args:

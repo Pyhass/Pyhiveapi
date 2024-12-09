@@ -6,7 +6,7 @@ from tests.common import MockSession
 
 
 @pytest.mark.asyncio
-async def test_startSession():
+async def test_start_session():
     """Test a session can be started."""
     hive = MockSession()
     device_list = await hive.async_start_session()

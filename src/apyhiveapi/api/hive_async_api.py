@@ -19,21 +19,21 @@ class HiveApiAsync:
 
     def __init__(self, hive_session=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
-        self.baseUrl = "https://beekeeper.hivehome.com/1.0"
-        self.cameraBaseUrl = "prod.hcam.bgchtest.info"
+        self.base_url = "https://beekeeper.hivehome.com/1.0"
+        self.camera_base_url = "prod.hcam.bgchtest.info"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
-            "login": f"{self.baseUrl}/cognito/login",
-            "refresh": f"{self.baseUrl}/cognito/refresh-token",
-            "holiday_mode": f"{self.baseUrl}/holiday-mode",
-            "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
-            "alarm": f"{self.baseUrl}/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
-            "devices": f"{self.baseUrl}/devices",
-            "products": f"{self.baseUrl}/products",
-            "actions": f"{self.baseUrl}/actions",
-            "nodes": f"{self.baseUrl}/nodes/{{0}}/{{1}}",
+            "login": f"{self.base_url}/cognito/login",
+            "refresh": f"{self.base_url}/cognito/refresh-token",
+            "holiday_mode": f"{self.base_url}/holiday-mode",
+            "all": f"{self.base_url}/nodes/all?products=true&devices=true&actions=true",
+            "alarm": f"{self.base_url}/security-lite?homeId=",
+            "camera_images": f"https://event-history-service.{self.camera_base_url}/v1/events/cameras?latest=true&cameraId={{0}}",
+            "camera_recordings": f"https://event-history-service.{self.camera_base_url}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "devices": f"{self.base_url}/devices",
+            "products": f"{self.base_url}/products",
+            "actions": f"{self.base_url}/actions",
+            "nodes": f"{self.base_url}/nodes/{{0}}/{{1}}",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
         }
@@ -106,11 +106,11 @@ class HiveApiAsync:
             + "}"
         )
 
-        loginData = {}
-        loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-        loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-        loginData.update({"REGION": json_data["HiveSSOPoolId"]})
-        return loginData
+        login_data = {}
+        login_data.update({"UPID": json_data["HiveSSOPoolId"]})
+        login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
+        login_data.update({"REGION": json_data["HiveSSOPoolId"]})
+        return login_data
 
     async def refresh_tokens(self):
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
@@ -131,8 +131,8 @@ class HiveApiAsync:
                 info = self.json_return["parsed"]
                 if "token" in info:
                     await self.session.update_tokens(info)
-                    self.baseUrl = info["platform"]["endpoint"]
-                    self.cameraBaseUrl = info["platform"]["cameraPlatform"]
+                    self.base_url = info["platform"]["endpoint"]
+                    self.camera_base_url = info["platform"]["cameraPlatform"]
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
@@ -168,7 +168,7 @@ class HiveApiAsync:
     async def get_camera_image(self, device):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
+        url = self.urls["camera_images"].format(device["props"]["hardwareIdentifier"])
         try:
             resp = await self.request("get", url, True)
             json_return.update({"original": resp.status})
@@ -181,7 +181,7 @@ class HiveApiAsync:
     async def get_camera_recording(self, device, eventId):
         """Build and query alarm endpoint."""
         json_return = {}
-        url = self.urls["cameraRecordings"].format(
+        url = self.urls["camera_recordings"].format(
             device["props"]["hardwareIdentifier"], eventId
         )
         try:

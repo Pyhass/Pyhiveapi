@@ -25,10 +25,8 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.camera_base_u
-rl}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.camera_base_u
-rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "cameraImages": f"https://event-history-service.{self.camera_base_url}/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraRecordings": f"https://event-history-service.{self.camera_base_url}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
@@ -123,11 +121,11 @@ rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
                 + "}"
             )
 
-            loginData = {}
-            loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-            loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-            loginData.update({"REGION": json_data["HiveSSOPoolId"]})
-            return loginData
+            login_data = {}
+            login_data.update({"UPID": json_data["HiveSSOPoolId"]})
+            login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
+            login_data.update({"REGION": json_data["HiveSSOPoolId"]})
+            return login_data
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
@@ -158,7 +156,7 @@ rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
 
         return self.json_return
 
-    def get_camera_image(self, device=None, accessToken=None):
+    def get_camera_image(self, device=None, access_token=None):
         """Build and query camera endpoint."""
         json_return = {}
         url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
@@ -171,11 +169,11 @@ rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
 
         return json_return
 
-    def get_camera_recording(self, device=None, eventId=None):
+    def get_camera_recording(self, device=None, event_id=None):
         """Build and query camera endpoint."""
         json_return = {}
-        url = self.urls["cameraRecordings"].format(
-            device["props"]["hardwareIdentifier"], eventId
+        url = self.urls["camera_recordings"].format(
+            device["props"]["hardwareIdentifier"], event_id
         )
         try:
             info = self.request("GET", url, camera=True)

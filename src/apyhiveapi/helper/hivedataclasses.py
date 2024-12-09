@@ -8,14 +8,14 @@ from dataclasses import dataclass
 class Device:
     """Class for keeping track of an device."""
 
-    hiveID: str
-    hiveName: str
-    hiveType: str
-    haType: str
-    deviceData: dict
+    hive_id: str
+    hive_name: str
+    hive_type: str
+    ha_type: str
+    device_data: dict
     status: dict
     data: dict
-    parentDevice: str
-    isGroup: bool
+    parent_device: str
+    is_group: bool
     device_id: str
     device_name: str

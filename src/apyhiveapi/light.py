@@ -12,9 +12,9 @@ class HiveLight:
         object: Hivelight
     """
 
-    lightType = "Light"
+    light_type = "Light"
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get light current state.
 
         Args:
@@ -27,15 +27,15 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["state"]["status"]
-            final = HIVETOHA[self.lightType].get(state, state)
+            final = HIVETOHA[self.light_type].get(state, state)
         except KeyError as e:
             await self.session.log.error(e)
 
         return final
 
-    async def getBrightness(self, device: dict):
+    async def get_brightness(self, device: dict):
         """Get light current brightness.
 
         Args:
@@ -48,7 +48,7 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["state"]["brightness"]
             final = (state / 100) * 255
         except KeyError as e:
@@ -56,7 +56,7 @@ class HiveLight:
 
         return final
 
-    async def getMinColorTemp(self, device: dict):
+    async def get_min_color_temp(self, device: dict):
         """Get light minimum color temperature.
 
         Args:
@@ -69,7 +69,7 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["colourTemperature"]["max"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
@@ -77,7 +77,7 @@ class HiveLight:
 
         return final
 
-    async def getMaxColorTemp(self, device: dict):
+    async def get_max_color_temp(self, device: dict):
         """Get light maximum color temperature.
 
         Args:
@@ -90,7 +90,7 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["props"]["colourTemperature"]["min"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
@@ -98,7 +98,7 @@ class HiveLight:
 
         return final
 
-    async def getColorTemp(self, device: dict):
+    async def get_color_temp(self, device: dict):
         """Get light current color temperature.
 
         Args:
@@ -111,7 +111,7 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["state"]["colourTemperature"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
@@ -119,7 +119,7 @@ class HiveLight:
 
         return final
 
-    async def getColor(self, device: dict):
+    async def get_color(self, device: dict):
         """Get light current colour.
 
         Args:
@@ -132,7 +132,7 @@ class HiveLight:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = [
                 (data["state"]["hue"]) / 360,
                 (data["state"]["saturation"]) / 100,
@@ -146,7 +146,7 @@ class HiveLight:
 
         return final
 
-    async def getColorMode(self, device: dict):
+    async def get_color_mode(self, device: dict):
         """Get Colour Mode.
 
         Args:
@@ -158,14 +158,14 @@ class HiveLight:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             state = data["state"]["colourMode"]
         except KeyError as e:
             await self.session.log.error(e)
 
         return state
 
-    async def setStatusOff(self, device: dict):
+    async def set_status_off(self, device: dict):
         """Set light to turn off.
 
         Args:
@@ -177,13 +177,13 @@ class HiveLight:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             resp = await self.session.api.set_state(
-                data["type"], device["hiveID"], status="OFF"
+                data["type"], device["hive_id"], status="OFF"
             )
 
             if resp["original"] == 200:
@@ -192,7 +192,7 @@ class HiveLight:
 
         return final
 
-    async def setStatusOn(self, device: dict):
+    async def set_status_on(self, device: dict):
         """Set light to turn on.
 
         Args:
@@ -204,14 +204,14 @@ class HiveLight:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
 
             resp = await self.session.api.set_state(
-                data["type"], device["hiveID"], status="ON"
+                data["type"], device["hive_id"], status="ON"
             )
             if resp["original"] == 200:
                 final = True
@@ -219,7 +219,7 @@ class HiveLight:
 
         return final
 
-    async def setBrightness(self, device: dict, n_brightness: int):
+    async def set_brightness(self, device: dict, n_brightness: int):
         """Set brightness of the light.
 
         Args:
@@ -232,14 +232,14 @@ class HiveLight:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
             resp = await self.session.api.set_state(
                 data["type"],
-                device["hiveID"],
+                device["hive_id"],
                 status="ON",
                 brightness=n_brightness,
             )
@@ -249,7 +249,7 @@ class HiveLight:
 
         return final
 
-    async def setColorTemp(self, device: dict, color_temp: int):
+    async def set_color_temp(self, device: dict, color_temp: int):
         """Set light to turn on.
 
         Args:
@@ -262,22 +262,22 @@ class HiveLight:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
 
             if data["type"] == "tuneablelight":
                 resp = await self.session.api.set_state(
                     data["type"],
-                    device["hiveID"],
+                    device["hive_id"],
                     colourTemperature=color_temp,
                 )
             else:
                 resp = await self.session.api.set_state(
                     data["type"],
-                    device["hiveID"],
+                    device["hive_id"],
                     colourMode="WHITE",
                     colourTemperature=color_temp,
                 )
@@ -288,7 +288,7 @@ class HiveLight:
 
         return final
 
-    async def setColor(self, device: dict, new_color: list):
+    async def set_color(self, device: dict, new_color: list):
         """Set light to turn on.
 
         Args:
@@ -301,15 +301,15 @@ class HiveLight:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.products
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device["hive_id"]]
 
             resp = await self.session.api.set_state(
                 data["type"],
-                device["hiveID"],
+                device["hive_id"],
                 colourMode="COLOUR",
                 hue=str(new_color[0]),
                 saturation=str(new_color[1]),
@@ -337,7 +337,7 @@ class Light(HiveLight):
         """
         self.session = session
 
-    async def getLight(self, device: dict):
+    async def get_light(self, device: dict):
         """Get light data.
 
         Args:
@@ -346,69 +346,69 @@ class Light(HiveLight):
         Returns:
             dict: Updated device.
         """
-        device["deviceData"].update(
+        device["device_data"].update(
             {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device["device_data"]["online"]:
             self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
-                "haType": device["haType"],
+                "hive_id": device["hive_id"],
+                "hive_name": device["hive_name"],
+                "hive_type": device["hive_type"],
+                "ha_name": device["ha_name"],
+                "ha_type": device["ha_type"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.getState(device),
-                    "brightness": await self.getBrightness(device),
+                    "state": await self.get_state(device),
+                    "brightness": await self.get_brightness(device),
                 },
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
+                "device_data": data.get("props", None),
+                "parent_device": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.session.attr.state_attributes(
-                    device["device_id"], device["hiveType"]
+                    device["device_id"], device["hive_type"]
                 ),
             }
 
-            if device["hiveType"] in ("tuneablelight", "colourtuneablelight"):
+            if device["hive_type"] in ("tuneablelight", "colourtuneablelight"):
                 dev_data.update(
                     {
-                        "min_mireds": await self.getMinColorTemp(device),
-                        "max_mireds": await self.getMaxColorTemp(device),
+                        "min_mireds": await self.get_min_color_temp(device),
+                        "max_mireds": await self.get_max_color_temp(device),
                     }
                 )
                 dev_data["status"].update(
-                    {"color_temp": await self.getColorTemp(device)}
+                    {"color_temp": await self.get_color_temp(device)}
                 )
-            if device["hiveType"] == "colourtuneablelight":
-                mode = await self.getColorMode(device)
+            if device["hive_type"] == "colourtuneablelight":
+                mode = await self.get_color_mode(device)
                 if mode == "COLOUR":
                     dev_data["status"].update(
                         {
-                            "hs_color": await self.getColor(device),
-                            "mode": await self.getColorMode(device),
+                            "hs_color": await self.get_color(device),
+                            "mode": await self.get_color_mode(device),
                         }
                     )
                 else:
                     dev_data["status"].update(
                         {
-                            "mode": await self.getColorMode(device),
+                            "mode": await self.get_color_mode(device),
                         }
                     )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device["hive_id"]: dev_data})
+            return self.session.devices[device["hive_id"]]
         else:
             await self.session.log.error_check(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device["device_data"]["online"]
             )
             return device
 
-    async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):
+    async def turn_on(self, device: dict, brightness: int, color_temp: int, color: list):
         """Set light to turn on.
 
         Args:
@@ -421,15 +421,15 @@ class Light(HiveLight):
             boolean: True/False if successful.
         """
         if brightness is not None:
-            return await self.setBrightness(device, brightness)
+            return await self.set_brightness(device, brightness)
         if color_temp is not None:
-            return await self.setColorTemp(device, color_temp)
+            return await self.set_color_temp(device, color_temp)
         if color is not None:
-            return await self.setColor(device, color)
+            return await self.set_color(device, color)
 
-        return await self.setStatusOn(device)
+        return await self.set_status_on(device)
 
-    async def turnOff(self, device: dict):
+    async def turn_off(self, device: dict):
         """Set light to turn off.
 
         Args:
@@ -438,4 +438,4 @@ class Light(HiveLight):
         Returns:
             boolean: True/False if successful.
         """
-        return await self.setStatusOff(device)
+        return await self.set_status_off(device)

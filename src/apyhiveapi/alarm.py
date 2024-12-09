@@ -9,7 +9,7 @@ class HiveHomeShield:
         object: Hive homeshield
     """
 
-    alarmType = "Alarm"
+    alarm_type = "Alarm"
 
     async def get_mode(self):
         """Get current mode of the alarm.
@@ -36,7 +36,7 @@ class HiveHomeShield:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
+            data = self.session.data.devices[device["hive_id"]]
             state = data["state"]["alarmActive"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -55,8 +55,8 @@ class HiveHomeShield:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.devices
-            and device["deviceData"]["online"]
+            device["hive_id"] in self.session.data.devices
+            and device["device_data"]["online"]
         ):
             await self.session.hive_refresh_tokens()
             resp = await self.session.api.set_alarm(mode=mode)
@@ -91,38 +91,38 @@ class Alarm(HiveHomeShield):
         Returns:
             dict: Updated device.
         """
-        device["deviceData"].update(
+        device["device_data"].update(
             {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device["device_data"]["online"]:
             self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
-                "haType": device["haType"],
+                "hive_id": device["hive_id"],
+                "hive_name": device["hive_name"],
+                "hive_type": device["hive_type"],
+                "ha_name": device["ha_name"],
+                "ha_type": device["ha_type"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
                     "state": await self.get_state(device),
                     "mode": await self.get_mode(),
                 },
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
+                "device_data": data.get("props", None),
+                "parent_device": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.session.attr.state_attributes(
-                    device["device_id"], device["hiveType"]
+                    device["device_id"], device["hive_type"]
                 ),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device["hive_id"]: dev_data})
+            return self.session.devices[device["hive_id"]]
         else:
             await self.session.log.error_check(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device["device_data"]["online"]
             )
             return device
