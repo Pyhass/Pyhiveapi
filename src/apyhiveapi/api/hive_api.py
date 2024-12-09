@@ -12,9 +12,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApi:
     """Hive API Code."""
 
-    def __init__(self, hiveSession=None, websession=None, token=None):
+    def __init__(self, hive_session=None, websession=None, token=None):
         """Hive API initialisation."""
-        self.cameraBaseUrl = "prod.hcam.bgchtest.info"
+        self.camera_base_url = "prod.hcam.bgchtest.info"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": "https://beekeeper.hivehome.com/1.0/cognito/login",
@@ -25,8 +25,10 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "cameraImages": f"https://event-history-service.{self.camera_base_u
+rl}/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraRecordings": f"https://event-history-service.{self.camera_base_u
+rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
@@ -37,7 +39,7 @@ class HiveApi:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        self.session = hiveSession
+        self.session = hive_session
         self.token = token
 
     def request(self, type, url, jsc=None, camera=False):
@@ -80,7 +82,7 @@ class HiveApi:
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
             )
 
-    def refreshTokens(self, tokens={}):
+    def refresh_tokens(self, tokens={}):
         """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
@@ -106,7 +108,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getLoginInfo(self):
+    def get_login_info(self):
         """Get login properties to make the login request."""
         url = self.urls["properties"]
         try:
@@ -129,7 +131,7 @@ class HiveApi:
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-    def getAll(self):
+    def get_all(self):
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["base"] + self.urls["all"]
@@ -142,7 +144,7 @@ class HiveApi:
 
         return json_return
 
-    def getAlarm(self, home_id=None):
+    def get_alarm(self, home_id=None):
         """Build and query alarm endpoint."""
         if self.session is not None:
             home_id = self.session.config.home_id
@@ -156,7 +158,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getCameraImage(self, device=None, accessToken=None):
+    def get_camera_image(self, device=None, accessToken=None):
         """Build and query camera endpoint."""
         json_return = {}
         url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
@@ -169,7 +171,7 @@ class HiveApi:
 
         return json_return
 
-    def getCameraRecording(self, device=None, eventId=None):
+    def get_camera_recording(self, device=None, eventId=None):
         """Build and query camera endpoint."""
         json_return = {}
         url = self.urls["cameraRecordings"].format(
@@ -184,7 +186,7 @@ class HiveApi:
 
         return json_return
 
-    def getDevices(self):
+    def get_devices(self):
         """Call the get devices endpoint."""
         url = self.urls["base"] + self.urls["devices"]
         try:
@@ -196,7 +198,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getProducts(self):
+    def get_products(self):
         """Call the get products endpoint."""
         url = self.urls["base"] + self.urls["products"]
         try:
@@ -208,7 +210,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getActions(self):
+    def get_actions(self):
         """Call the get actions endpoint."""
         url = self.urls["base"] + self.urls["actions"]
         try:
@@ -220,7 +222,7 @@ class HiveApi:
 
         return self.json_return
 
-    def motionSensor(self, sensor, fromepoch, toepoch):
+    def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
         url = (
             self.urls["base"]
@@ -243,7 +245,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getWeather(self, weather_url):
+    def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
@@ -256,7 +258,7 @@ class HiveApi:
 
         return self.json_return
 
-    def setState(self, n_type, n_id, **kwargs):
+    def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
         jsc = (
             "{"
@@ -277,7 +279,7 @@ class HiveApi:
 
         return self.json_return
 
-    def setAction(self, n_id, data):
+    def set_action(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id

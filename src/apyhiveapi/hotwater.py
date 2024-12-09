@@ -13,7 +13,7 @@ class HiveHotwater:
 
     hotwaterType = "Hotwater"
 
-    async def getMode(self, device: dict):
+    async def get_mode(self, device: dict):
         """Get hotwater current mode.
 
         Args:
@@ -37,7 +37,7 @@ class HiveHotwater:
         return final
 
     @staticmethod
-    async def getOperationModes():
+    async def get_operation_modes():
         """Get heating list of possible modes.
 
         Returns:
@@ -45,7 +45,7 @@ class HiveHotwater:
         """
         return ["SCHEDULE", "ON", "OFF"]
 
-    async def getBoost(self, device: dict):
+    async def get_boost(self, device: dict):
         """Get hot water current boost status.
 
         Args:
@@ -66,7 +66,7 @@ class HiveHotwater:
 
         return final
 
-    async def getBoostTime(self, device: dict):
+    async def get_boost_time(self, device: dict):
         """Get hotwater boost time remaining.
 
         Args:
@@ -76,7 +76,7 @@ class HiveHotwater:
             str: Return time remaining on the boost.
         """
         state = None
-        if await self.getBoost(device) == "ON":
+        if await self.get_boost(device) == "ON":
             try:
                 data = self.session.data.products[device["hiveID"]]
                 state = data["state"]["boost"]
@@ -85,7 +85,7 @@ class HiveHotwater:
 
         return state
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get hot water current state.
 
         Args:
@@ -100,9 +100,9 @@ class HiveHotwater:
         try:
             data = self.session.data.products[device["hiveID"]]
             state = data["state"]["status"]
-            mode_current = await self.getMode(device)
+            mode_current = await self.get_mode(device)
             if mode_current == "SCHEDULE":
-                if await self.getBoost(device) == "ON":
+                if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
                     snan = self.session.helper.getScheduleNNL(data["state"]["schedule"])
@@ -114,7 +114,7 @@ class HiveHotwater:
 
         return final
 
-    async def setMode(self, device: dict, new_mode: str):
+    async def set_mode(self, device: dict, new_mode: str):
         """Set hot water mode.
 
         Args:
@@ -138,7 +138,7 @@ class HiveHotwater:
 
         return final
 
-    async def setBoostOn(self, device: dict, mins: int):
+    async def set_boost_on(self, device: dict, mins: int):
         """Turn hot water boost on.
 
         Args:
@@ -166,7 +166,7 @@ class HiveHotwater:
 
         return final
 
-    async def setBoostOff(self, device: dict):
+    async def set_boost_off(self, device: dict):
         """Turn hot water boost off.
 
         Args:
@@ -179,7 +179,7 @@ class HiveHotwater:
 
         if (
             device["hiveID"] in self.session.data.products
-            and await self.getBoost(device) == "ON"
+            and await self.get_boost(device) == "ON"
             and device["deviceData"]["online"]
         ):
             await self.session.hive_refresh_tokens()
@@ -210,7 +210,7 @@ class WaterHeater(HiveHotwater):
         """
         self.session = session
 
-    async def getWaterHeater(self, device: dict):
+    async def get_water_heater(self, device: dict):
         """Update water heater device.
 
         Args:
@@ -236,7 +236,7 @@ class WaterHeater(HiveHotwater):
                 "haType": device["haType"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
-                "status": {"current_operation": await self.getMode(device)},
+                "status": {"current_operation": await self.get_mode(device)},
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
@@ -253,7 +253,7 @@ class WaterHeater(HiveHotwater):
             )
             return device
 
-    async def getScheduleNowNextLater(self, device: dict):
+    async def get_schedule_now_next_later(self, device: dict):
         """Hive get hotwater schedule now, next and later.
 
         Args:
@@ -265,7 +265,7 @@ class WaterHeater(HiveHotwater):
         state = None
 
         try:
-            mode_current = await self.getMode(device)
+            mode_current = await self.get_mode(device)
             if mode_current == "SCHEDULE":
                 data = self.session.data.products[device["hiveID"]]
                 state = self.session.helper.getScheduleNNL(data["state"]["schedule"])

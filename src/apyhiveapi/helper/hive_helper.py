@@ -17,7 +17,7 @@ class HiveHelper:
         """
         self.session = session
 
-    def getDeviceName(self, n_id: str):
+    def get_device_name(self, n_id: str):
         """Resolve a id into a name.
 
         Args:
@@ -45,17 +45,17 @@ class HiveHelper:
         else:
             return n_id
 
-    def deviceRecovered(self, n_id: str):
+    def device_recovered(self, n_id: str):
         """Register that a device has recovered from being offline.
 
         Args:
             n_id (str): ID of the device.
         """
-        # name = HiveHelper.getDeviceName(n_id)
+        # name = HiveHelper.get_device_name(n_id)
         if n_id in self.session.config.errorList:
             self.session.config.errorList.pop(n_id)
 
-    def getDeviceFromID(self, n_id: str):
+    def get_device_from_id(self, n_id: str):
         """Get product/device data from ID.
 
         Args:
@@ -72,7 +72,7 @@ class HiveHelper:
 
         return data
 
-    def getDeviceData(self, product: dict):
+    def get_device_data(self, product: dict):
         """Get device from product data.
 
         Args:
@@ -105,7 +105,7 @@ class HiveHelper:
 
         return device
 
-    def convertMinutesToTime(self, minutes_to_convert: str):
+    def convert_minutes_to_time(self, minutes_to_convert: str):
         """Convert minutes string to datetime.
 
         Args:
@@ -121,7 +121,7 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def getScheduleNNL(self, hive_api_schedule: list):
+    def get_schedule_nnl(self, hive_api_schedule: list):
         """Get the schedule now, next and later of a given nodes schedule.
 
         Args:
@@ -160,7 +160,7 @@ class HiveHelper:
                 current_slot_custom = current_day_schedule_sorted[current_slot]
 
                 slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
-                slot_time = self.convertMinutesToTime(current_slot_custom["start"])
+                slot_time = self.convert_minutes_to_time(current_slot_custom["start"])
                 slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
@@ -195,7 +195,7 @@ class HiveHelper:
 
         return schedule_now_and_next
 
-    def getHeatOnDemandDevice(self, device: dict):
+    def get_heat_on_demand_device(self, device: dict):
         """Use TRV device to get the linked thermostat device.
 
         Args:
@@ -211,11 +211,11 @@ class HiveHelper:
     async def call_sensor_function(self, device):
         """Helper to decide which function to call."""
         if device["hiveType"] == "SMOKE_CO":
-            return await self.session.hub.getSmokeStatus(device)
+            return await self.session.hub.get_smoke_status(device)
         if device["hiveType"] == "DOG_BARK":
-            return await self.session.hub.getDogBarkStatus(device)
+            return await self.session.hub.get_dog_bark_status(device)
         if device["hiveType"] == "GLASS_BREAK":
-            return await self.session.hub.getGlassBreakStatus(device)
+            return await self.session.hub.get_glass_break_status(device)
         if device["hiveType"] == "Camera_Temp":
             return await self.session.camera.getCameraTemperature(device)
         if device["hiveType"] == "Heating_Current_Temperature":

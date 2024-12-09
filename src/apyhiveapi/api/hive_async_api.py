@@ -91,7 +91,7 @@ class HiveApiAsync:
 
         raise HiveApiError
 
-    def getLoginInfo(self):
+    def get_login_info(self):
         """Get login properties to make the login request."""
         url = "https://sso.hivehome.com/"
 
@@ -112,7 +112,7 @@ class HiveApiAsync:
         loginData.update({"REGION": json_data["HiveSSOPoolId"]})
         return loginData
 
-    async def refreshTokens(self):
+    async def refresh_tokens(self):
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
@@ -139,7 +139,7 @@ class HiveApiAsync:
 
         return self.json_return
 
-    async def getAll(self):
+    async def get_all(self):
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
@@ -152,7 +152,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getAlarm(self):
+    async def get_alarm(self):
         """Build and query alarm endpoint."""
         json_return = {}
         url = self.urls["alarm"] + self.session.config.home_id
@@ -165,7 +165,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getCameraImage(self, device):
+    async def get_camera_image(self, device):
         """Build and query alarm endpoint."""
         json_return = {}
         url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
@@ -178,7 +178,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getCameraRecording(self, device, eventId):
+    async def get_camera_recording(self, device, eventId):
         """Build and query alarm endpoint."""
         json_return = {}
         url = self.urls["cameraRecordings"].format(
@@ -194,7 +194,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getDevices(self):
+    async def get_devices(self):
         """Call the get devices endpoint."""
         json_return = {}
         url = self.urls["devices"]
@@ -207,7 +207,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getProducts(self):
+    async def get_products(self):
         """Call the get products endpoint."""
         json_return = {}
         url = self.urls["products"]
@@ -220,7 +220,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getActions(self):
+    async def get_actions(self):
         """Call the get actions endpoint."""
         json_return = {}
         url = self.urls["actions"]
@@ -233,7 +233,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def motionSensor(self, sensor, fromepoch, toepoch):
+    async def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
         json_return = {}
         url = (
@@ -257,7 +257,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getWeather(self, weather_url):
+    async def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         json_return = {}
         t_url = self.urls["weather"] + weather_url
@@ -271,7 +271,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def setState(self, n_type, n_id, **kwargs):
+    async def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
         json_return = {}
         jsc = (
@@ -284,7 +284,7 @@ class HiveApiAsync:
 
         url = self.urls["nodes"].format(n_type, n_id)
         try:
-            await self.isFileBeingUsed()
+            await self.is_file_being_used()
             resp = await self.request("post", url, data=jsc)
             json_return["original"] = resp.status
             json_return["parsed"] = await resp.json(content_type=None)
@@ -296,7 +296,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def setAlarm(self, **kwargs):
+    async def set_alarm(self, **kwargs):
         """Set the state of the alarm."""
         json_return = {}
         jsc = (
@@ -309,7 +309,7 @@ class HiveApiAsync:
 
         url = f"{self.urls['alarm']}{self.session.config.home_id}"
         try:
-            await self.isFileBeingUsed()
+            await self.is_file_being_used()
             resp = await self.request("post", url, data=jsc)
             json_return["original"] = resp.status
             json_return["parsed"] = await resp.json(content_type=None)
@@ -321,12 +321,12 @@ class HiveApiAsync:
 
         return json_return
 
-    async def setAction(self, n_id, data):
+    async def set_action(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
-            await self.isFileBeingUsed()
+            await self.is_file_being_used()
             await self.request("put", url, data=jsc)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
@@ -340,7 +340,20 @@ class HiveApiAsync:
         """An error has occurred iteracting with the Hive API."""
         raise web_exceptions.HTTPError
 
-    async def isFileBeingUsed(self):
+    async def is_file_being_used(self):
         """Check if running in file mode."""
         if self.session.config.file:
             raise FileInUse()
+
+    async def close(self):
+        """Close the aiohttp session."""
+        if self.websession and not self.websession.closed:
+            await self.websession.close()
+
+    async def __aenter__(self):
+        """Async enter."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async exit."""
+        await self.close()

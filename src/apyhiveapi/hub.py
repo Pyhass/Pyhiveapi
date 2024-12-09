@@ -21,7 +21,7 @@ class HiveHub:
         """
         self.session = session
 
-    async def getSmokeStatus(self, device: dict):
+    async def get_smoke_status(self, device: dict):
         """Get the hub smoke status.
 
         Args:
@@ -42,7 +42,7 @@ class HiveHub:
 
         return final
 
-    async def getDogBarkStatus(self, device: dict):
+    async def get_dog_bark_status(self, device: dict):
         """Get dog bark status.
 
         Args:
@@ -63,7 +63,7 @@ class HiveHub:
 
         return final
 
-    async def getGlassBreakStatus(self, device: dict):
+    async def get_glass_break_status(self, device: dict):
         """Get the glass detected status from the Hive hub.
 
         Args:

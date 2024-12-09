@@ -11,7 +11,7 @@ class HiveHomeShield:
 
     alarmType = "Alarm"
 
-    async def getMode(self):
+    async def get_mode(self):
         """Get current mode of the alarm.
 
         Returns:
@@ -27,7 +27,7 @@ class HiveHomeShield:
 
         return state
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get the alarm triggered state.
 
         Returns:
@@ -43,7 +43,7 @@ class HiveHomeShield:
 
         return state
 
-    async def setMode(self, device: dict, mode: str):
+    async def set_mode(self, device: dict, mode: str):
         """Set the alarm mode.
 
         Args:
@@ -59,7 +59,7 @@ class HiveHomeShield:
             and device["deviceData"]["online"]
         ):
             await self.session.hive_refresh_tokens()
-            resp = await self.session.api.setAlarm(mode=mode)
+            resp = await self.session.api.set_alarm(mode=mode)
             if resp["original"] == 200:
                 final = True
                 await self.session.getAlarm()
@@ -82,7 +82,7 @@ class Alarm(HiveHomeShield):
         """
         self.session = session
 
-    async def getAlarm(self, device: dict):
+    async def get_alarm(self, device: dict):
         """Get alarm data.
 
         Args:
@@ -108,8 +108,8 @@ class Alarm(HiveHomeShield):
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "state": await self.getState(device),
-                    "mode": await self.getMode(),
+                    "state": await self.get_state(device),
+                    "mode": await self.get_mode(),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),

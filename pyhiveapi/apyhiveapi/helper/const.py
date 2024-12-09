@@ -56,9 +56,9 @@ HIVE_TYPES = {
     "Switch": ["activeplug"],
 }
 sensor_commands = {
-    "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
-    "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
-    "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
+    "SMOKE_CO": "self.session.hub.get_smoke_status(device)",
+    "DOG_BARK": "self.session.hub.get_dog_bark_status(device)",
+    "GLASS_BREAK": "self.session.hub.get_glass_break_status(device)",
     "Camera_Temp": "self.session.camera.getCameraTemperature(device)",
     "Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",

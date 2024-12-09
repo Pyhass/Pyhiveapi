@@ -19,7 +19,7 @@ class HiveAction:
         """
         self.session = session
 
-    async def getAction(self, device: dict):
+    async def get_action(self, device: dict):
         """Action device to update.
 
         Args:
@@ -37,7 +37,7 @@ class HiveAction:
                 "hiveType": device["hiveType"],
                 "haName": device["haName"],
                 "haType": device["haType"],
-                "status": {"state": await self.getState(device)},
+                "status": {"state": await self.get_state(device)},
                 "power_usage": None,
                 "deviceData": {},
                 "custom": device.get("custom", None),
@@ -51,7 +51,7 @@ class HiveAction:
                 return "REMOVE"
             return device
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get action state.
 
         Args:
@@ -70,7 +70,7 @@ class HiveAction:
 
         return final
 
-    async def setStatusOn(self, device: dict):
+    async def set_status_on(self, device: dict):
         """Set action turn on.
 
         Args:
@@ -95,7 +95,7 @@ class HiveAction:
 
         return final
 
-    async def setStatusOff(self, device: dict):
+    async def set_status_off(self, device: dict):
         """Set action to turn off.
 
         Args:

@@ -21,9 +21,9 @@ class DebugContext:
         print("Entering Debug Decorated func")
         # Set the trace function to the trace_calls function
         # So all events are now traced
-        self.traceCalls
+        self.trace_calls
 
-    def traceCalls(self, frame, event, arg):
+    def trace_calls(self, frame, event, arg):
         """Trace calls be made."""
         # We want to only trace our call to the decorated function
         if event != "call":
@@ -32,9 +32,9 @@ class DebugContext:
             return
         # return the trace function to use when you go into that
         # function call
-        return self.traceLines
+        return self.trace_lines
 
-    def traceLines(self, frame, event, arg):
+    def trace_lines(self, frame, event, arg):
         """Print out lines for function."""
         # If you want to print local variables each line
         # keep the check for the event 'line'

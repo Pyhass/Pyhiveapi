@@ -11,7 +11,7 @@ class HiveCamera:
 
     cameraType = "Camera"
 
-    async def getCameraTemperature(self, device: dict):
+    async def get_camera_temperature(self, device: dict):
         """Get the camera state.
 
         Returns:
@@ -27,7 +27,7 @@ class HiveCamera:
 
         return state
 
-    async def getCameraState(self, device: dict):
+    async def get_camera_state(self, device: dict):
         """Get the camera state.
 
         Returns:
@@ -43,7 +43,7 @@ class HiveCamera:
 
         return state
 
-    async def getCameraImageURL(self, device: dict):
+    async def get_camera_image_url(self, device: dict):
         """Get the camera image url.
 
         Returns:
@@ -60,7 +60,7 @@ class HiveCamera:
 
         return state
 
-    async def getCameraRecodringURL(self, device: dict):
+    async def get_camera_recording_url(self, device: dict):
         """Get the camera recording url.
 
         Returns:
@@ -75,7 +75,7 @@ class HiveCamera:
 
         return state
 
-    async def setCameraOn(self, device: dict, mode: str):
+    async def set_camera_on(self, device: dict, mode: str):
         """Set the camera state to on.
 
         Args:
@@ -98,7 +98,7 @@ class HiveCamera:
 
         return final
 
-    async def setCameraOff(self, device: dict, mode: str):
+    async def set_camera_off(self, device: dict, mode: str):
         """Set the camera state to on.
 
         Args:
@@ -137,7 +137,7 @@ class Camera(HiveCamera):
         """
         self.session = session
 
-    async def getCamera(self, device: dict):
+    async def get_camera(self, device: dict):
         """Get camera data.
 
         Args:
@@ -163,10 +163,10 @@ class Camera(HiveCamera):
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
                 "status": {
-                    "temperature": await self.getCameraTemperature(device),
-                    "state": await self.getCameraState(device),
-                    "imageURL": await self.getCameraImageURL(device),
-                    "recordingURL": await self.getCameraRecodringURL(device),
+                    "temperature": await self.get_camera_temperature(device),
+                    "state": await self.get_camera_state(device),
+                    "imageURL": await self.get_camera_image_url(device),
+                    "recordingURL": await self.get_camera_recording_url(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),

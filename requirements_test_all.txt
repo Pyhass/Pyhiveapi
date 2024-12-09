@@ -1,4 +1,6 @@
 pyhiveapi
+pylint
 pytest
 pytest-cov
+pytest-timeout
 tox
