@@ -49,14 +49,14 @@ rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
                 self.headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData["token"],
+                    "Authorization": f"Bearer {self.session.tokens.token_data['token']}",
+                    "x-jwt-token": self.session.tokens.token_data["token"],
                 }
             else:
                 self.headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "authorization": self.session.tokens.tokenData["token"],
+                    "authorization": self.session.tokens.token_data["token"],
                 }
         else:
             if camera:
@@ -86,7 +86,7 @@ rl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
         """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
-            tokens = self.session.tokens.tokenData
+            tokens = self.session.tokens.token_data
         jsc = (
             "{"
             + ",".join(

@@ -17,7 +17,7 @@ from .hub import HiveHub
 from .light import Light
 from .plug import Switch
 from .sensor import Sensor
-from .session import HiveSession
+from .session import hive_session
 
 debug = []
 home = expanduser("~")
@@ -88,11 +88,11 @@ def trace_debug(frame, event, arg):
         return trace_debug
 
 
-class Hive(HiveSession):
+class Hive(hive_session):
     """Hive Class.
 
     Args:
-        HiveSession (object): Interact with Hive Account
+        hive_session (object): Interact with Hive Account
     """
 
     def __init__(

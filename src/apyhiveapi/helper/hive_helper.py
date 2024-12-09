@@ -219,15 +219,15 @@ class HiveHelper:
         if device["hiveType"] == "Camera_Temp":
             return await self.session.camera.getCameraTemperature(device)
         if device["hiveType"] == "Heating_Current_Temperature":
-            return await self.session.heating.getCurrentTemperature(device)
+            return await self.session.heating.get_current_temperature(device)
         if device["hiveType"] == "Heating_Target_Temperature":
-            return await self.session.heating.getTargetTemperature(device)
+            return await self.session.heating.get_target_temperature(device)
         if device["hiveType"] == "Heating_State":
             return await self.session.heating.getState(device)
         if device["hiveType"] in ("Heating_Mode", "Hotwater_Mode", "Mode"):
-            return await self.session.heating.getMode(device)
+            return await self.session.heating.get_mode(device)
         if device["hiveType"] == "Heating_Boost":
-            return await self.session.heating.getBoostStatus(device)
+            return await self.session.heating.get_boost_status(device)
         if device["hiveType"] == "Hotwater_State":
             return await self.session.hotwater.getState(device)
         if device["hiveType"] == "Hotwater_Boost":

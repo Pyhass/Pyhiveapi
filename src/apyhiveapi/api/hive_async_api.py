@@ -17,7 +17,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApiAsync:
     """Hive API Code."""
 
-    def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
+    def __init__(self, hive_session=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
         self.cameraBaseUrl = "prod.hcam.bgchtest.info"
@@ -42,7 +42,7 @@ class HiveApiAsync:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        self.session = hiveSession
+        self.session = hive_session
         self.websession = ClientSession() if websession is None else websession
 
     async def request(
@@ -56,14 +56,14 @@ class HiveApiAsync:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData["token"],
+                    "Authorization": f"Bearer {self.session.tokens.token_data['token']}",
+                    "x-jwt-token": self.session.tokens.token_data["token"],
                 }
             else:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "authorization": self.session.tokens.tokenData["token"],
+                    "authorization": self.session.tokens.token_data["token"],
                 }
         except KeyError:
             if "sso" in url:
@@ -116,7 +116,7 @@ class HiveApiAsync:
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
-            tokens = self.session.tokens.tokenData
+            tokens = self.session.tokens.token_data
         jsc = (
             "{"
             + ",".join(

@@ -79,7 +79,7 @@ class Sensor(HiveSensor):
             dict: Updated device.
         """
         device["deviceData"].update(
-            {"online": await self.session.attr.onlineOffline(device["device_id"])}
+            {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         data = {}
 
@@ -88,7 +88,7 @@ class Sensor(HiveSensor):
             "Connectivity",
         ):
             if device["hiveType"] not in ("Availability", "Connectivity"):
-                self.session.helper.deviceRecovered(device["device_id"])
+                self.session.helper.device_recovered(device["device_id"])
 
             dev_data = {}
             dev_data = {
@@ -124,7 +124,7 @@ class Sensor(HiveSensor):
                         "status": {"state": await self.getState(device)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
-                        "attributes": await self.session.attr.stateAttributes(
+                        "attributes": await self.session.attr.state_attributes(
                             device["device_id"], device["hiveType"]
                         ),
                     }
@@ -133,7 +133,7 @@ class Sensor(HiveSensor):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.log.error_check(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device

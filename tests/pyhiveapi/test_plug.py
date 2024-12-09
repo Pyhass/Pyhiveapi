@@ -70,7 +70,7 @@ def test_switch_turn_on_successfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOn(switch)
@@ -87,7 +87,7 @@ def test_switch_turn_on_unsuccessfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOn(switch)
@@ -104,7 +104,7 @@ def test_switch_turn_off_successfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOff(switch)
@@ -121,7 +121,7 @@ def test_switch_turn_off_unsuccessfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOff(switch)
@@ -138,7 +138,7 @@ def test_switch_heat_on_demand_turn_on_successfully():
     switch = hive_session.session.device_list["switch"][0]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOn(switch)
@@ -155,7 +155,7 @@ def test_switch_heat_on_demand_turn_on_unsuccessfully():
     switch = hive_session.session.device_list["switch"][0]
 
     with patch(
-        "pyhiveapi.api.hive_api.HiveApi.setState",
+        "pyhiveapi.api.hive_api.HiveApi.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = hive_session.switch.turnOff(switch)

@@ -105,7 +105,7 @@ class HiveHotwater:
                 if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
-                    snan = self.session.helper.getScheduleNNL(data["state"]["schedule"])
+                    snan = self.session.helper.get_schedule_nnl(data["state"]["schedule"])
                     state = snan["now"]["value"]["status"]
 
             final = HIVETOHA[self.hotwaterType].get(state, state)
@@ -129,7 +129,7 @@ class HiveHotwater:
         if device["hiveID"] in self.session.data.products:
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device["hiveID"], mode=new_mode
             )
             if resp["original"] == 200:
@@ -157,7 +157,7 @@ class HiveHotwater:
         ):
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device["hiveID"], mode="BOOST", boost=mins
             )
             if resp["original"] == 200:
@@ -185,7 +185,7 @@ class HiveHotwater:
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device["hiveID"], mode=prev_mode
             )
             if resp["original"] == 200:
@@ -220,13 +220,13 @@ class WaterHeater(HiveHotwater):
             dict: Updated device.
         """
         device["deviceData"].update(
-            {"online": await self.session.attr.onlineOffline(device["device_id"])}
+            {"online": await self.session.attr.online_offline(device["device_id"])}
         )
 
         if device["deviceData"]["online"]:
 
             dev_data = {}
-            self.session.helper.deviceRecovered(device["device_id"])
+            self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -240,7 +240,7 @@ class WaterHeater(HiveHotwater):
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.stateAttributes(
+                "attributes": await self.session.attr.state_attributes(
                     device["device_id"], device["hiveType"]
                 ),
             }
@@ -248,7 +248,7 @@ class WaterHeater(HiveHotwater):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.log.error_check(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
@@ -268,7 +268,7 @@ class WaterHeater(HiveHotwater):
             mode_current = await self.get_mode(device)
             if mode_current == "SCHEDULE":
                 data = self.session.data.products[device["hiveID"]]
-                state = self.session.helper.getScheduleNNL(data["state"]["schedule"])
+                state = self.session.helper.get_schedule_nnl(data["state"]["schedule"])
         except KeyError as e:
             await self.session.log.error(e)
 

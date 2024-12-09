@@ -78,7 +78,7 @@ async def test_switch_turn_on_successfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOn(switch)
@@ -96,7 +96,7 @@ async def test_switch_turn_on_unsuccessfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOn(switch)
@@ -114,7 +114,7 @@ async def test_switch_turn_off_successfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOff(switch)
@@ -132,7 +132,7 @@ async def test_switch_turn_off_unsuccessfully():
     switch = hive_session.session.device_list["switch"][1]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOff(switch)
@@ -150,7 +150,7 @@ async def test_switch_heat_on_demand_turn_on_successfully():
     switch = hive_session.session.device_list["switch"][0]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 200, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOn(switch)
@@ -168,7 +168,7 @@ async def test_switch_heat_on_demand_turn_on_unsuccessfully():
     switch = hive_session.session.device_list["switch"][0]
 
     with patch(
-        "apyhiveapi.api.hive_async_api.HiveApiAsync.setState",
+        "apyhiveapi.api.hive_async_api.HiveApiAsync.set_state",
         return_value={"original": 401, "parsed": {}},
     ) as api_call:
         result = await hive_session.switch.turnOff(switch)

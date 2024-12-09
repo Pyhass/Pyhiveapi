@@ -182,7 +182,7 @@ class HiveLight:
         ):
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device["hiveID"], status="OFF"
             )
 
@@ -210,7 +210,7 @@ class HiveLight:
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
 
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device["hiveID"], status="ON"
             )
             if resp["original"] == 200:
@@ -237,7 +237,7 @@ class HiveLight:
         ):
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"],
                 device["hiveID"],
                 status="ON",
@@ -269,13 +269,13 @@ class HiveLight:
             data = self.session.data.products[device["hiveID"]]
 
             if data["type"] == "tuneablelight":
-                resp = await self.session.api.setState(
+                resp = await self.session.api.set_state(
                     data["type"],
                     device["hiveID"],
                     colourTemperature=color_temp,
                 )
             else:
-                resp = await self.session.api.setState(
+                resp = await self.session.api.set_state(
                     data["type"],
                     device["hiveID"],
                     colourMode="WHITE",
@@ -307,7 +307,7 @@ class HiveLight:
             await self.session.hive_refresh_tokens()
             data = self.session.data.products[device["hiveID"]]
 
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"],
                 device["hiveID"],
                 colourMode="COLOUR",
@@ -347,12 +347,12 @@ class Light(HiveLight):
             dict: Updated device.
         """
         device["deviceData"].update(
-            {"online": await self.session.attr.onlineOffline(device["device_id"])}
+            {"online": await self.session.attr.online_offline(device["device_id"])}
         )
         dev_data = {}
 
         if device["deviceData"]["online"]:
-            self.session.helper.deviceRecovered(device["device_id"])
+            self.session.helper.device_recovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -369,7 +369,7 @@ class Light(HiveLight):
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
-                "attributes": await self.session.attr.stateAttributes(
+                "attributes": await self.session.attr.state_attributes(
                     device["device_id"], device["hiveType"]
                 ),
             }
@@ -403,7 +403,7 @@ class Light(HiveLight):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.log.error_check(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
