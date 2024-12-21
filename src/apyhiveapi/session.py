@@ -393,20 +393,12 @@ class hive_session:
         self.data.camera[device["id"]]["camera_recording"] = None
 
         if camera_image is not None and has_camera_image:
-            self.data.camera[device["id"]] = {}
             self.data.camera[device["id"]]["camera_image"] = camera_image["parsed"][
                 "events"
             ][0]
         if camera_recording is not None and has_camera_recording:
-            self.data.camera[device["id"]]["camera_recording"] = camera_recording[
-
-        Raises:
-            HTTPException: HTTP error has occurred updating the devices.
-            HiveApiError: An API error code has been returned.
-
-        Returns:
-            boolean: True/False if update was successful.
-        """
+            self.data.camera[device["id"]]["camera_recording"] = camera_recording
+        
         get_nodes_successful = False
         api_resp_d = None
 
