@@ -128,15 +128,15 @@ class HiveSession:
         Returns:
             dict: Entity.
         """
-        device = self.helper.getDeviceData(data)
-        device_name = (
-            device["state"]["name"]
-            if device["state"]["name"] != "Receiver"
-            else "Heating"
-        )
-        formatted_data = {}
-
         try:
+            device = self.helper.getDeviceData(data)
+            device_name = (
+                device["state"]["name"]
+                if device["state"]["name"] != "Receiver"
+                else "Heating"
+            )
+            formatted_data = {}
+
             formatted_data = {
                 "hiveID": data.get("id", ""),
                 "hiveName": device_name,
@@ -154,11 +154,11 @@ class HiveSession:
             else:
                 formatted_data["haName"] = device_name
             formatted_data.update(kwargs)
+            self.deviceList[entityType].append(formatted_data)
+            return formatted_data
         except KeyError as error:
             self.logger.error(error)
-
-        self.deviceList[entityType].append(formatted_data)
-        return formatted_data
+            return None
 
     async def updateInterval(self, new_interval: timedelta):
         """Update the scan interval.
