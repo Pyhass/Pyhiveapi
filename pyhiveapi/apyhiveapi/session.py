@@ -536,7 +536,10 @@ class HiveSession:
                 continue
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
             for code in product_list:
-                eval("self." + code)
+                try:
+                    eval("self." + code)
+                except:
+                    pass
 
             if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])
