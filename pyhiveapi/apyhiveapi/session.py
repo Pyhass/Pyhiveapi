@@ -535,10 +535,12 @@ class HiveSession:
             ):
                 continue
             product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
+            product_name = self.data.products[aProduct]["state"].get("name", "Unknown")
             for code in product_list:
                 try:
                     eval("self." + code)
-                except:
+                except (NameError, AttributeError) as e:
+                    self.log.warning(f"Device {product_name} cannot be setup - {e}")
                     pass
 
             if self.data.products[aProduct]["type"] in hive_type:
