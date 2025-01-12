@@ -540,7 +540,7 @@ class HiveSession:
                 try:
                     eval("self." + code)
                 except (NameError, AttributeError) as e:
-                    self.log.warning(f"Device {product_name} cannot be setup - {e}")
+                    self.logger.warning(f"Device {product_name} cannot be setup - {e}")
                     pass
 
             if self.data.products[aProduct]["type"] in hive_type:

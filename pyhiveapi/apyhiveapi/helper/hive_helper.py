@@ -81,7 +81,7 @@ class HiveHelper:
         Returns:
             [type]: Device data.
         """
-        device_id = product["id"]
+        device = product
         type = product["type"]
         if type in ("heating", "hotwater"):
             for aDevice in self.session.data.devices:
@@ -91,23 +91,23 @@ class HiveHelper:
                             product["props"]["zone"]
                             == self.session.data.devices[aDevice]["props"]["zone"]
                         ):
-                            device_id = self.session.data.devices[aDevice]["id"]
+                            device = self.session.data.devices[aDevice]
                     except KeyError:
                         pass
         elif type == "trvcontrol":
             trv_present = len(product["props"]["trvs"]) > 0
             if trv_present:
-                device_id = self.session.data.devices[product["props"]["trvs"][0]]["id"]
+                device = self.session.data.devices[product["props"]["trvs"][0]]
             else:
                 raise KeyError
         elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
-            device_id = self.session.data.devices[product["parent"]]
+            device = self.session.data.devices[product["parent"]]
         elif type == "sense":
-            device_id = self.session.data.devices[product["parent"]]
+            device = self.session.data.devices[product["parent"]]
         else:
-            device_id = self.session.data.devices[product["id"]]
+            device = self.session.data.devices[product["id"]]
 
-        return device_id
+        return device
 
     def convertMinutesToTime(self, minutes_to_convert: str):
         """Convert minutes string to datetime.
