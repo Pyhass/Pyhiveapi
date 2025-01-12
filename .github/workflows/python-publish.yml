@@ -31,6 +31,13 @@ jobs:
           # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
+        
+      - name: Upload wheel to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*.whl"  # Path to your wheel file(s)
+          tag: ${{ github.ref_name }}
+          allowUpdates: true
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
