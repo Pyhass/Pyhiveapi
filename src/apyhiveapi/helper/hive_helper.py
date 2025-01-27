@@ -125,6 +125,9 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
+    ## Exclude below functions from pylint checks
+    
+    @staticmethod
     def get_schedule_nnl(self, hive_api_schedule: list) -> dict:
         """Get the schedule now, next, and later of a given node's schedule.
 
@@ -134,6 +137,7 @@ class HiveHelper:
         Returns:
             dict: Now, Next, and later values.
         """
+        # pylint: disable=too-many-locals, too-many-branches
         schedule_now_and_next = {}
         now = datetime.datetime.now()
         day_int = now.weekday()
