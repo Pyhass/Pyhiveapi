@@ -16,7 +16,7 @@ def requirements_from_file(filename="requirements_all.txt"):
 
 
 setup(
-    version="0.5.17",
+    version="1.0.1",
     package_data={"data": ["*.json"]},
     include_package_data=True,
     cmdclass={
