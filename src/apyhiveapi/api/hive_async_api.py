@@ -1,5 +1,5 @@
 """Hive API Module."""
-# pylint: skip-file
+
 import json
 from typing import Optional
 
@@ -10,6 +10,7 @@ from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
+from ..session import HiveSession
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -17,7 +18,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApiAsync:
     """Hive API Code."""
 
-    def __init__(self, hive_session=None, websession: Optional[ClientSession] = None):
+    def __init__(
+        self,
+        hive_session: Optional[HiveSession] = None,
+        websession: Optional[ClientSession] = None,
+    ) -> None:
         """Hive API initialisation."""
         self.base_url = "https://beekeeper.hivehome.com/1.0"
         self.camera_base_url = "prod.hcam.bgchtest.info"
@@ -28,8 +33,10 @@ class HiveApiAsync:
             "holiday_mode": f"{self.base_url}/holiday-mode",
             "all": f"{self.base_url}/nodes/all?products=true&devices=true&actions=true",
             "alarm": f"{self.base_url}/security-lite?homeId=",
-            "camera_images": f"https://event-history-service.{self.camera_base_url}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "camera_recordings": f"https://event-history-service.{self.camera_base_url}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "camera_images": f"https://event-history-service.{self.camera_base_url}" \
+                "/v1/events/cameras?latest=true&cameraId={{0}}",
+            "camera_recordings": f"https://event-history-service.{self.camera_base_url}" \
+                "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": f"{self.base_url}/devices",
             "products": f"{self.base_url}/products",
             "actions": f"{self.base_url}/actions",
@@ -43,7 +50,7 @@ class HiveApiAsync:
             "parsed": "No response to Hive API request",
         }
         self.session = hive_session
-        self.websession = ClientSession() if websession is None else websession
+        self.websession = websession
 
     async def request(
         self, method: str, url: str, camera: bool = False, **kwargs
@@ -51,25 +58,25 @@ class HiveApiAsync:
         """Make a request."""
         data = kwargs.get("data", None)
 
+        headers = {}
         try:
+            token = self.session.tokens.token_data["token"]
             if camera:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "Authorization": f"Bearer {self.session.tokens.token_data['token']}",
-                    "x-jwt-token": self.session.tokens.token_data["token"],
+                    "Authorization": f"Bearer {token}",
+                    "x-jwt-token": token,
                 }
             else:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "authorization": self.session.tokens.token_data["token"],
+                    "authorization": token,
                 }
         except KeyError:
-            if "sso" in url:
-                pass
-            else:
-                raise NoApiToken
+            if "sso" not in url:
+                raise NoApiToken from None
 
         async with self.websession.request(
             method, url, headers=headers, data=data
@@ -80,13 +87,11 @@ class HiveApiAsync:
 
         if resp.status == HTTP_UNAUTHORIZED:
             self.session.logger.error(
-                f"Hive token has expired when calling {url} - "
-                f"HTTP status is - {resp.status}"
+                "Hive token has expired when calling %s - HTTP status is - %d", url, resp.status
             )
-        elif url is not None and resp.status is not None:
+        else:
             self.session.logger.error(
-                f"Something has gone wrong calling {url} - "
-                f"HTTP status is - {resp.status}"
+                "Something has gone wrong calling %s - HTTP status is - %d", url, resp.status
             )
 
         raise HiveApiError
@@ -112,32 +117,26 @@ class HiveApiAsync:
         login_data.update({"REGION": json_data["HiveSSOPoolId"]})
         return login_data
 
-    async def refresh_tokens(self):
-        """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
-        url = self.urls["refresh"]
-        if self.session is not None:
-            tokens = self.session.tokens.token_data
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in tokens.items())
-            )
-            + "}"
-        )
-        try:
-            await self.request("post", url, data=jsc)
+    # async def refresh_tokens(self) -> bool:
+    #     """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
+    #     url = self.urls["refresh"]
+    #     if self.session is None:
+    #         raise NoSessionError from None
+    #     tokens = self.session.tokens.token_data
+    #     jsc = json.dumps({str(i): str(t) for i, t in tokens.items()})
+    #     try:
+    #         await self.request("POST", url, data=jsc)
+    #         if self.json_return["original"] == 200:
+    #             info = self.json_return["parsed"]
+    #             if "token" in info:
+    #                 await self.session.update_tokens(info)
+    #                 self.base_url = info["platform"]["endpoint"]
+    #                 self.camera_base_url = info["platform"]["cameraPlatform"]
+    #             return True
+    #     except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
+    #         await self.error()
 
-            if self.json_return["original"] == 200:
-                info = self.json_return["parsed"]
-                if "token" in info:
-                    await self.session.update_tokens(info)
-                    self.base_url = info["platform"]["endpoint"]
-                    self.camera_base_url = info["platform"]["cameraPlatform"]
-                return True
-        except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return self.json_return
+    #     return self.json_return
 
     async def get_all(self):
         """Build and query all endpoint."""
@@ -178,17 +177,17 @@ class HiveApiAsync:
 
         return json_return
 
-    async def get_camera_recording(self, device, eventId):
+    async def get_camera_recording(self, device, event_id):
         """Build and query alarm endpoint."""
         json_return = {}
         url = self.urls["camera_recordings"].format(
-            device["props"]["hardwareIdentifier"], eventId
+            device["props"]["hardwareIdentifier"], event_id
         )
         try:
             resp = await self.request("get", url, True)
-            recUrl = await resp.text()
+            rec_url = await resp.text()
             json_return.update({"original": resp.status})
-            json_return.update({"parsed": recUrl.split("\n")[3]})
+            json_return.update({"parsed": rec_url.split("\n")[3]})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -291,8 +290,8 @@ class HiveApiAsync:
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
-            else:
-                await self.error()
+
+            await self.error()
 
         return json_return
 
@@ -316,8 +315,8 @@ class HiveApiAsync:
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
-            else:
-                await self.error()
+
+            await self.error()
 
         return json_return
 
@@ -331,8 +330,8 @@ class HiveApiAsync:
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
-            else:
-                await self.error()
+
+            await self.error()
 
         return self.json_return
 

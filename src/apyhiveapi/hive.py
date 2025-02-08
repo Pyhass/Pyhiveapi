@@ -1,8 +1,8 @@
 """Start Hive Session."""
-# pylint: skip-file
+
+import os
 import sys
 import traceback
-from os.path import expanduser
 from typing import Optional
 
 from aiohttp import ClientSession
@@ -17,10 +17,10 @@ from .hub import HiveHub
 from .light import Light
 from .plug import Switch
 from .sensor import Sensor
-from .session import hive_session
+from .session import HiveSession
 
 debug = []
-home = expanduser("~")
+home = os.path.expanduser("~")
 logger.add(
     home + "/pyhiveapi_debug.log", filter=lambda record: record["level"].name == "DEBUG"
 )
@@ -40,6 +40,9 @@ def exception_handler(exctype, value, tb):
         value ([type]): [description]
         tb ([type]): [description]
     """
+    with open(os.devnull, "w", encoding="utf-8") as devnull:
+        print(f"{exctype.__name__}: {value}", file=devnull)
+
     last = len(traceback.extract_tb(tb)) - 1
     logger.error(
         f"-> \n"
@@ -85,10 +88,10 @@ def trace_debug(frame, event, arg):
             elif event == "return":
                 logger.debug(f"returning {arg}")
 
-        return trace_debug
+    return trace_debug
 
 
-class Hive(hive_session):
+class Hive(HiveSession):
     """Hive Class.
 
     Args:
@@ -104,7 +107,8 @@ class Hive(hive_session):
         """Generate a Hive session.
 
         Args:
-            websession (Optional[ClientSession], optional): This is a websession that can be used for the api. Defaults to None.
+            websession (Optional[ClientSession], optional):
+                This is a websession that can be used for the api. Defaults to None.
             username (str, optional): This is the Hive username used for login. Defaults to None.
             password (str, optional): This is the Hive password used for login. Defaults to None.
         """
@@ -123,17 +127,15 @@ class Hive(hive_session):
         if debug:
             sys.settrace(trace_debug)
 
-    def set_debugging(self, debugger: list):
+    def set_debugging(self, debugger: list) -> None:
         """Set function to debug.
 
         Args:
             debugger (list): a list of functions to debug
-
-        Returns:
-            object: Returns traceback object.
         """
         global debug
         debug = debugger
         if debug:
-            return sys.settrace(trace_debug)
-        return sys.settrace(None)
+            sys.settrace(trace_debug)
+        else:
+            sys.settrace(None)

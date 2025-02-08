@@ -1,10 +1,11 @@
 """Hive API Module."""
-# pylint: skip-file
-import json
 
+import json
+from typing import Any, Dict, Optional
+
+from pyquery import PyQuery
 import requests
 import urllib3
-from pyquery import PyQuery
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -25,8 +26,10 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.camera_base_url}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.camera_base_url}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "cameraImages": f"https://event-history-service.{self.camera_base_url}" \
+                "/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraRecordings": f"https://event-history-service.{self.camera_base_url}" \
+                "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
@@ -39,8 +42,10 @@ class HiveApi:
         }
         self.session = hive_session
         self.token = token
+        self.headers = {}
+        self.websession = websession
 
-    def request(self, type, url, jsc=None, camera=False):
+    def request(self, request_type, url, jsc=None, camera=False):
         """Make API request."""
         if self.session is not None:
             if camera:
@@ -71,30 +76,26 @@ class HiveApi:
                     "authorization": self.token,
                 }
 
-        if type == "GET":
+        if request_type == "GET":
             return requests.get(
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
             )
-        if type == "POST":
+        if request_type == "POST":
             return requests.post(
                 url=url, headers=self.headers, data=jsc, timeout=self.timeout
             )
 
-    def refresh_tokens(self, tokens={}):
+        return None
+
+    def refresh_tokens(self, tokens: Dict[str, str] = None) -> Dict[str, Any]:
         """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
             tokens = self.session.tokens.token_data
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in tokens.items())
-            )
-            + "}"
-        )
+        jsc = json.dumps({str(i): str(t) for i, t in tokens.items()})
         try:
             info = self.request("POST", url, jsc)
-            data = json.loads(info.text)
+            data = info.json()
             if "token" in data and self.session:
                 self.session.update_tokens(data)
                 self.urls.update({"base": data["platform"]["endpoint"]})
@@ -106,19 +107,15 @@ class HiveApi:
 
         return self.json_return
 
-    def get_login_info(self):
+    def get_login_info(self) -> Dict[str, str]:
         """Get login properties to make the login request."""
         url = self.urls["properties"]
         try:
             data = requests.get(url=url, verify=False, timeout=self.timeout)
             html = PyQuery(data.content)
             json_data = json.loads(
-                '{"'
-                + (html("script:first").text())
-                .replace(",", ', "')
-                .replace("=", '":')
-                .replace("window.", "")
-                + "}"
+                f'{{"{html("script:first").text().replace(",", ", ").replace(
+                    "=", ":").replace("window.", "")}"}}'
             )
 
             login_data = {}
@@ -128,37 +125,41 @@ class HiveApi:
             return login_data
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
+            return {}
 
-    def get_all(self):
+    def get_all(self) -> Dict[str, Any]:
         """Build and query all endpoint."""
-        json_return = {}
+        json_return: Dict[str, Any] = {}
         url = self.urls["base"] + self.urls["all"]
         try:
             info = self.request("GET", url)
-            json_return.update({"original": info.status_code})
-            json_return.update({"parsed": info.json()})
+            json_return["original"] = info.status_code
+            json_return["parsed"] = info.json()
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
         return json_return
 
-    def get_alarm(self, home_id=None):
+    def get_alarm(self, home_id: Optional[str] = None) -> Dict[str, Any]:
         """Build and query alarm endpoint."""
         if self.session is not None:
             home_id = self.session.config.home_id
         url = self.urls["base"] + self.urls["alarm"] + home_id
+        json_return: Dict[str, Any] = {}
         try:
             info = self.request("GET", url)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
+            json_return["original"] = info.status_code
+            json_return["parsed"] = info.json()
         except (OSError, RuntimeError, ZeroDivisionError):
             self.error()
 
-        return self.json_return
+        return json_return
 
-    def get_camera_image(self, device=None, access_token=None):
+    def get_camera_image(
+        self, device: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Build and query camera endpoint."""
-        json_return = {}
+        json_return: Dict[str, Any] = {}
         url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
         try:
             info = self.request("GET", url, camera=True)
@@ -169,9 +170,11 @@ class HiveApi:
 
         return json_return
 
-    def get_camera_recording(self, device=None, event_id=None):
+    def get_camera_recording(
+        self, device: Optional[Dict[str, Any]] = None, event_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Build and query camera endpoint."""
-        json_return = {}
+        json_return: Dict[str, Any] = {}
         url = self.urls["camera_recordings"].format(
             device["props"]["hardwareIdentifier"], event_id
         )

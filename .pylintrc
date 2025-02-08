@@ -154,7 +154,13 @@ disable=raw-checker-failed,
         too-many-arguments,
         too-many-branches,
         duplicate-code,
-        import-error
+        import-error,
+        R0917,
+        E1101,
+        W0603,
+        W0123,
+        R0401,
+
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

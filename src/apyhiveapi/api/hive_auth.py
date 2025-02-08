@@ -113,7 +113,7 @@ class HiveAuth:
         self.use_file = bool(self.username == "use@file.com")
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         self.api = HiveApi()
-        self.data = self.api.getLoginInfo()
+        self.data = self.api.get_login_info()
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]

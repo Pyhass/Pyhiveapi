@@ -2,6 +2,8 @@
 
 import datetime
 import operator
+import timedelta
+
 
 from .const import HIVE_TYPES
 
@@ -109,7 +111,8 @@ class HiveHelper:
 
         return device
 
-    def convert_minutes_to_time(self, minutes_to_convert: str):
+    @staticmethod
+    def convert_minutes_to_time(minutes_to_convert: str) -> timedelta:
         """Convert minutes string to datetime.
 
         Args:
@@ -125,10 +128,8 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    ## Exclude below functions from pylint checks
-    
     @staticmethod
-    def get_schedule_nnl(self, hive_api_schedule: list) -> dict:
+    def get_schedule_nnl(hive_api_schedule: list) -> dict:
         """Get the schedule now, next, and later of a given node's schedule.
 
         Args:
@@ -166,7 +167,7 @@ class HiveHelper:
 
             for current_slot_custom in current_day_schedule_sorted:
                 slot_date = now + datetime.timedelta(days=day_index)
-                slot_time = self.convert_minutes_to_time(current_slot_custom["start"])
+                slot_time = HiveHelper.convert_minutes_to_time(current_slot_custom["start"])
                 slot_time_date_s = f"{slot_date.strftime('%d-%m-%Y')} {slot_time}"
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"

@@ -1,5 +1,5 @@
 """Hive Light Module."""
-# pylint: skip-file
+
 import colorsys
 
 from .helper.const import HIVETOHA
@@ -402,11 +402,11 @@ class Light(HiveLight):
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device
 
     async def turn_on(self, device: dict, brightness: int, color_temp: int, color: list):
         """Set light to turn on.

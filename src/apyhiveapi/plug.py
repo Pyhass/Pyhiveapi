@@ -1,5 +1,5 @@
-"""Hive Switch Module."""
-# pylint: skip-file
+"""Hive Plug Module."""
+
 from .helper.const import HIVETOHA
 
 
@@ -168,11 +168,11 @@ class Switch(HiveSmartPlug):
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device
 
     async def get_switch_state(self, device: dict):
         """Home Assistant wrapper to get updated switch state.
@@ -185,8 +185,8 @@ class Switch(HiveSmartPlug):
         """
         if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.get_heat_on_demand(device)
-        else:
-            return await self.get_state(device)
+
+        return await self.get_state(device)
 
     async def turn_on(self, device: dict):
         """Home Assisatnt wrapper for turning switch on.
@@ -199,8 +199,8 @@ class Switch(HiveSmartPlug):
         """
         if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.set_heat_on_demand(device, "ENABLED")
-        else:
-            return await self.set_status_on(device)
+
+        return await self.set_status_on(device)
 
     async def turn_off(self, device: dict):
         """Home Assisatnt wrapper for turning switch off.
@@ -213,5 +213,5 @@ class Switch(HiveSmartPlug):
         """
         if device["hive_type"] == "Heating_Heat_On_Demand":
             return await self.session.heating.set_heat_on_demand(device, "DISABLED")
-        else:
-            return await self.set_status_off(device)
+
+        return await self.set_status_off(device)

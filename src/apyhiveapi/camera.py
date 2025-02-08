@@ -1,5 +1,4 @@
 """Hive Camera Module."""
-# pylint: skip-file
 
 
 class HiveCamera:
@@ -27,17 +26,17 @@ class HiveCamera:
 
         return state
 
-    async def get_camera_state(self, device: dict):
+    async def get_camera_state(self, device: dict) -> bool:
         """Get the camera state.
 
         Returns:
-            boolean: True/False if camera is on.
+            bool: True/False if camera is on.
         """
-        state = None
+        state = False
 
         try:
             data = self.session.data.devices[device["hive_id"]]
-            state = True if data["state"]["mode"] == "ARMED" else False
+            state = data["state"]["mode"] == "ARMED"
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -178,8 +177,9 @@ class Camera(HiveCamera):
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device

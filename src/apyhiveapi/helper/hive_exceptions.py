@@ -1,5 +1,5 @@
 """Hive exception class."""
-# pylint: skip-file
+
 
 
 class FileInUse(Exception):
@@ -76,6 +76,13 @@ class HiveInvalidDeviceAuthentication(Exception):
 
 class HiveFailedToRefreshTokens(Exception):
     """Raise invalid refresh tokens.
+
+    Args:
+        Exception (object): Exception object to invoke
+    """
+
+class NoSessionError(Exception):
+    """No session error.
 
     Args:
         Exception (object): Exception object to invoke

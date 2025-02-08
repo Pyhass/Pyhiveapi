@@ -1,5 +1,5 @@
 """Test the helper method for writing tests."""
-# pylint: skip-file
+
 
 from dataclasses import dataclass
 

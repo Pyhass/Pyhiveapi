@@ -1,5 +1,5 @@
 """Hive Device Attribute Module."""
-# pylint: skip-file
+
 from .helper.const import HIVETOHA
 from .helper.logger import Logger
 
@@ -15,7 +15,7 @@ class HiveAttributes:
         """
         self.session = session
         self.session.log = Logger()
-        self.type = "Attribute"
+        self.data_type = "Attribute"
 
     async def state_attributes(self, n_id: str, _type: str):
         """Get HA State Attributes.
@@ -73,7 +73,7 @@ class HiveAttributes:
         try:
             data = self.session.data.products[n_id]
             state = data["state"]["mode"]
-            final = HIVETOHA[self.type].get(state, state)
+            final = HIVETOHA[self.data_type].get(state, state)
         except KeyError as e:
             await self.session.log.error(e)
 
@@ -95,7 +95,7 @@ class HiveAttributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.session.log.error_check(n_id, self.type, state)
+            await self.session.log.error_check(n_id, state)
         except KeyError as e:
             await self.session.log.error(e)
 

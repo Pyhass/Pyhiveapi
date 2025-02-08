@@ -1,7 +1,6 @@
 """Hive Action Module."""
-# pylint: skip-file
 
-
+import json
 class HiveAction:
     """Hive Action Code.
 
@@ -30,7 +29,7 @@ class HiveAction:
         """
         dev_data = {}
 
-        if device["hive_id"] in self.data["action"]:
+        if device["hive_id"] in self.session.data.actions:
             dev_data = {
                 "hive_id": device["hive_id"],
                 "hive_name": device["hive_name"],
@@ -45,11 +44,11 @@ class HiveAction:
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            exists = self.session.data.actions.get("hive_id", False)
-            if exists is False:
-                return "REMOVE"
-            return device
+
+        exists = self.session.data.actions.get("hive_id", False)
+        if exists is False:
+            return "REMOVE"
+        return device
 
     async def get_state(self, device: dict):
         """Get action state.
@@ -79,7 +78,7 @@ class HiveAction:
         Returns:
             boolean: True/False if successful.
         """
-        import json
+
 
         final = False
 
@@ -104,8 +103,6 @@ class HiveAction:
         Returns:
             boolean: True/False if successful.
         """
-        import json
-
         final = False
 
         if device["hive_id"] in self.session.data.actions:

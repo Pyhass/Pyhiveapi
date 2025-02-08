@@ -1,5 +1,5 @@
 """Custom Logging Module."""
-# pylint: skip-file
+
 import inspect
 from datetime import datetime
 
@@ -11,15 +11,17 @@ class Logger:
         """Initialise the logger class."""
         self.session = session
 
-    async def error(self, e="UNKNOWN"):
-        """Process and unexpected error."""
+    async def error(self, e: Exception = Exception("UNKNOWN")) -> None:
+        """Process an unexpected error."""
         self.session.logger.error(
-            f"An unexpected error has occurred whilst"
-            f" executing {inspect.stack()[1][3]}"
-            f" with exception {e.__class__} {e}"
+            "An unexpected error has occurred whilst "
+            "executing %s with exception %s %s",
+            inspect.stack()[1][3],
+            e.__class__,
+            e,
         )
 
-    async def error_check(self, n_id, n_type, error_type, **kwargs):
+    async def error_check(self, n_id: str, error_type: bool) -> None:
         """Error has occurred."""
         message = None
         name = self.session.helper.get_device_name(n_id)

@@ -1,14 +1,16 @@
 """Hive Session Module."""
-# pylint: skip-file
+
 import asyncio
 import copy
+from datetime import datetime, timedelta
 import json
 import operator
 import os
 import time
-from datetime import datetime, timedelta
+from typing import Optional
 
 from aiohttp.web import HTTPException
+
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
@@ -29,7 +31,7 @@ from .helper.logger import Logger
 from .helper.map import Map
 
 
-class hive_session:
+class HiveSession:
     """Hive Session Code.
 
     Raises:
@@ -113,7 +115,7 @@ class hive_session:
         """
         path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
         path = path.replace("/pyhiveapi/", "/apyhiveapi/")
-        with open(path) as j:
+        with open(path, encoding="utf-8") as j:
             data = json.loads(j.read())
 
         return data
@@ -154,7 +156,7 @@ class hive_session:
             else:
                 formatted_data["ha_name"] = device_name
             formatted_data.update(kwargs)
-            self.deviceList[entityType].append(formatted_data)
+            self.device_list[entity_type].append(formatted_data)
             return formatted_data
         except KeyError as error:
             self.logger.error(error)
@@ -171,18 +173,17 @@ class hive_session:
 
         interval = new_interval
         if interval < timedelta(seconds=15):
-            interval = timedelta(seconds=15)
+            interval = max(interval, timedelta(seconds=15))
         self.config.scan_interval = interval
 
-    async def use_file(self, username: str = None):
+    async def use_file(self, username: Optional[str] = None) -> None:
         """Update to check if file is being used.
 
         Args:
-            username (str, optional): Looks for use@file.com. Defaults to None.
+            username (Optional[str], optional): Looks for use@file.com. Defaults to None.
         """
-        using_file = True if username == "use@file.com" else False
-        if using_file:
-            self.config.file = True
+        using_file = username == "use@file.com"
+        self.config.file = using_file
 
     async def update_tokens(self, tokens: dict, update_expiry_time: bool = True):
         """Update session tokens.
@@ -280,8 +281,8 @@ class hive_session:
 
         try:
             result = await self.auth.device_login()
-        except HiveInvalidDeviceAuthentication:
-            raise HiveInvalidDeviceAuthentication
+        except HiveInvalidDeviceAuthentication as exc:
+            raise HiveInvalidDeviceAuthentication from exc
 
         if "AuthenticationResult" in result:
             await self.update_tokens(result)
@@ -298,25 +299,22 @@ class hive_session:
 
         if self.config.file:
             return None
-        else:
-            expiry_time = self.tokens.token_created + self.tokens.token_expiry
-            if datetime.now() >= expiry_time:
-                result = await self.auth.refresh_token(
-                    self.tokens.token_data["refresh_token"]
-                )
 
-                if "AuthenticationResult" in result:
-                    await self.update_tokens(result)
-                else:
-                    raise HiveFailedToRefreshTokens
+        expiry_time = self.tokens.token_created + self.tokens.token_expiry
+        if datetime.now() >= expiry_time:
+            result = await self.auth.refresh_token(
+                self.tokens.token_data["refresh_token"]
+            )
+
+            if "AuthenticationResult" in result:
+                await self.update_tokens(result)
+            else:
+                raise HiveFailedToRefreshTokens
 
         return result
 
-    async def update_data(self, device: dict):
+    async def update_data(self):
         """Get latest data for Hive nodes - rate limiting.
-
-        Args:
-            device (dict): Device requesting the update.
 
         Returns:
             boolean: True/False if update was successful
@@ -326,7 +324,7 @@ class hive_session:
         if datetime.now() >= ep and not self.update_lock.locked():
             try:
                 await self.update_lock.acquire()
-                await self.get_devices(device["hive_id"])
+                await self.get_devices()
                 if len(self.device_list["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.get_camera(self.devices[camera])
@@ -349,7 +347,7 @@ class hive_session:
             api_resp_d = await self.api.get_alarm()
             if operator.contains(str(api_resp_d["original"]), "20") is False:
                 raise HTTPException
-            elif api_resp_d["parsed"] is None:
+            if api_resp_d["parsed"] is None:
                 raise HiveApiError
 
         self.data.alarm = api_resp_d["parsed"]
@@ -361,44 +359,63 @@ class hive_session:
             HTTPException: HTTP error has occurred updating the devices.
             HiveApiError: An API error code has been returned.
         """
-        camera_image = None
-        camera_recording = None
-        has_camera_image = False
-        has_camera_recording = False
+        camera_info = {
+            "camera_image": {},
+            "camera_recording": {},
+            "has_camera_image": False,
+            "has_camera_recording": False,
+        }
 
         if self.config.file:
-            camera_image = self.open_file("camera.json")
-            camera_recording = self.open_file("camera.json")
+            camera_info["camera_image"] = self.open_file("camera.json")
+            camera_info["camera_recording"] = self.open_file("camera.json")
         elif self.tokens is not None:
-            camera_image = await self.api.get_camera_image(device)
-            has_camera_recording = bool(
-                camera_image["parsed"]["events"][0]["hasRecording"]
+            camera_info["camera_image"] = await self.api.get_camera_image(device)
+            camera_info["has_camera_image"] = bool(
+                camera_info["camera_image"]["parsed"]["events"][0]["hasRecording"]
             )
-            if has_camera_recording:
-                camera_recording = await self.api.get_camera_recording(
-                    device, camera_image["parsed"]["events"][0]["eventId"]
+            if camera_info["has_camera_image"]:
+                camera_info["camera_recording"] = await self.api.get_camera_recording(
+                    device,
+                    camera_info["camera_image"]["parsed"]["events"][0]["eventId"],
+                )
+                camera_info["has_camera_recording"] = bool(
+                    camera_info["camera_recording"]["parsed"]["events"][0][
+                        "hasRecording"
+                    ]
                 )
 
-            if operator.contains(str(camera_image["original"]), "20") is False:
+            if (
+                operator.contains(str(camera_info["camera_image"]["original"]), "20")
+                is False
+            ):
                 raise HTTPException
-            elif camera_image["parsed"] is None:
+            if camera_info["camera_image"]["parsed"] is None:
                 raise HiveApiError
         else:
             raise NoApiToken
 
-        has_camera_image = bool(camera_image["parsed"]["events"][0])
-
+        camera_info["has_camera_image"] = bool(
+            camera_info["camera_image"]["parsed"]["events"][0]
+        )
         self.data.camera[device["id"]] = {}
         self.data.camera[device["id"]]["camera_image"] = None
         self.data.camera[device["id"]]["camera_recording"] = None
 
-        if camera_image is not None and has_camera_image:
-            self.data.camera[device["id"]]["camera_image"] = camera_image["parsed"][
-                "events"
-            ][0]
-        if camera_recording is not None and has_camera_recording:
-            self.data.camera[device["id"]]["camera_recording"] = camera_recording
-        
+        if camera_info["camera_image"] is not None and camera_info["has_camera_image"]:
+            self.data.camera[device["id"]]["camera_image"] = camera_info[
+                "camera_image"
+            ]["parsed"]["events"][0]
+        if (
+            camera_info["camera_recording"] is not None
+            and camera_info["has_camera_recording"]
+        ):
+            self.data.camera[device["id"]]["camera_recording"] = camera_info[
+                "camera_recording"
+            ]["parsed"]["events"][0]
+
+    async def get_devices(self):
+        """Get node data."""
         get_nodes_successful = False
         api_resp_d = None
 
@@ -407,11 +424,12 @@ class hive_session:
                 api_resp_d = self.open_file("data.json")
             elif self.tokens is not None:
                 await self.hive_refresh_tokens()
-                api_resp_d = await self.api.get_all()
-                if operator.contains(str(api_resp_d["original"]), "20") is False:
-                    raise HTTPException
-                elif api_resp_d["parsed"] is None:
-                    raise HiveApiError
+            await self.hive_refresh_tokens()
+            api_resp_d = await self.api.get_all()
+            if operator.contains(str(api_resp_d["original"]), "20") is False:
+                raise HTTPException
+            if api_resp_d["parsed"] is None:
+                raise HiveApiError
 
             api_resp_p = api_resp_d["parsed"]
             temp_products = {}
@@ -447,12 +465,18 @@ class hive_session:
                 await self.get_alarm()
             self.config.last_update = datetime.now()
             get_nodes_successful = True
-        except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
+        except (
+            OSError,
+            RuntimeError,
+            HiveApiError,
+            ConnectionError,
+            HTTPException,
+        ):
             get_nodes_successful = False
 
         return get_nodes_successful
 
-    async def start_session(self, config: dict = {}):
+    async def start_session(self, config: dict = None):
         """Setup the Hive platform.
 
         Args:
@@ -483,7 +507,7 @@ class hive_session:
                 raise HiveUnknownConfiguration
 
         try:
-            await self.get_devices("No_ID")
+            await self.get_devices()
         except HTTPException:
             return HTTPException
 
@@ -518,14 +542,13 @@ class hive_session:
                 and self.data.products[a_product]["type"] not in HIVE_TYPES["Heating"]
             ):
                 continue
-            product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
-            product_name = self.data.products[aProduct]["state"].get("name", "Unknown")
+            product_list = PRODUCTS.get(self.data.products[a_product]["type"], [])
+            product_name = self.data.products[a_product]["state"].get("name", "Unknown")
             for code in product_list:
                 try:
                     eval("self." + code)
                 except (NameError, AttributeError) as e:
                     self.logger.warning(f"Device {product_name} cannot be setup - {e}")
-                    pass
 
             if self.data.products[a_product]["type"] in hive_type:
                 self.config.mode.append(p["id"])
@@ -542,7 +565,8 @@ class hive_session:
 
         if "action" in HIVE_TYPES["Switch"]:
             for action in self.data["actions"]:
-                a = self.data["actions"][action]  # noqa: F841
+                a = self.data["actions"][action]
+                type(a)
                 eval("self." + ACTIONS)
 
         return self.device_list
@@ -563,6 +587,8 @@ class hive_session:
             pattern = "%d.%m.%Y %H:%M:%S"
             epoch_time = int(time.mktime(time.strptime(str(date_time), pattern)))
             return epoch_time
-        elif action == "from_epoch":
+        if action == "from_epoch":
             date = datetime.fromtimestamp(int(date_time)).strftime(pattern)
             return date
+
+        return None

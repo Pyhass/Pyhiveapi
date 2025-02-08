@@ -1,5 +1,5 @@
 """Hive Hotwater Module."""
-# pylint: skip-file
+
 
 from .helper.const import HIVETOHA
 
@@ -247,11 +247,11 @@ class WaterHeater(HiveHotwater):
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device
 
     async def get_schedule_now_next_later(self, device: dict):
         """Hive get hotwater schedule now, next and later.

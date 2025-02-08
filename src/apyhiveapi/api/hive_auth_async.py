@@ -57,6 +57,7 @@ class HiveAuthAsync:
     SMS_MFA_CHALLENGE = "SMS_MFA"
     DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         username: str,
@@ -100,7 +101,7 @@ class HiveAuthAsync:
 
     async def async_init(self):
         """Initialise async variables."""
-        self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
+        self.data = await self.loop.run_in_executor(None, self.api.get_login_info)
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
@@ -218,7 +219,7 @@ class HiveAuthAsync:
         self.device_password = device_password
         return device_secret_verifier_config
 
-    async def get_device_authentication_key(
+    async def get_device_authentication_key(  # pylint: disable=too-many-arguments
         self, device_group_key, device_key, device_password, server_b_value, salt
     ):
         """Get device authentication key."""

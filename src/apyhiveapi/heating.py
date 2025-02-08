@@ -1,7 +1,8 @@
 """Hive Heating Module."""
-# pylint: skip-file
-from .helper.const import HIVETOHA
 
+from datetime import datetime
+
+from .helper.const import HIVETOHA
 
 class HiveHeating:
     """Hive Heating Code.
@@ -47,7 +48,6 @@ class HiveHeating:
         Returns:
             float: current temperature
         """
-        from datetime import datetime
 
         f_state = None
         state = None
@@ -364,7 +364,7 @@ class HiveHeating:
             await self.session.get_devices(device["hive_id"])
             if await self.get_boost_status(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
-                if prev_mode == "MANUAL" or prev_mode == "OFF":
+                if prev_mode in ("MANUAL", "OFF"):
                     pre_temp = data["props"]["previous"].get("target", 7)
                     resp = await self.session.api.set_state(
                         data["type"],
@@ -470,11 +470,11 @@ class Climate(HiveHeating):
             }
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device
 
     async def get_schedule_now_next_later(self, device: dict):
         """Hive get heating schedule now, next and later.

@@ -1,7 +1,6 @@
 """Hive Sensor Module."""
-# pylint: skip-file
-from .helper.const import HIVE_TYPES, HIVETOHA
 
+from .helper.const import HIVE_TYPES, HIVETOHA
 
 class HiveSensor:
     """Hive Sensor Code."""
@@ -132,8 +131,8 @@ class Sensor(HiveSensor):
 
             self.session.devices.update({device["hive_id"]: dev_data})
             return self.session.devices[device["hive_id"]]
-        else:
-            await self.session.log.error_check(
-                device["device_id"], "ERROR", device["device_data"]["online"]
-            )
-            return device
+
+        await self.session.log.error_check(
+            device["device_id"], device["device_data"]["online"]
+        )
+        return device
