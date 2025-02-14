@@ -58,12 +58,14 @@ class HiveApiAsync:
                     "Accept": "*/*",
                     "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
                     "x-jwt-token": self.session.tokens.tokenData["token"],
+                    "User-Agent": "pyhiveapi",
                 }
             else:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "authorization": self.session.tokens.tokenData["token"],
+                    "Authorization": self.session.tokens.tokenData["token"],
+                    "User-Agent": "pyhiveapi",
                 }
         except KeyError:
             if "sso" in url:
