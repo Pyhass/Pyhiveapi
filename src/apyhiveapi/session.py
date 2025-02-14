@@ -11,7 +11,13 @@ from typing import Optional
 
 from aiohttp.web import HTTPException
 
-from apyhiveapi import API, Auth
+
+if __name__ == "pyhiveapi":
+    from .api.hive_api import HiveApi as API
+    from .api.hive_auth import HiveAuth as Auth
+else:
+    from .api.hive_async_api import HiveApiAsync as API
+    from .api.hive_auth_async import HiveAuthAsync as Auth
 
 from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
@@ -113,7 +119,7 @@ class HiveSession:
         Returns:
             dict: Data from the chosen file.
         """
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
+        path = os.path.dirname(os.path.realpath(__file__)) + "/test_data/" + file
         path = path.replace("/pyhiveapi/", "/apyhiveapi/")
         with open(path, encoding="utf-8") as j:
             data = json.loads(j.read())
@@ -131,7 +137,7 @@ class HiveSession:
             dict: Entity.
         """
         try:
-            device = self.helper.getDeviceData(data)
+            device = self.helper.get_device_data(data)
             device_name = (
                 device["state"]["name"]
                 if device["state"]["name"] != "Receiver"
@@ -424,12 +430,11 @@ class HiveSession:
                 api_resp_d = self.open_file("data.json")
             elif self.tokens is not None:
                 await self.hive_refresh_tokens()
-            await self.hive_refresh_tokens()
-            api_resp_d = await self.api.get_all()
-            if operator.contains(str(api_resp_d["original"]), "20") is False:
-                raise HTTPException
-            if api_resp_d["parsed"] is None:
-                raise HiveApiError
+                api_resp_d = await self.api.get_all()
+                if operator.contains(str(api_resp_d["original"]), "20") is False:
+                    raise HTTPException
+                if api_resp_d["parsed"] is None:
+                    raise HiveApiError
 
             api_resp_p = api_resp_d["parsed"]
             temp_products = {}
@@ -547,8 +552,9 @@ class HiveSession:
             for code in product_list:
                 try:
                     eval("self." + code)
-                except (NameError, AttributeError) as e:
+                except (NameError, AttributeError, KeyError) as e:
                     self.logger.warning(f"Device {product_name} cannot be setup - {e}")
+                    pass
 
             if self.data.products[a_product]["type"] in hive_type:
                 self.config.mode.append(p["id"])

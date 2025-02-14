@@ -183,7 +183,7 @@ class Switch(HiveSmartPlug):
         Returns:
             boolean: Return True or False for the state.
         """
-        if device["hive_type"] == "Heating_Heat_On_Demand":
+        if device["hive_type"] == "heating_heat_on_demand":
             return await self.session.heating.get_heat_on_demand(device)
 
         return await self.get_state(device)

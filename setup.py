@@ -23,15 +23,16 @@ setup(
         "build_py": unasync.cmdclass_build_py(
             rules=[
                 unasync.Rule(
-                    "/apyhiveapi/",
-                    "/pyhiveapi/",
+                    "/src/apyhiveapi/",
+                    "
+                    /pyhiveapi/",
                     additional_replacements={
                         "apyhiveapi": "pyhiveapi",
                         "asyncio": "threading",
                     },
                 ),
                 unasync.Rule(
-                    "/apyhiveapi/api/",
+                    "/src/apyhiveapi/api/",
                     "/pyhiveapi/api/",
                     additional_replacements={
                         "apyhiveapi": "pyhiveapi",

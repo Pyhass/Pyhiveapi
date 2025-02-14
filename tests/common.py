@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from apyhiveapi import Hive as HiveAsync
 
-from pyhiveapi import Hive as HiveSync
 
 USERNAME = "use@file.com"
 PASSWORD = "Test12345"
@@ -54,4 +53,5 @@ class MockSession:
     async def async_start_session(self):
         """Start a async session."""
         self.async_hive = HiveAsync(username=USERNAME, password=PASSWORD)
-        return await self.async_hive.start_session(TEMP_CONFIG)
+        await self.async_hive.start_session(TEMP_CONFIG)
+        return self.async_hive

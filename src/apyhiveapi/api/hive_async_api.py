@@ -10,7 +10,7 @@ from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
-from ..session import HiveSession
+##from ..session import HiveSession
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -20,7 +20,7 @@ class HiveApiAsync:
 
     def __init__(
         self,
-        hive_session: Optional[HiveSession] = None,
+        hive_session = None,
         websession: Optional[ClientSession] = None,
     ) -> None:
         """Hive API initialisation."""

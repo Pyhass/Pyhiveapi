@@ -34,7 +34,7 @@ def test_switch_get_plug_state():
     hive.sync_start_session()
     hive_session = hive.sync_hive
     switch = hive_session.session.device_list["switch"][1]
-    state = hive_session.switch.get_switchState(switch)
+    state = hive_session.switch.get_switch_state(switch)
 
     assert state in (True, False)
 
@@ -57,7 +57,7 @@ def test_switch_get_heat_on_demand_state():
     hive.sync_start_session()
     hive_session = hive.sync_hive
     switch = hive_session.session.device_list["switch"][0]
-    state = hive_session.switch.get_switchState(switch)
+    state = hive_session.switch.get_switch_state(switch)
 
     assert state in (True, False)
 

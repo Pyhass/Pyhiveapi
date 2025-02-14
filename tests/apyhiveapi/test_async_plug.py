@@ -39,7 +39,7 @@ async def test_switch_get_plug_state():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][1]
-    state = await hive_session.switch.get_switchState(switch)
+    state = await hive_session.switch.get_switch_state(switch)
 
     assert state in (True, False)
 
@@ -64,7 +64,7 @@ async def test_switch_get_heat_on_demand_state():
     await hive.async_start_session()
     hive_session = hive.async_hive
     switch = hive_session.session.device_list["switch"][0]
-    state = await hive_session.switch.get_switchState(switch)
+    state = await hive_session.switch.get_switch_state(switch)
 
     assert state in (True, False)
 
