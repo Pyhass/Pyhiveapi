@@ -4,5 +4,4 @@ botocore>=1.19.10
 requests
 aiohttp
 pyquery
-unasync
 loguru
