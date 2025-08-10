@@ -7,7 +7,7 @@ This library is built mainly to integrate with the Home Assistant platform,
 but it can also be used independently (See examples below.)
 
 NOTE:
-This integration can only be used with the hive owner accountguest accounts are currently not supported.
+This integration can only be used with the hive owner account guest accounts are currently not supported.
 
 
 ## Examples
