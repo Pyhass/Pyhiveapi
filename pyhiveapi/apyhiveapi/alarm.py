@@ -1,4 +1,5 @@
 """Hive Alarm Module."""
+
 # pylint: skip-file
 
 

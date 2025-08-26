@@ -1,4 +1,5 @@
 """Hive Sensor Module."""
+
 # pylint: skip-file
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
 

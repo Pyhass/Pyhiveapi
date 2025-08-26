@@ -1,4 +1,5 @@
 """Hive exception class."""
+
 # pylint: skip-file
 
 

@@ -1,4 +1,5 @@
 """Mock services for tests."""
+
 # pylint: skip-file
 
 

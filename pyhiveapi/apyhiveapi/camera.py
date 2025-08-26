@@ -1,4 +1,5 @@
 """Hive Camera Module."""
+
 # pylint: skip-file
 
 

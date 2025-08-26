@@ -1,4 +1,5 @@
 """Device data class."""
+
 # pylint: skip-file
 
 from dataclasses import dataclass

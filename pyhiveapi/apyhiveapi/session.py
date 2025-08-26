@@ -1,4 +1,5 @@
 """Hive Session Module."""
+
 # pylint: skip-file
 import asyncio
 import copy
@@ -475,7 +476,7 @@ class HiveSession:
             config (dict, optional): Configuration for Home Assistant to use. Defaults to {}.
 
         Raises:
-            HiveUnknownConfiguration: Unknown configuration identifed.
+            HiveUnknownConfiguration: Unknown configuration identified.
             HiveReauthRequired: Tokens have expired and reauthentication is required.
 
         Returns:

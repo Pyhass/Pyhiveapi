@@ -1,4 +1,5 @@
 """Hive API Module."""
+
 # pylint: skip-file
 import json
 from typing import Optional
@@ -339,7 +340,7 @@ class HiveApiAsync:
         return self.json_return
 
     async def error(self):
-        """An error has occurred iteracting with the Hive API."""
+        """An error has occurred interacting with the Hive API."""
         raise web_exceptions.HTTPError
 
     async def isFileBeingUsed(self):

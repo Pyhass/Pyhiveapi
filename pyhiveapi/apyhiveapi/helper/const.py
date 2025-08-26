@@ -1,4 +1,5 @@
 """Constants for Pyhiveapi."""
+
 # pylint: skip-file
 SYNC_PACKAGE_NAME = "pyhiveapi"
 SYNC_PACKAGE_DIR = "/pyhiveapi/"

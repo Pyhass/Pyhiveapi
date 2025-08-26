@@ -1,4 +1,5 @@
 """Hive Device Attribute Module."""
+
 # pylint: skip-file
 from .helper.const import HIVETOHA
 from .helper.logger import Logger

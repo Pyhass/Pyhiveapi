@@ -1,4 +1,5 @@
 """Hive Hub Module."""
+
 # pylint: skip-file
 from .helper.const import HIVETOHA
 

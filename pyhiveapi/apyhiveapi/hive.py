@@ -1,4 +1,5 @@
 """Start Hive Session."""
+
 # pylint: skip-file
 import sys
 import traceback
