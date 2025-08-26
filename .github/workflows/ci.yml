@@ -44,6 +44,7 @@ jobs:
       - name: Create Python virtual environment
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
+          sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev python3-dev build-essential
           python -m venv venv
           . venv/bin/activate
           pip install -U "pip<20.3" setuptools
@@ -57,9 +58,6 @@ jobs:
             ${{ env.CACHE_VERSION}}-${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
             ${{ env.CACHE_VERSION}}-${{ runner.os }}-pre-commit-
-      - name: Install system dependencies
-        if: steps.cache-precommit.outputs.cache-hit != 'true'
-        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev python3-dev build-essential
       - name: Install pre-commit dependencies
         if: steps.cache-precommit.outputs.cache-hit != 'true'
         run: |
