@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
         id: python
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
       - name: Restore base Python virtual environment
@@ -69,9 +69,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -113,9 +113,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -157,9 +157,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -204,9 +204,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -251,9 +251,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -298,9 +298,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -342,9 +342,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -389,9 +389,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -433,9 +433,9 @@ jobs:
     needs: prepare-base
     steps:
       - name: Check out code from GitHub
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v2.2.1
+        uses: actions/setup-python@v5
         id: python
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
@@ -477,9 +477,9 @@ jobs:
     name: Check pylint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Set up python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
       - name: Install dependencies
