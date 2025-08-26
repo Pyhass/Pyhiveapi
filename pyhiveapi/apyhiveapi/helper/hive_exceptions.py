@@ -25,12 +25,14 @@ class HiveApiError(Exception):
         Exception (object): Exception object to invoke
     """
 
+
 class HiveRefreshTokenExpired(Exception):
     """Refresh token expired.
 
     Args:
         Exception (object): Exception object to invoke
     """
+
 
 class HiveReauthRequired(Exception):
     """Re-Authentication is required.

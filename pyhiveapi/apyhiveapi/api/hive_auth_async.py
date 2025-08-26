@@ -561,7 +561,7 @@ class HiveAuthAsync:
                 "CodeMismatchException",
             ):
                 if "Refresh Token has expired" in err.response.get(
-                    "Error", {}).get("Message", ""):
+                        "Error", {}).get("Message", ""):
                     raise HiveRefreshTokenExpired from err
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
