@@ -1,4 +1,5 @@
 """Hive Light Module."""
+
 # pylint: skip-file
 import colorsys
 

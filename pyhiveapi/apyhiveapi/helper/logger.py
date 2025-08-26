@@ -1,4 +1,5 @@
 """Custom Logging Module."""
+
 # pylint: skip-file
 import inspect
 from datetime import datetime

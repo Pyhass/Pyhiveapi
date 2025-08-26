@@ -1,4 +1,5 @@
 """Dot notation for dictionary."""
+
 # pylint: skip-file
 
 

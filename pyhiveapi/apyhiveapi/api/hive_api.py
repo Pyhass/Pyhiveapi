@@ -1,4 +1,5 @@
 """Hive API Module."""
+
 # pylint: skip-file
 import json
 

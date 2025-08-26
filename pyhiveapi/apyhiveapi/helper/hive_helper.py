@@ -1,4 +1,5 @@
 """Helper class for pyhiveapi."""
+
 # pylint: skip-file
 import datetime
 import operator

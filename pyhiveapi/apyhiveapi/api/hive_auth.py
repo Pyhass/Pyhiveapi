@@ -70,7 +70,7 @@ class HiveAuth:
     SMS_MFA_CHALLENGE = "SMS_MFA"
     DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         username: str,
         password: str,
@@ -227,7 +227,7 @@ class HiveAuth:
         }
         return device_password, device_secret_verifier_config
 
-    def get_device_authentication_key(
+    def get_device_authentication_key(  # pylint: disable=too-many-positional-arguments
         self, device_group_key, device_key, device_password, server_b_value, salt
     ):
         """Get the device authentication key."""

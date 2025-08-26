@@ -58,7 +58,7 @@ class HiveAuthAsync:
     SMS_MFA_CHALLENGE = "SMS_MFA"
     DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         username: str,
         password: str,
@@ -219,7 +219,7 @@ class HiveAuthAsync:
         self.device_password = device_password
         return device_secret_verifier_config
 
-    async def get_device_authentication_key(
+    async def get_device_authentication_key(  # pylint: disable=too-many-positional-arguments
         self, device_group_key, device_key, device_password, server_b_value, salt
     ):
         """Get device authentication key."""
@@ -560,8 +560,9 @@ class HiveAuthAsync:
                 "NotAuthorizedException",
                 "CodeMismatchException",
             ):
-                if "Refresh Token has expired" in err.response.get(
-                    "Error", {}).get("Message", ""):
+                if "Refresh Token has expired" in err.response.get("Error", {}).get(
+                    "Message", ""
+                ):
                     raise HiveRefreshTokenExpired from err
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:

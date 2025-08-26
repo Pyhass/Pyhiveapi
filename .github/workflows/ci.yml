@@ -10,7 +10,7 @@ on:
 
 env:
   CACHE_VERSION: 1
-  DEFAULT_PYTHON: 3.8
+  DEFAULT_PYTHON: "3.10"
   PRE_COMMIT_HOME: ~/.cache/pre-commit
 
 jobs:
@@ -44,6 +44,7 @@ jobs:
       - name: Create Python virtual environment
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
+          sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev python3-dev build-essential
           python -m venv venv
           . venv/bin/activate
           pip install -U "pip<20.3" setuptools

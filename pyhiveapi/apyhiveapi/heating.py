@@ -1,4 +1,5 @@
 """Hive Heating Module."""
+
 # pylint: skip-file
 from .helper.const import HIVETOHA
 
