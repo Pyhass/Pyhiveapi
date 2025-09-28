@@ -1,10 +1,11 @@
 """Test the helper method for writing tests."""
 
-
 from dataclasses import dataclass
 
 from apyhiveapi import Hive as HiveAsync
 
+# Provide a sync alias used by legacy tests; current implementation is async
+HiveSync = HiveAsync
 
 USERNAME = "use@file.com"
 PASSWORD = "Test12345"

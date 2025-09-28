@@ -25,8 +25,8 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-docstrings==1.5.0
-          - pydocstyle==5.1.1
+          - flake8-docstrings==1.7.0
+          - pydocstyle==6.3.0
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.6
     hooks:
@@ -35,6 +35,8 @@ repos:
           - --quiet
           - --format=custom
           - --configfile=tests/bandit.yaml
+        additional_dependencies:
+          - pbr
   - repo: https://github.com/PyCQA/isort
     rev: 6.0.1
     hooks:
@@ -63,8 +65,8 @@ repos:
     rev: v3.3.1
     hooks:
       - id: pylint
-        args:
-          [
-            "-rn",  # Only display messages
-            "-sn",  # Don't display the score
-          ]
+        name: pylint
+        args: [
+          "-rn",  # Only display messages
+          "-sn",  # Don't display the score
+        ]

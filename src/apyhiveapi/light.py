@@ -408,7 +408,9 @@ class Light(HiveLight):
         )
         return device
 
-    async def turn_on(self, device: dict, brightness: int, color_temp: int, color: list):
+    async def turn_on(
+        self, device: dict, brightness: int, color_temp: int, color: list
+    ):
         """Set light to turn on.
 
         Args:

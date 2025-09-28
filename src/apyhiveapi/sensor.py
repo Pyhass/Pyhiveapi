@@ -2,6 +2,7 @@
 
 from .helper.const import HIVE_TYPES, HIVETOHA
 
+
 class HiveSensor:
     """Hive Sensor Code."""
 

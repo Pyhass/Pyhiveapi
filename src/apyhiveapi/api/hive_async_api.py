@@ -10,7 +10,8 @@ from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
-##from ..session import HiveSession
+
+# from ..session import HiveSession
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -20,7 +21,7 @@ class HiveApiAsync:
 
     def __init__(
         self,
-        hive_session = None,
+        hive_session=None,
         websession: Optional[ClientSession] = None,
     ) -> None:
         """Hive API initialisation."""
@@ -33,10 +34,10 @@ class HiveApiAsync:
             "holiday_mode": f"{self.base_url}/holiday-mode",
             "all": f"{self.base_url}/nodes/all?products=true&devices=true&actions=true",
             "alarm": f"{self.base_url}/security-lite?homeId=",
-            "camera_images": f"https://event-history-service.{self.camera_base_url}" \
-                "/v1/events/cameras?latest=true&cameraId={{0}}",
-            "camera_recordings": f"https://event-history-service.{self.camera_base_url}" \
-                "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "camera_images": f"https://event-history-service.{self.camera_base_url}"
+            "/v1/events/cameras?latest=true&cameraId={{0}}",
+            "camera_recordings": f"https://event-history-service.{self.camera_base_url}"
+            "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": f"{self.base_url}/devices",
             "products": f"{self.base_url}/products",
             "actions": f"{self.base_url}/actions",
@@ -60,19 +61,20 @@ class HiveApiAsync:
 
         headers = {}
         try:
-            token = self.session.tokens.token_data["token"]
             if camera:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "Authorization": f"Bearer {token}",
-                    "x-jwt-token": token,
+                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
+                    "x-jwt-token": self.session.tokens.tokenData["token"],
+                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
                 }
             else:
                 headers = {
                     "content-type": "application/json",
                     "Accept": "*/*",
-                    "authorization": token,
+                    "Authorization": self.session.tokens.tokenData["token"],
+                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
                 }
         except KeyError:
             if "sso" not in url:
@@ -87,11 +89,15 @@ class HiveApiAsync:
 
         if resp.status == HTTP_UNAUTHORIZED:
             self.session.logger.error(
-                "Hive token has expired when calling %s - HTTP status is - %d", url, resp.status
+                "Hive token has expired when calling %s - HTTP status is - %d",
+                url,
+                resp.status,
             )
         else:
             self.session.logger.error(
-                "Something has gone wrong calling %s - HTTP status is - %d", url, resp.status
+                "Something has gone wrong calling %s - HTTP status is - %d",
+                url,
+                resp.status,
             )
 
         raise HiveApiError
@@ -336,7 +342,7 @@ class HiveApiAsync:
         return self.json_return
 
     async def error(self):
-        """An error has occurred iteracting with the Hive API."""
+        """An error has occurred interacting with the Hive API."""
         raise web_exceptions.HTTPError
 
     async def is_file_being_used(self):

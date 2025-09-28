@@ -1,5 +1,7 @@
 """Setup pyhiveapi package."""
 
+# pylint: skip-file
+
 import os
 import re
 

@@ -3,9 +3,9 @@
 import json
 from typing import Any, Dict, Optional
 
-from pyquery import PyQuery
 import requests
 import urllib3
+from pyquery import PyQuery
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -26,10 +26,10 @@ class HiveApi:
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
             "alarm": "/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.camera_base_url}" \
-                "/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.camera_base_url}" \
-                "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
+            "cameraImages": f"https://event-history-service.{self.camera_base_url}"
+            "/v1/events/cameras?latest=true&cameraId={{0}}",
+            "cameraRecordings": f"https://event-history-service.{self.camera_base_url}"
+            "/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",

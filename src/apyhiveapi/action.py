@@ -1,6 +1,8 @@
 """Hive Action Module."""
 
 import json
+
+
 class HiveAction:
     """Hive Action Code.
 
@@ -78,8 +80,6 @@ class HiveAction:
         Returns:
             boolean: True/False if successful.
         """
-
-
         final = False
 
         if device["hive_id"] in self.session.data.actions:

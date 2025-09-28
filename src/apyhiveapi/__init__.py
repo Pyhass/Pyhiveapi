@@ -17,4 +17,4 @@ else:
 
     PATH = os.path.dirname(os.path.realpath(__file__)) + "/test_data/"
 
-  # noqa: F401
+# noqa: F401

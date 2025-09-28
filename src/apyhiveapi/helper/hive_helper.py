@@ -2,8 +2,8 @@
 
 import datetime
 import operator
-import timedelta
 
+import timedelta
 
 from .const import HIVE_TYPES
 
@@ -102,7 +102,9 @@ class HiveHelper:
                 device = self.session.data.devices[product["props"]["trvs"][0]]
             else:
                 raise KeyError
-        elif device_type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
+        elif (
+            device_type == "warmwhitelight" and product["props"]["model"] == "SIREN001"
+        ):
             device = self.session.data.devices[product["parent"]]
         elif device_type == "sense":
             device = self.session.data.devices[product["parent"]]
@@ -167,7 +169,9 @@ class HiveHelper:
 
             for current_slot_custom in current_day_schedule_sorted:
                 slot_date = now + datetime.timedelta(days=day_index)
-                slot_time = HiveHelper.convert_minutes_to_time(current_slot_custom["start"])
+                slot_time = HiveHelper.convert_minutes_to_time(
+                    current_slot_custom["start"]
+                )
                 slot_time_date_s = f"{slot_date.strftime('%d-%m-%Y')} {slot_time}"
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"

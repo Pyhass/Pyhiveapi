@@ -1,7 +1,6 @@
 """Hive exception class."""
 
 
-
 class FileInUse(Exception):
     """File in use exception.
 
@@ -20,6 +19,14 @@ class NoApiToken(Exception):
 
 class HiveApiError(Exception):
     """Api error.
+
+    Args:
+        Exception (object): Exception object to invoke
+    """
+
+
+class HiveRefreshTokenExpired(Exception):
+    """Refresh token expired.
 
     Args:
         Exception (object): Exception object to invoke
@@ -80,6 +87,7 @@ class HiveFailedToRefreshTokens(Exception):
     Args:
         Exception (object): Exception object to invoke
     """
+
 
 class NoSessionError(Exception):
     """No session error.

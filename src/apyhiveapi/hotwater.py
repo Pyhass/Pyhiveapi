@@ -1,6 +1,5 @@
 """Hive Hotwater Module."""
 
-
 from .helper.const import HIVETOHA
 
 
@@ -105,7 +104,9 @@ class HiveHotwater:
                 if await self.get_boost(device) == "ON":
                     state = "ON"
                 else:
-                    snan = self.session.helper.get_schedule_nnl(data["state"]["schedule"])
+                    snan = self.session.helper.get_schedule_nnl(
+                        data["state"]["schedule"]
+                    )
                     state = snan["now"]["value"]["status"]
 
             final = HIVETOHA[self.hot_water_type].get(state, state)

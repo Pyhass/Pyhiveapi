@@ -4,6 +4,7 @@ from datetime import datetime
 
 from .helper.const import HIVETOHA
 
+
 class HiveHeating:
     """Hive Heating Code.
 
@@ -48,7 +49,6 @@ class HiveHeating:
         Returns:
             float: current temperature
         """
-
         f_state = None
         state = None
         final = None
