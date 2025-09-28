@@ -61,13 +61,10 @@ repos:
       - id: no-commit-to-branch
         args:
           - --branch=master
-  - repo: local
+  - repo: https://github.com/pycqa/pylint
+    rev: v3.3.1
     hooks:
       - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
         args: [
           "-rn",  # Only display messages
           "-sn",  # Don't display the score
