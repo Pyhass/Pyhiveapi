@@ -154,8 +154,14 @@ class HiveSession:
                 kwargs["haName"] = device_name + kwargs["haName"]
             else:
                 formatted_data["haName"] = device_name
+
             formatted_data.update(kwargs)
-            self.deviceList[entityType].append(formatted_data)
+
+            if data.get("type", "") == "hub":
+                self.devices["parent"].append(formatted_data)
+            else:
+                self.deviceList[entityType].append(formatted_data)
+
             return formatted_data
         except KeyError as error:
             self.logger.error(error)
@@ -515,6 +521,7 @@ class HiveSession:
         Returns:
             list: List of devices
         """
+        self.deviceList["parent"] = []
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
         self.deviceList["camera"] = []
