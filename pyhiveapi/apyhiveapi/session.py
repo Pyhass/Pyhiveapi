@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
+
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
@@ -158,7 +159,7 @@ class HiveSession:
             formatted_data.update(kwargs)
 
             if data.get("type", "") == "hub":
-                self.devices["parent"].append(formatted_data)
+                self.deviceList["parent"].append(formatted_data)
             else:
                 self.deviceList[entityType].append(formatted_data)
 
