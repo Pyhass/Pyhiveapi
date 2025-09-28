@@ -17,6 +17,7 @@ import botocore
 
 from ..helper.hive_exceptions import (
     HiveApiError,
+    HiveFailedToRefreshTokens,
     HiveInvalid2FACode,
     HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
@@ -560,6 +561,12 @@ class HiveAuthAsync:
                 "NotAuthorizedException",
                 "CodeMismatchException",
             ):
+                error_message = err.response.get("Error", {}).get("Message", "")
+                if any(
+                    msg in error_message
+                    for msg in ["Refresh Token has expired", "Invalid Refresh Token"]
+                ):
+                    raise HiveFailedToRefreshTokens from err
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":

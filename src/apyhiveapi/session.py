@@ -2,22 +2,14 @@
 
 import asyncio
 import copy
-from datetime import datetime, timedelta
 import json
 import operator
 import os
 import time
+from datetime import datetime, timedelta
 from typing import Optional
 
 from aiohttp.web import HTTPException
-
-
-if __name__ == "pyhiveapi":
-    from .api.hive_api import HiveApi as API
-    from .api.hive_auth import HiveAuth as Auth
-else:
-    from .api.hive_async_api import HiveApiAsync as API
-    from .api.hive_auth_async import HiveAuthAsync as Auth
 
 from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
@@ -35,6 +27,13 @@ from .helper.hive_exceptions import (
 from .helper.hive_helper import HiveHelper
 from .helper.logger import Logger
 from .helper.map import Map
+
+if __name__ == "pyhiveapi":
+    from .api.hive_api import HiveApi as API
+    from .api.hive_auth import HiveAuth as Auth
+else:
+    from .api.hive_async_api import HiveApiAsync as API
+    from .api.hive_auth_async import HiveAuthAsync as Auth
 
 
 class HiveSession:
@@ -160,12 +159,18 @@ class HiveSession:
             if kwargs.get("ha_name", "FALSE")[0] == " ":
                 kwargs["ha_name"] = device_name + kwargs["ha_name"]
             else:
-                formatted_data["ha_name"] = device_name
+                formatted_data["haName"] = device_name
+
             formatted_data.update(kwargs)
-            self.device_list[entity_type].append(formatted_data)
+
+            if data.get("type", "") == "hub":
+                self.device_list["parent"].append(formatted_data)
+            else:
+                self.device_list[entity_type].append(formatted_data)
+
             return formatted_data
         except KeyError as error:
-            self.logger.error(error)
+            self.log.error(error)
             return None
 
     async def update_interval(self, new_interval: timedelta):
@@ -488,7 +493,7 @@ class HiveSession:
             config (dict, optional): Configuration for Home Assistant to use. Defaults to {}.
 
         Raises:
-            HiveUnknownConfiguration: Unknown configuration identifed.
+            HiveUnknownConfiguration: Unknown configuration identified.
             HiveReauthRequired: Tokens have expired and reauthentication is required.
 
         Returns:
@@ -527,6 +532,7 @@ class HiveSession:
         Returns:
             list: List of devices
         """
+        self.device_list["parent"] = []
         self.device_list["alarm_control_panel"] = []
         self.device_list["binary_sensor"] = []
         self.device_list["camera"] = []
@@ -553,8 +559,7 @@ class HiveSession:
                 try:
                     eval("self." + code)
                 except (NameError, AttributeError, KeyError) as e:
-                    self.logger.warning(f"Device {product_name} cannot be setup - {e}")
-                    pass
+                    self.log.warning(f"Device {product_name} cannot be setup - {e}")
 
             if self.data.products[a_product]["type"] in hive_type:
                 self.config.mode.append(p["id"])

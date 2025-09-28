@@ -9,14 +9,14 @@ from setuptools import setup
 
 def requirements_from_file(filename="requirements_all.txt"):
     """Get requirements from file."""
-    with open(os.path.join(os.path.dirname(__file__), filename)) as r:
+    with open(os.path.join(os.path.dirname(__file__), filename), encoding="utf-8") as r:
         reqs = r.read().strip().split("\n")
     # Return non empty lines and non comments
     return [r for r in reqs if re.match(r"^\w+", r)]
 
 
 setup(
-    version="1.0.1",
+    version="1.0.4",
     package_data={"data": ["*.json"]},
     include_package_data=True,
     cmdclass={
@@ -24,8 +24,7 @@ setup(
             rules=[
                 unasync.Rule(
                     "/src/apyhiveapi/",
-                    "
-                    /pyhiveapi/",
+                    "/pyhiveapi/",
                     additional_replacements={
                         "apyhiveapi": "pyhiveapi",
                         "asyncio": "threading",
