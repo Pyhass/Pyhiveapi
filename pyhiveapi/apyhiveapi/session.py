@@ -63,7 +63,6 @@ class HiveSession:
             username=username,
             password=password,
         )
-        self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
         self.log = Logger(self)
@@ -103,6 +102,8 @@ class HiveSession:
         )
         self.devices = {}
         self.deviceList = {}
+        self.api = API(hiveSession=self, websession=websession)
+
 
     def openFile(self, file: str):
         """Open a file.
@@ -460,7 +461,8 @@ class HiveSession:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
                 if hiveType == "homes":
-                    self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
+                    if self.config.homeID is None:
+                        self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
 
             if len(tmpProducts) > 0:
                 self.data.products = copy.deepcopy(tmpProducts)
@@ -505,6 +507,9 @@ class HiveSession:
 
             if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
+                
+            if "house" in config:
+                self.api.setHome(config["house"])
 
         try:
             await self.getDevices("No_ID")
