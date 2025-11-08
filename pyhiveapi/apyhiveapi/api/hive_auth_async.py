@@ -17,11 +17,11 @@ import botocore
 
 from ..helper.hive_exceptions import (
     HiveApiError,
+    HiveFailedToRefreshTokens,
     HiveInvalid2FACode,
     HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
-    HiveRefreshTokenExpired,
 )
 from .hive_api import HiveApi
 
@@ -57,6 +57,7 @@ class HiveAuthAsync:
     PASSWORD_VERIFIER_CHALLENGE = "PASSWORD_VERIFIER"
     SMS_MFA_CHALLENGE = "SMS_MFA"
     DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
+    DEVICE_PASSWORD_CHALLENGE = "DEVICE_PASSWORD_VERIFIER"
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
@@ -87,7 +88,7 @@ class HiveAuthAsync:
         self.client_secret = client_secret
         self.big_n = hex_to_long(N_HEX)
         self.g_value = hex_to_long(G_HEX)
-        self.k = hex_to_long(hex_hash("00" + N_HEX + "0" + G_HEX))
+        self.k = hex_to_long(hex_hash(pad_hex(N_HEX) + pad_hex(G_HEX)))
         self.small_a_value = self.generate_random_small_a()
         self.large_a_value = self.calculate_a()
         self.use_file = bool(self.username == "use@file.com")
@@ -116,6 +117,14 @@ class HiveAuthAsync:
                 aws_session_token="SESSION_TOKEN",
             ),
         )
+
+    def _to_int(self, value):
+        """Accepts int or hex string and returns int."""
+        if isinstance(value, int):
+            return value
+        if isinstance(value, bytes):
+            return int(value.hex(), 16)
+        return int(str(value), 16)
 
     def generate_random_small_a(self):
         """
@@ -150,7 +159,7 @@ class HiveAuthAsync:
         :param {Long integer} salt Generated salt.
         :return {Buffer} Computed HKDF value.
         """
-        server_b_value = hex_to_long(server_b_value)
+        server_b_value = self._to_int(server_b_value)
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
@@ -160,8 +169,9 @@ class HiveAuthAsync:
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
         g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
-        int_value2 = server_b_value - self.k * g_mod_pow_xn
-        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
+        int_value2 = (server_b_value - self.k * g_mod_pow_xn) % self.big_n
+        exp = self.small_a_value + u_value * x_value
+        s_value = pow(int_value2, exp, self.big_n)
         hkdf = compute_hkdf(
             bytearray.fromhex(pad_hex(s_value)),
             bytearray.fromhex(pad_hex(long_to_hex(u_value))),
@@ -172,14 +182,12 @@ class HiveAuthAsync:
         """Get auth params."""
         auth_params = {
             "USERNAME": self.username,
-            "SRP_A": await self.loop.run_in_executor(
-                None, long_to_hex, self.large_a_value
-            ),
+            "SRP_A": long_to_hex(self.large_a_value),
         }
         if self.client_secret is not None:
             auth_params.update(
                 {
-                    "SECRET_HASH": await self.get_secret_hash(
+                    "SECRET_HASH": self.get_secret_hash(
                         self.username, self.__client_id, self.client_secret
                     )
                 }
@@ -187,7 +195,7 @@ class HiveAuthAsync:
         return auth_params
 
     @staticmethod
-    async def get_secret_hash(username, client_id, client_secret):
+    def get_secret_hash(username, client_id, client_secret):
         """Get secret hash."""
         message = bytearray(username + client_id, "utf-8")
         hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
@@ -231,8 +239,9 @@ class HiveAuthAsync:
 
         x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
         g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
-        int_value2 = server_b_value - self.k * g_mod_pow_xn
-        s_value = pow(int_value2, self.small_a_value + u_value * x_value, self.big_n)
+        int_value2 = (server_b_value - self.k * g_mod_pow_xn) % self.big_n
+        exp = self.small_a_value + u_value * x_value
+        s_value = pow(int_value2, exp, self.big_n)
         hkdf = compute_hkdf(
             bytearray.fromhex(pad_hex(s_value)),
             bytearray.fromhex(pad_hex(long_to_hex(u_value))),
@@ -242,7 +251,11 @@ class HiveAuthAsync:
     async def process_device_challenge(self, challenge_parameters):
         """Process device challenge."""
         username = challenge_parameters["USERNAME"]
-        salt_hex = challenge_parameters["SALT"]
+        salt_hex = (
+            challenge_parameters["SALT"]
+            if isinstance(challenge_parameters["SALT"], str)
+            else pad_hex(challenge_parameters["SALT"])
+        )
         srp_b_hex = challenge_parameters["SRP_B"]
         secret_block_b64 = challenge_parameters["SECRET_BLOCK"]
         # re strips leading zero from a day number (required by AWS Cognito)
@@ -277,7 +290,7 @@ class HiveAuthAsync:
         if self.client_secret is not None:
             response.update(
                 {
-                    "SECRET_HASH": await self.get_secret_hash(
+                    "SECRET_HASH": self.get_secret_hash(
                         username, self.__client_id, self.client_secret
                     )
                 }
@@ -287,7 +300,11 @@ class HiveAuthAsync:
     async def process_challenge(self, challenge_parameters):
         """Process auth challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
-        salt_hex = challenge_parameters["SALT"]
+        salt_hex = (
+            challenge_parameters["SALT"]
+            if isinstance(challenge_parameters["SALT"], str)
+            else pad_hex(challenge_parameters["SALT"])
+        )
         srp_b_hex = challenge_parameters["SRP_B"]
         secret_block_b64 = challenge_parameters["SECRET_BLOCK"]
         # re strips leading zero from a day number (required by AWS Cognito)
@@ -322,11 +339,14 @@ class HiveAuthAsync:
         if self.client_secret is not None:
             response.update(
                 {
-                    "SECRET_HASH": await self.get_secret_hash(
+                    "SECRET_HASH": self.get_secret_hash(
                         self.username, self.__client_id, self.client_secret
                     )
                 }
             )
+
+        if self.device_key is not None:
+            response.update({"DEVICE_KEY": self.device_key})
 
         return response
 
@@ -410,7 +430,7 @@ class HiveAuthAsync:
                     functools.partial(
                         self.client.respond_to_auth_challenge,
                         ClientId=self.__client_id,
-                        ChallengeName="DEVICE_PASSWORD_VERIFIER",
+                        ChallengeName=self.DEVICE_PASSWORD_CHALLENGE,
                         ChallengeResponses=device_challenge_response,
                     ),
                 )
@@ -556,15 +576,7 @@ class HiveAuthAsync:
                 ),
             )
         except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ in (
-                "NotAuthorizedException",
-                "CodeMismatchException",
-            ):
-                if "Refresh Token has expired" in err.response.get("Error", {}).get(
-                    "Message", ""
-                ):
-                    raise HiveRefreshTokenExpired from err
-                raise HiveInvalid2FACode from err
+            raise HiveFailedToRefreshTokens from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
                 raise HiveApiError from err
