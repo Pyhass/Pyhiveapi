@@ -103,6 +103,7 @@ class HiveSession:
         )
         self.devices = {}
         self.deviceList = {}
+        self.hub_id = None
 
     def openFile(self, file: str):
         """Open a file.
@@ -145,7 +146,7 @@ class HiveSession:
                 "hiveType": data.get("type", ""),
                 "haType": entityType,
                 "deviceData": device.get("props", data.get("props", {})),
-                "parentDevice": data.get("parent", None),
+                "parentDevice": self.hub_id,
                 "isGroup": data.get("isGroup", False),
                 "device_id": device["id"],
                 "device_name": device_name,
@@ -160,6 +161,7 @@ class HiveSession:
 
             if data.get("type", "") == "hub":
                 self.deviceList["parent"].append(formatted_data)
+                self.deviceList[entityType].append(formatted_data)
             else:
                 self.deviceList[entityType].append(formatted_data)
 
@@ -532,6 +534,25 @@ class HiveSession:
         self.deviceList["switch"] = []
         self.deviceList["water_heater"] = []
 
+        hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
+        for aDevice in self.data["devices"]:
+            if self.data["devices"][aDevice]["type"] == "hub":
+                self.hub_id = aDevice
+                break
+        for aDevice in self.data["devices"]:
+            d = self.data.devices[aDevice]
+            device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
+            for code in device_list:
+                eval("self." + code)
+
+            if self.data["devices"][aDevice]["type"] in hive_type:
+                self.config.battery.append(d["id"])
+
+        if "action" in HIVE_TYPES["Switch"]:
+            for action in self.data["actions"]:
+                a = self.data["actions"][action]  # noqa: F841
+                eval("self." + ACTIONS)
+
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
@@ -554,21 +575,6 @@ class HiveSession:
 
             if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])
-
-        hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
-        for aDevice in self.data["devices"]:
-            d = self.data.devices[aDevice]
-            device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
-            for code in device_list:
-                eval("self." + code)
-
-            if self.data["devices"][aDevice]["type"] in hive_type:
-                self.config.battery.append(d["id"])
-
-        if "action" in HIVE_TYPES["Switch"]:
-            for action in self.data["actions"]:
-                a = self.data["actions"][action]  # noqa: F841
-                eval("self." + ACTIONS)
 
         return self.deviceList
 
