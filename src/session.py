@@ -551,7 +551,7 @@ class HiveSession:
             d = self.data.devices[aDevice]
             device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
             for code in device_list:
-                eval("self." + code)
+                getattr(self, code)
 
             if self.data["devices"][aDevice]["type"] in hive_type:
                 self.config.battery.append(d["id"])
