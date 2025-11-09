@@ -10,7 +10,6 @@ import time
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
-
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
