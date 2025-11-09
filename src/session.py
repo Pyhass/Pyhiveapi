@@ -71,9 +71,9 @@ class HiveSession:
         self.updateLock = asyncio.Lock()
         self.tokens = Map(
             {
-                "tokenData": {},
-                "tokenCreated": datetime.now() - timedelta(seconds=4000),
-                "tokenExpiry": timedelta(seconds=3600),
+                "token_data": {},
+                "token_created": datetime.now() - timedelta(seconds=4000),
+                "token_expiry": timedelta(seconds=3600),
             }
         )
         self.config = Map(
@@ -83,11 +83,11 @@ class HiveSession:
                 "camera": False,
                 "errorList": {},
                 "file": False,
-                "homeID": None,
-                "lastUpdated": datetime.now(),
+                "home_id": None,
+                "last_updated": datetime.now(),
                 "mode": [],
-                "scanInterval": timedelta(seconds=120),
-                "userID": None,
+                "scan_interval": timedelta(seconds=120),
+                "user_id": None,
                 "username": username,
             }
         )
@@ -185,7 +185,7 @@ class HiveSession:
         interval = new_interval
         if interval < timedelta(seconds=15):
             interval = timedelta(seconds=15)
-        self.config.scanInterval = interval
+        self.config.scan_interval = interval
 
     async def useFile(self, username: str = None):
         """Update to check if file is being used.
@@ -210,20 +210,20 @@ class HiveSession:
         data = {}
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
-            self.tokens.tokenData.update({"token": data["IdToken"]})
+            self.tokens.token_data.update({"token": data["IdToken"]})
             if "RefreshToken" in data:
-                self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
-            self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
+                self.tokens.token_data.update({"refreshToken": data["RefreshToken"]})
+            self.tokens.token_data.update({"accessToken": data["AccessToken"]})
             if update_expiry_time:
-                self.tokens.tokenCreated = datetime.now()
+                self.tokens.token_created = datetime.now()
         elif "token" in tokens:
             data = tokens
-            self.tokens.tokenData.update({"token": data["token"]})
-            self.tokens.tokenData.update({"refreshToken": data["refreshToken"]})
-            self.tokens.tokenData.update({"accessToken": data["accessToken"]})
+            self.tokens.token_data.update({"token": data["token"]})
+            self.tokens.token_data.update({"refreshToken": data["refreshToken"]})
+            self.tokens.token_data.update({"accessToken": data["accessToken"]})
 
         if "ExpiresIn" in data:
-            self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
+            self.tokens.token_expiry = timedelta(seconds=data["ExpiresIn"])
 
         return self.tokens
 
@@ -298,7 +298,7 @@ class HiveSession:
 
         if "AuthenticationResult" in result:
             await self.updateTokens(result)
-            self.tokens.tokenExpiry = timedelta(seconds=0)
+            self.tokens.token_expiry = timedelta(seconds=0)
         return result
 
     async def hiveRefreshTokens(self):
@@ -312,11 +312,11 @@ class HiveSession:
         if self.config.file:
             return None
         else:
-            expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
+            expiry_time = self.tokens.token_created + self.tokens.token_expiry
             if datetime.now() >= expiry_time:
                 try:
                     result = await self.auth.refresh_token(
-                        self.tokens.tokenData["refreshToken"]
+                        self.tokens.token_data["refreshToken"]
                     )
 
                     if "AuthenticationResult" in result:
@@ -338,7 +338,7 @@ class HiveSession:
             boolean: True/False if update was successful
         """
         updated = False
-        ep = self.config.lastUpdate + self.config.scanInterval
+        ep = self.config.last_updated + self.config.scan_interval
         if datetime.now() >= ep and not self.updateLock.locked():
             try:
                 await self.updateLock.acquire()
@@ -453,7 +453,7 @@ class HiveSession:
             for hiveType in api_resp_p:
                 if hiveType == "user":
                     self.data.user = api_resp_p[hiveType]
-                    self.config.userID = api_resp_p[hiveType]["id"]
+                    self.config.user_id = api_resp_p[hiveType]["id"]
                 if hiveType == "products":
                     for aProduct in api_resp_p[hiveType]:
                         tmpProducts.update({aProduct["id"]: aProduct})
@@ -468,7 +468,7 @@ class HiveSession:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
                 if hiveType == "homes":
-                    self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
+                    self.config.home_id = api_resp_p[hiveType]["homes"][0]["id"]
 
             if len(tmpProducts) > 0:
                 self.data.products = copy.deepcopy(tmpProducts)
@@ -477,7 +477,7 @@ class HiveSession:
             self.data.actions = copy.deepcopy(tmpActions)
             if self.config.alarm:
                 await self.getAlarm()
-            self.config.lastUpdate = datetime.now()
+            self.config.last_updated = datetime.now()
             get_nodes_successful = True
         except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
             get_nodes_successful = False
@@ -499,7 +499,7 @@ class HiveSession:
         """
         await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
-            config.get("options", {}).get("scan_interval", self.config.scanInterval)
+            config.get("options", {}).get("scan_interval", self.config.scan_interval)
         )
 
         if config != {}:
