@@ -2,7 +2,6 @@
 
 from .hivedataclasses import EntityConfig
 
-# pylint: skip-file
 SYNC_PACKAGE_NAME = "pyhiveapi"
 SYNC_PACKAGE_DIR = "/pyhiveapi/"
 ASYNC_PACKAGE_NAME = "apyhiveapi"
