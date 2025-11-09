@@ -37,7 +37,7 @@ class HiveSession:
         HiveUnknownConfiguration: Unknown configuration.
         HTTPException: HTTP error has occurred.
         HiveApiError: Hive has retuend an error code.
-        HiveReauthRequired: Tokens have expired and reauthentiction is required.
+        HiveReauthRequired: Tokens have expired and reauthentication is required.
 
     Returns:
         object: Session object.
