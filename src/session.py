@@ -10,7 +10,6 @@ import time
 from datetime import datetime, timedelta
 
 from aiohttp.web import HTTPException
-
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
@@ -311,14 +310,17 @@ class HiveSession:
         else:
             expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
             if datetime.now() >= expiry_time:
-                result = await self.auth.refresh_token(
-                    self.tokens.tokenData["refreshToken"]
-                )
+                try:
+                    result = await self.auth.refresh_token(
+                        self.tokens.tokenData["refreshToken"]
+                    )
 
-                if "AuthenticationResult" in result:
-                    await self.updateTokens(result)
-                else:
-                    raise HiveFailedToRefreshTokens
+                    if "AuthenticationResult" in result:
+                        await self.updateTokens(result)
+                except HiveFailedToRefreshTokens:
+                    await self.deviceLogin()
+                except HiveApiError:
+                    raise HiveApiError
 
         return result
 
@@ -499,6 +501,12 @@ class HiveSession:
         if config != {}:
             if "tokens" in config and not self.config.file:
                 await self.updateTokens(config["tokens"], False)
+
+            if "username" in config and not self.config.file:
+                self.auth.username = config["username"]
+
+            if "password" in config and not self.config.file:
+                self.auth.password = config["password"]
 
             if "device_data" in config and not self.config.file:
                 self.auth.device_group_key = config["device_data"][0]
