@@ -166,7 +166,7 @@ class HiveSession:
 
             return formatted_data
         except KeyError as error:
-            self.logger.error(error)
+            self.log.error(error)
             return None
 
     async def updateInterval(self, new_interval: timedelta):
