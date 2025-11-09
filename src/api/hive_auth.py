@@ -11,6 +11,8 @@ import socket
 
 import boto3
 import botocore
+from botocore import UNSIGNED
+from botocore.config import Config
 
 from ..helper.hive_exceptions import (
     HiveApiError,
@@ -117,12 +119,12 @@ class HiveAuth:
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
+        # Use unsigned requests for Cognito public client (no AWS credentials needed)
+        config = Config(signature_version=UNSIGNED)
         self.client = boto3.client(
             "cognito-idp",
-            self.__region,
-            aws_access_key_id="ACCESS_KEY",
-            aws_secret_access_key="SECRET_KEY",
-            aws_session_token="SESSION_TOKEN",
+            region_name=self.__region,
+            config=config,
         )
 
     def generate_random_small_a(self):

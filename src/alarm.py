@@ -37,7 +37,7 @@ class HiveHomeShield:
         state = None
 
         try:
-            data = self.session.data.devices[device["hiveID"]]
+            data = self.session.data.devices[device.hive_id]
             state = data["state"]["alarmActive"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -55,10 +55,7 @@ class HiveHomeShield:
         """
         final = False
 
-        if (
-            device["hiveID"] in self.session.data.devices
-            and device["deviceData"]["online"]
-        ):
+        if device.hive_id in self.session.data.devices and device.device_data["online"]:
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setAlarm(mode=mode)
             if resp["original"] == 200:
@@ -92,19 +89,19 @@ class Alarm(HiveHomeShield):
         Returns:
             dict: Updated device.
         """
-        device["deviceData"].update(
+        device.device_data.update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device.device_data["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
+                "hiveID": device.hive_id,
+                "hiveName": device.hive_name,
+                "hiveType": device.hive_type,
+                "haName": device.ha_name,
                 "haType": device["haType"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
@@ -116,14 +113,14 @@ class Alarm(HiveHomeShield):
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.session.attr.stateAttributes(
-                    device["device_id"], device["hiveType"]
+                    device["device_id"], device.hive_type
                 ),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device.hive_id: dev_data})
+            return self.session.devices[device.hive_id]
         else:
             await self.session.log.errorCheck(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device.device_data["online"]
             )
             return device

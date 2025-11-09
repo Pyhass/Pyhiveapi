@@ -5,6 +5,7 @@ import datetime
 import operator
 
 from .const import HIVE_TYPES
+from .hivedataclasses import EntityConfig
 
 
 class HiveHelper:
@@ -209,6 +210,21 @@ class HiveHelper:
         Returns:
             [dictionary]: [Gets the thermostat device linked to TRV.]
         """
-        trv = self.session.data.products.get(device["HiveID"])
+        trv = self.session.data.products.get(device.hive_id)
         thermostat = self.session.data.products.get(trv["state"]["zone"])
         return thermostat
+
+    def _build_kwargs(self, config: EntityConfig) -> dict:
+        """Build kwargs dict from EntityConfig, excluding None values."""
+        kwargs = {}
+
+        if config.ha_name:
+            kwargs["haName"] = config.ha_name
+        if config.hive_type:
+            kwargs["hiveType"] = config.hive_type
+        if config.category:
+            kwargs["category"] = config.category
+        if config.temperature_unit:
+            kwargs["temperatureunit"] = self.session.data["user"]["temperatureUnit"]
+
+        return kwargs

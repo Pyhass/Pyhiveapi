@@ -22,8 +22,8 @@ class HiveHeating:
         Returns:
             int: Minimum temperature
         """
-        if device["hiveType"] == "nathermostat":
-            return self.session.data.products[device["hiveID"]]["props"]["minHeat"]
+        if device.hive_type == "nathermostat":
+            return self.session.data.products[device.hive_id]["props"]["minHeat"]
         return 5
 
     async def getMaxTemperature(self, device: dict):
@@ -35,8 +35,8 @@ class HiveHeating:
         Returns:
             int: Maximum temperature
         """
-        if device["hiveType"] == "nathermostat":
-            return self.session.data.products[device["hiveID"]]["props"]["maxHeat"]
+        if device.hive_type == "nathermostat":
+            return self.session.data.products[device.hive_id]["props"]["maxHeat"]
         return 32
 
     async def getCurrentTemperature(self, device: dict):
@@ -55,31 +55,31 @@ class HiveHeating:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["temperature"]
 
-            if device["hiveID"] in self.session.data.minMax:
-                if self.session.data.minMax[device["hiveID"]]["TodayDate"] == str(
+            if device.hive_id in self.session.data.minMax:
+                if self.session.data.minMax[device.hive_id]["TodayDate"] == str(
                     datetime.date(datetime.now())
                 ):
-                    if state < self.session.data.minMax[device["hiveID"]]["TodayMin"]:
-                        self.session.data.minMax[device["hiveID"]]["TodayMin"] = state
+                    if state < self.session.data.minMax[device.hive_id]["TodayMin"]:
+                        self.session.data.minMax[device.hive_id]["TodayMin"] = state
 
-                    if state > self.session.data.minMax[device["hiveID"]]["TodayMax"]:
-                        self.session.data.minMax[device["hiveID"]]["TodayMax"] = state
+                    if state > self.session.data.minMax[device.hive_id]["TodayMax"]:
+                        self.session.data.minMax[device.hive_id]["TodayMax"] = state
                 else:
                     data = {
                         "TodayMin": state,
                         "TodayMax": state,
                         "TodayDate": str(datetime.date(datetime.now())),
                     }
-                    self.session.data.minMax[device["hiveID"]].update(data)
+                    self.session.data.minMax[device.hive_id].update(data)
 
-                if state < self.session.data.minMax[device["hiveID"]]["RestartMin"]:
-                    self.session.data.minMax[device["hiveID"]]["RestartMin"] = state
+                if state < self.session.data.minMax[device.hive_id]["RestartMin"]:
+                    self.session.data.minMax[device.hive_id]["RestartMin"] = state
 
-                if state > self.session.data.minMax[device["hiveID"]]["RestartMax"]:
-                    self.session.data.minMax[device["hiveID"]]["RestartMax"] = state
+                if state > self.session.data.minMax[device.hive_id]["RestartMax"]:
+                    self.session.data.minMax[device.hive_id]["RestartMax"] = state
             else:
                 data = {
                     "TodayMin": state,
@@ -88,7 +88,7 @@ class HiveHeating:
                     "RestartMin": state,
                     "RestartMax": state,
                 }
-                self.session.data.minMax[device["hiveID"]] = data
+                self.session.data.minMax[device.hive_id] = data
 
             f_state = round(float(state), 1)
             final = f_state
@@ -109,7 +109,7 @@ class HiveHeating:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = float(data["state"].get("target", None))
             state = float(data["state"].get("heat", state))
         except (KeyError, TypeError) as e:
@@ -130,7 +130,7 @@ class HiveHeating:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["state"]["mode"]
             if state == "BOOST":
                 state = data["props"]["previous"]["mode"]
@@ -177,7 +177,7 @@ class HiveHeating:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["working"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -196,7 +196,7 @@ class HiveHeating:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = HIVETOHA["Boost"].get(data["state"].get("boost", False), "ON")
         except KeyError as e:
             await self.session.log.error(e)
@@ -216,7 +216,7 @@ class HiveHeating:
             state = None
 
             try:
-                data = self.session.data.products[device["hiveID"]]
+                data = self.session.data.products[device.hive_id]
                 state = data["state"]["boost"]
             except KeyError as e:
                 await self.session.log.error(e)
@@ -236,7 +236,7 @@ class HiveHeating:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["autoBoost"]["active"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -266,17 +266,17 @@ class HiveHeating:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
             await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             resp = await self.session.api.setState(
-                data["type"], device["hiveID"], target=new_temp
+                data["type"], device.hive_id, target=new_temp
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.getDevices(device.hive_id)
                 final = True
 
         return final
@@ -295,16 +295,16 @@ class HiveHeating:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             resp = await self.session.api.setState(
-                data["type"], device["hiveID"], mode=new_mode
+                data["type"], device.hive_id, mode=new_mode
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.getDevices(device.hive_id)
                 final = True
 
         return final
@@ -326,20 +326,20 @@ class HiveHeating:
                 final = False
 
                 if (
-                    device["hiveID"] in self.session.data.products
-                    and device["deviceData"]["online"]
+                    device.hive_id in self.session.data.products
+                    and device.device_data["online"]
                 ):
-                    data = self.session.data.products[device["hiveID"]]
+                    data = self.session.data.products[device.hive_id]
                     resp = await self.session.api.setState(
                         data["type"],
-                        device["hiveID"],
+                        device.hive_id,
                         mode="BOOST",
                         boost=mins,
                         target=temp,
                     )
 
                     if resp["original"] == 200:
-                        await self.session.getDevices(device["hiveID"])
+                        await self.session.getDevices(device.hive_id)
                         final = True
 
                 return final
@@ -357,28 +357,28 @@ class HiveHeating:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
             await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
-            await self.session.getDevices(device["hiveID"])
+            data = self.session.data.products[device.hive_id]
+            await self.session.getDevices(device.hive_id)
             if await self.getBoostStatus(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode == "MANUAL" or prev_mode == "OFF":
                     pre_temp = data["props"]["previous"].get("target", 7)
                     resp = await self.session.api.setState(
                         data["type"],
-                        device["hiveID"],
+                        device.hive_id,
                         mode=prev_mode,
                         target=pre_temp,
                     )
                 else:
                     resp = await self.session.api.setState(
-                        data["type"], device["hiveID"], mode=prev_mode
+                        data["type"], device.hive_id, mode=prev_mode
                     )
                 if resp["original"] == 200:
-                    await self.session.getDevices(device["hiveID"])
+                    await self.session.getDevices(device.hive_id)
                     final = True
 
         return final
@@ -396,17 +396,17 @@ class HiveHeating:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(
-                data["type"], device["hiveID"], autoBoost=state
+                data["type"], device.hive_id, autoBoost=state
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device["hiveID"])
+                await self.session.getDevices(device.hive_id)
                 final = True
 
         return final
@@ -436,19 +436,19 @@ class Climate(HiveHeating):
         Returns:
             dict: Updated device.
         """
-        device["deviceData"].update(
+        device.device_data.update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
 
-        if device["deviceData"]["online"]:
+        if device.device_data["online"]:
             dev_data = {}
             self.session.helper.deviceRecovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
+                "hiveID": device.hive_id,
+                "hiveName": device.hive_name,
+                "hiveType": device.hive_type,
+                "haName": device.ha_name,
                 "haType": device["haType"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
@@ -466,14 +466,14 @@ class Climate(HiveHeating):
                 "parentDevice": data.get("parent", None),
                 "custom": device.get("custom", None),
                 "attributes": await self.session.attr.stateAttributes(
-                    device["device_id"], device["hiveType"]
+                    device["device_id"], device.hive_type
                 ),
             }
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device.hive_id: dev_data})
+            return self.session.devices[device.hive_id]
         else:
             await self.session.log.errorCheck(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device.device_data["online"]
             )
             return device
 
@@ -492,7 +492,7 @@ class Climate(HiveHeating):
 
         try:
             if online and current_mode == "SCHEDULE":
-                data = self.session.data.products[device["hiveID"]]
+                data = self.session.data.products[device.hive_id]
                 state = self.session.helper.getScheduleNNL(data["state"]["schedule"])
         except KeyError as e:
             await self.session.log.error(e)
@@ -512,7 +512,7 @@ class Climate(HiveHeating):
         final = None
 
         try:
-            state = self.session.data.minMax[device["hiveID"]]
+            state = self.session.data.minMax[device.hive_id]
             final = state
         except KeyError as e:
             await self.session.log.error(e)

@@ -8,12 +8,13 @@ import operator
 import os
 import time
 from datetime import datetime, timedelta
+from typing import Optional
 
 from aiohttp.web import HTTPException
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
-from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
+from .helper.const import DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
     HiveFailedToRefreshTokens,
@@ -26,6 +27,7 @@ from .helper.hive_exceptions import (
     NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
+from .helper.hivedataclasses import Device
 from .helper.logger import Logger
 from .helper.map import Map
 
@@ -120,15 +122,16 @@ class HiveSession:
 
         return data
 
-    def addList(self, entityType: str, data: dict, **kwargs: dict):
+    def addList(self, entity_type: str, data: dict, **kwargs: dict) -> Optional[Device]:
         """Add entity to the list.
 
         Args:
-            type (str): Type of entity
+            entityType (str): Type of entity
             data (dict): Information to create entity.
+            **kwargs: Additional device attributes (ha_name, category, etc.)
 
         Returns:
-            dict: Entity.
+            Optional[Device]: Device dataclass instance, or None on error.
         """
         try:
             device = self.helper.getDeviceData(data)
@@ -137,34 +140,35 @@ class HiveSession:
                 if device["state"]["name"] != "Receiver"
                 else "Heating"
             )
-            formatted_data = {}
 
-            formatted_data = {
-                "hiveID": data.get("id", ""),
-                "hiveName": device_name,
-                "hiveType": data.get("type", ""),
-                "haType": entityType,
-                "deviceData": device.get("props", data.get("props", {})),
-                "parentDevice": self.hub_id,
-                "isGroup": data.get("isGroup", False),
-                "device_id": device["id"],
-                "device_name": device_name,
-            }
+            # Handle ha_name logic
+            ha_name = kwargs.get("ha_name", device_name)
+            if ha_name and ha_name[0] == " ":
+                ha_name = device_name + ha_name
 
-            if kwargs.get("haName", "FALSE")[0] == " ":
-                kwargs["haName"] = device_name + kwargs["haName"]
-            else:
-                formatted_data["haName"] = device_name
-
-            formatted_data.update(kwargs)
+            # Create Device instance
+            device_obj = Device(
+                hive_id=data.get("id", ""),
+                hive_name=device_name,
+                hive_type=data.get("type", ""),
+                ha_type=entity_type,
+                device_id=device["id"],
+                device_name=device_name,
+                device_data=device.get("props", data.get("props", {})),
+                parent_device=self.hub_id,
+                is_group=data.get("isGroup", False),
+                ha_name=ha_name,
+                category=kwargs.get("category"),
+                temperature_unit=kwargs.get("temperatureunit"),
+            )
 
             if data.get("type", "") == "hub":
-                self.deviceList["parent"].append(formatted_data)
-                self.deviceList[entityType].append(formatted_data)
+                self.deviceList["parent_device"].append(device_obj)
+                self.deviceList[entity_type].append(device_obj)
             else:
-                self.deviceList[entityType].append(formatted_data)
+                self.deviceList[entity_type].append(device_obj)
 
-            return formatted_data
+            return device_obj
         except KeyError as error:
             self.logger.error(error)
             return None
@@ -338,7 +342,7 @@ class HiveSession:
         if datetime.now() >= ep and not self.updateLock.locked():
             try:
                 await self.updateLock.acquire()
-                await self.getDevices(device["hiveID"])
+                await self.getDevices(device.hive_id)
                 if len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
@@ -532,7 +536,7 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        self.deviceList["parent"] = []
+        self.deviceList["parent_device"] = []
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
         self.deviceList["camera"] = []
@@ -543,45 +547,48 @@ class HiveSession:
         self.deviceList["water_heater"] = []
 
         hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
-        for aDevice in self.data["devices"]:
-            if self.data["devices"][aDevice]["type"] == "hub":
-                self.hub_id = aDevice
+        for device_id, device_data in self.data["devices"].items():
+            if device_data["type"] == "hub":
+                self.hub_id = device_id
                 break
-        for aDevice in self.data["devices"]:
-            d = self.data.devices[aDevice]
-            device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
-            for code in device_list:
-                eval("self." + code)
 
-            if self.data["devices"][aDevice]["type"] in hive_type:
-                self.config.battery.append(d["id"])
+        for device_id, device_data in self.data["devices"].items():
+            entity_configs = DEVICES.get(device_data["type"], [])
 
-        if "action" in HIVE_TYPES["Switch"]:
-            for action in self.data["actions"]:
-                a = self.data["actions"][action]  # noqa: F841
-                eval("self." + ACTIONS)
+            for config in entity_configs:
+                kwargs = self.helper._build_kwargs(config)
+                self.addList(config.entity_type, device_data, **kwargs)
+
+            if device_data["type"] in hive_type:
+                self.config.battery.append(device_data["id"])
 
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
-        for aProduct in self.data.products:
-            p = self.data.products[aProduct]
-            if "error" in p:
+        for product_id, product_data in self.data.products.items():
+            if "error" in product_data:
                 continue
-            # Only consider single items or heating groups
+
+            # Skip non-heating groups
             if (
-                p.get("isGroup", False)
-                and self.data.products[aProduct]["type"] not in HIVE_TYPES["Heating"]
+                product_data.get("isGroup", False)
+                and product_data["type"] not in HIVE_TYPES["Heating"]
             ):
                 continue
-            product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
-            product_name = self.data.products[aProduct]["state"].get("name", "Unknown")
-            for code in product_list:
-                try:
-                    eval("self." + code)
-                except (NameError, AttributeError) as e:
-                    self.logger.warning(f"Device {product_name} cannot be setup - {e}")
 
-            if self.data.products[aProduct]["type"] in hive_type:
-                self.config.mode.append(p["id"])
+            entity_configs = PRODUCTS.get(product_data["type"], [])
+
+            for config in entity_configs:
+                kwargs = self.helper._build_kwargs(config)
+
+                try:
+                    self.addList(config.entity_type, product_data, **kwargs)
+                except (NameError, AttributeError) as e:
+                    product_name = product_data["state"].get("name", "Unknown")
+                    self.logger.warning(
+                        f"Device {product_id}-{product_name} cannot be setup - {e}"
+                    )
+
+            if product_data["type"] in hive_type:
+                self.config.mode.append(product_data["id"])
 
         return self.deviceList
 
