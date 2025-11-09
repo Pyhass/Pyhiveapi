@@ -334,7 +334,7 @@ class HiveSession:
             boolean: True/False if update was successful
         """
         updated = False
-        ep = self.config.lastUpdate + self.config.scanInterval
+        ep = self.config.lastUpdated + self.config.scanInterval
         if datetime.now() >= ep and not self.updateLock.locked():
             try:
                 await self.updateLock.acquire()
