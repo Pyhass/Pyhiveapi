@@ -25,7 +25,7 @@ class HiveSmartPlug:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["state"]["status"]
             state = HIVETOHA["Switch"].get(state, state)
         except KeyError as e:
@@ -45,7 +45,7 @@ class HiveSmartPlug:
         state = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["powerConsumption"]
         except KeyError as e:
             await self.session.log.error(e)
@@ -64,17 +64,17 @@ class HiveSmartPlug:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
             await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="ON"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.getDevices(device.hive_id)
 
         return final
 
@@ -90,17 +90,17 @@ class HiveSmartPlug:
         final = False
 
         if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
+            device.hive_id in self.session.data.products
+            and device.device_data["online"]
         ):
             await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             resp = await self.session.api.setState(
                 data["type"], data["id"], status="OFF"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device["hiveID"])
+                await self.session.getDevices(device.hive_id)
 
         return final
 
@@ -129,19 +129,19 @@ class Switch(HiveSmartPlug):
         Returns:
             dict: Return device after update is complete.
         """
-        device["deviceData"].update(
+        device.device_data.update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
         dev_data = {}
 
-        if device["deviceData"]["online"]:
+        if device.device_data["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
-                "hiveID": device["hiveID"],
-                "hiveName": device["hiveName"],
-                "hiveType": device["hiveType"],
-                "haName": device["haName"],
+                "hiveID": device.hive_id,
+                "hiveName": device.hive_name,
+                "hiveType": device.hive_type,
+                "haName": device.ha_name,
                 "haType": device["haType"],
                 "device_id": device["device_id"],
                 "device_name": device["device_name"],
@@ -154,7 +154,7 @@ class Switch(HiveSmartPlug):
                 "attributes": {},
             }
 
-            if device["hiveType"] == "activeplug":
+            if device.hive_type == "activeplug":
                 dev_data.update(
                     {
                         "status": {
@@ -162,16 +162,16 @@ class Switch(HiveSmartPlug):
                             "power_usage": await self.getPowerUsage(device),
                         },
                         "attributes": await self.session.attr.stateAttributes(
-                            device["device_id"], device["hiveType"]
+                            device["device_id"], device.hive_type
                         ),
                     }
                 )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            self.session.devices.update({device.hive_id: dev_data})
+            return self.session.devices[device.hive_id]
         else:
             await self.session.log.errorCheck(
-                device["device_id"], "ERROR", device["deviceData"]["online"]
+                device["device_id"], "ERROR", device.device_data["online"]
             )
             return device
 
@@ -184,7 +184,7 @@ class Switch(HiveSmartPlug):
         Returns:
             boolean: Return True or False for the state.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device.hive_type == "Heating_Heat_On_Demand":
             return await self.session.heating.getHeatOnDemand(device)
         else:
             return await self.getState(device)
@@ -198,7 +198,7 @@ class Switch(HiveSmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device.hive_type == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "ENABLED")
         else:
             return await self.setStatusOn(device)
@@ -212,7 +212,7 @@ class Switch(HiveSmartPlug):
         Returns:
             function: Calls relevant function.
         """
-        if device["hiveType"] == "Heating_Heat_On_Demand":
+        if device.hive_type == "Heating_Heat_On_Demand":
             return await self.session.heating.setHeatOnDemand(device, "DISABLED")
         else:
             return await self.setStatusOff(device)
