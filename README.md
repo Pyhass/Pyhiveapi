@@ -1,6 +1,9 @@
 
 ![CodeQL](https://github.com/Pyhive/Pyhiveapi/workflows/CodeQL/badge.svg) ![Python Linting](https://github.com/Pyhive/Pyhiveapi/workflows/Python%20package/badge.svg)
 
+# Important
+The package name had to be changed and going forward the Pyhiveapi package should no longer be used. all the same code has been moved into a new package called pyhive-integration. Nothing changes in how the package functions its just a rename.
+
 # Introduction
 This is a library which interfaces with the Hive smart home platform. 
 This library is built mainly to integrate with the Home Assistant platform,
