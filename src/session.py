@@ -4,6 +4,7 @@
 import asyncio
 import copy
 import json
+import logging
 import operator
 import os
 import time
@@ -22,12 +23,14 @@ from .helper.hive_exceptions import (
     HiveInvalidPassword,
     HiveInvalidUsername,
     HiveReauthRequired,
+    HiveRefreshTokenExpired,
     HiveUnknownConfiguration,
     NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
-from .helper.logger import Logger
 from .helper.map import Map
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveSession:
@@ -65,8 +68,8 @@ class HiveSession:
         self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
-        self.log = Logger(self)
         self.updateLock = asyncio.Lock()
+        self._refreshLock = asyncio.Lock()
         self.tokens = Map(
             {
                 "tokenData": {},
@@ -82,7 +85,7 @@ class HiveSession:
                 "errorList": {},
                 "file": False,
                 "homeID": None,
-                "lastUpdated": datetime.now(),
+                "lastUpdate": datetime.now(),
                 "mode": [],
                 "scanInterval": timedelta(seconds=120),
                 "userID": None,
@@ -166,7 +169,7 @@ class HiveSession:
 
             return formatted_data
         except KeyError as error:
-            self.logger.error(error)
+            _LOGGER.error(error)
             return None
 
     async def updateInterval(self, new_interval: timedelta):
@@ -236,16 +239,21 @@ class HiveSession:
         if not self.auth:
             raise HiveUnknownConfiguration
 
+        _LOGGER.debug("Attempting login to Hive account.")
         try:
             result = await self.auth.login()
         except HiveInvalidUsername:
-            print("invalid_username")
+            _LOGGER.error("Login failed: invalid username.")
+            raise
         except HiveInvalidPassword:
-            print("invalid_password")
+            _LOGGER.error("Login failed: invalid password.")
+            raise
         except HiveApiError:
-            print("no_internet_available")
+            _LOGGER.error("Login failed: API error or no internet connection.")
+            raise
 
-        if "AuthenticationResult" in result:
+        if result and "AuthenticationResult" in result:
+            _LOGGER.debug("Login successful, tokens received.")
             await self.updateTokens(result)
         return result
 
@@ -260,16 +268,21 @@ class HiveSession:
         """
         result = None
         if not self.auth:
+            _LOGGER.error("2FA failed: authentication not initialised.")
             raise HiveUnknownConfiguration
 
+        _LOGGER.debug("Submitting 2FA code.")
         try:
             result = await self.auth.sms_2fa(code, session)
         except HiveInvalid2FACode:
-            print("invalid_code")
+            _LOGGER.error("2FA failed: invalid code entered.")
+            raise
         except HiveApiError:
-            print("no_internet_available")
+            _LOGGER.error("2FA failed: API error or no internet connection.")
+            raise
 
-        if "AuthenticationResult" in result:
+        if result and "AuthenticationResult" in result:
+            _LOGGER.debug("2FA login successful, tokens received.")
             await self.updateTokens(result)
         return result
 
@@ -285,17 +298,50 @@ class HiveSession:
         """
         result = None
         if not self.auth:
+            _LOGGER.error("Device login failed: authentication not initialised.")
             raise HiveUnknownConfiguration
 
+        _LOGGER.debug("Attempting device login.")
         try:
             result = await self.auth.device_login()
         except HiveInvalidDeviceAuthentication:
-            raise HiveInvalidDeviceAuthentication
+            _LOGGER.error("Device login failed: invalid device credentials.")
+            raise
 
-        if "AuthenticationResult" in result:
+        if result and "AuthenticationResult" in result:
+            _LOGGER.debug("Device login successful, tokens received.")
             await self.updateTokens(result)
             self.tokens.tokenExpiry = timedelta(seconds=0)
         return result
+
+    async def _retryDeviceLogin(self):
+        """Attempt device login with retries and backoff.
+
+        Raises:
+            HiveReauthRequired: All retry attempts have been exhausted.
+        """
+        last_err = None
+        for delay_s in (0, 5, 15):
+            try:
+                if delay_s:
+                    _LOGGER.debug("Retrying device login in %s seconds.", delay_s)
+                    await asyncio.sleep(delay_s)
+                await self.deviceLogin()
+                last_err = None
+                break
+            except HiveInvalidDeviceAuthentication as err:
+                _LOGGER.error(
+                    "Device login failed with invalid credentials, reauthentication required."
+                )
+                raise HiveReauthRequired from err
+            except HiveApiError as err:
+                _LOGGER.error("Device login attempt failed: %s", err)
+                last_err = err
+        if last_err is not None:
+            _LOGGER.error(
+                "All device login retries exhausted, reauthentication required."
+            )
+            raise HiveReauthRequired from last_err
 
     async def hiveRefreshTokens(self):
         """Refresh Hive tokens.
@@ -308,19 +354,38 @@ class HiveSession:
         if self.config.file:
             return None
         else:
-            expiry_time = self.tokens.tokenCreated + self.tokens.tokenExpiry
+            expiry_time = self.tokens.tokenCreated + (self.tokens.tokenExpiry * 0.95)
+            # Refresh at 95% of token lifetime to prevent expiration during API calls
             if datetime.now() >= expiry_time:
-                try:
-                    result = await self.auth.refresh_token(
-                        self.tokens.tokenData["refreshToken"]
+                async with self._refreshLock:
+                    # Re-check after acquiring lock — another caller may have already refreshed
+                    expiry_time = self.tokens.tokenCreated + (
+                        self.tokens.tokenExpiry * 0.95
                     )
+                    if datetime.now() < expiry_time:
+                        return result
+                    _LOGGER.debug(
+                        "Token nearing expiry (created: %s, expiry window: %s), refreshing.",
+                        self.tokens.tokenCreated,
+                        self.tokens.tokenExpiry,
+                    )
+                    try:
+                        result = await self.auth.refresh_token(
+                            self.tokens.tokenData["refreshToken"]
+                        )
 
-                    if "AuthenticationResult" in result:
-                        await self.updateTokens(result)
-                except HiveFailedToRefreshTokens:
-                    await self.deviceLogin()
-                except HiveApiError:
-                    raise HiveApiError
+                        if result and "AuthenticationResult" in result:
+                            _LOGGER.debug("Token refresh successful.")
+                            await self.updateTokens(result)
+                    except (HiveRefreshTokenExpired, HiveFailedToRefreshTokens) as exc:
+                        _LOGGER.warning(
+                            "Token refresh failed (%s), falling back to device login.",
+                            type(exc).__name__,
+                        )
+                        await self._retryDeviceLogin()
+                    except HiveApiError:
+                        _LOGGER.error("API error during token refresh.")
+                        raise
 
         return result
 
@@ -335,16 +400,19 @@ class HiveSession:
         """
         updated = False
         ep = self.config.lastUpdate + self.config.scanInterval
-        if datetime.now() >= ep and not self.updateLock.locked():
-            try:
-                await self.updateLock.acquire()
+        if datetime.now() >= ep:
+            async with self.updateLock:
+                # Re-check after acquiring lock — another caller may have already updated
+                ep = self.config.lastUpdate + self.config.scanInterval
+                if datetime.now() < ep:
+                    return updated
+                _LOGGER.debug("Polling Hive API for device updates.")
                 await self.getDevices(device["hiveID"])
                 if len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
                 updated = True
-            finally:
-                self.updateLock.release()
+                _LOGGER.debug("Device update completed successfully.")
 
         return updated
 
@@ -432,9 +500,11 @@ class HiveSession:
 
         try:
             if self.config.file:
+                _LOGGER.debug("Loading device data from file.")
                 api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
                 await self.hiveRefreshTokens()
+                _LOGGER.debug("Fetching all devices from Hive API.")
                 api_resp_d = await self.api.getAll()
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
@@ -466,6 +536,12 @@ class HiveSession:
                 if hiveType == "homes":
                     self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
 
+            _LOGGER.debug(
+                "API returned %d products, %d devices, %d actions.",
+                len(tmpProducts),
+                len(tmpDevices),
+                len(tmpActions),
+            )
             if len(tmpProducts) > 0:
                 self.data.products = copy.deepcopy(tmpProducts)
             if len(tmpDevices) > 0:
@@ -475,12 +551,19 @@ class HiveSession:
                 await self.getAlarm()
             self.config.lastUpdate = datetime.now()
             get_nodes_successful = True
-        except (OSError, RuntimeError, HiveApiError, ConnectionError, HTTPException):
+        except (
+            OSError,
+            RuntimeError,
+            HiveApiError,
+            ConnectionError,
+            HTTPException,
+        ) as err:
+            _LOGGER.error("Failed to fetch devices: %s", err)
             get_nodes_successful = False
 
         return get_nodes_successful
 
-    async def startSession(self, config: dict = {}):
+    async def startSession(self, config: dict = None):
         """Setup the Hive platform.
 
         Args:
@@ -493,6 +576,9 @@ class HiveSession:
         Returns:
             list: List of devices
         """
+        if config is None:
+            config = {}
+        _LOGGER.debug("Starting Hive session.")
         await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
             config.get("options", {}).get("scan_interval", self.config.scanInterval)
@@ -519,9 +605,12 @@ class HiveSession:
         try:
             await self.getDevices("No_ID")
         except HTTPException:
-            return HTTPException
+            raise
 
         if self.data.devices == {} or self.data.products == {}:
+            _LOGGER.error(
+                "No devices or products returned from Hive API, reauthentication required."
+            )
             raise HiveReauthRequired
 
         return await self.createDevices()
@@ -561,6 +650,15 @@ class HiveSession:
                 a = self.data["actions"][action]  # noqa: F841
                 eval("self." + ACTIONS)
 
+        _LOGGER.debug(
+            "Device discovery found: %d climate, %d light, %d switch, %d sensor, %d camera, %d alarm.",
+            len(self.deviceList["climate"]),
+            len(self.deviceList["light"]),
+            len(self.deviceList["switch"]),
+            len(self.deviceList["sensor"]),
+            len(self.deviceList["camera"]),
+            len(self.deviceList["alarm_control_panel"]),
+        )
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
@@ -578,7 +676,7 @@ class HiveSession:
                 try:
                     eval("self." + code)
                 except (NameError, AttributeError) as e:
-                    self.logger.warning(f"Device {product_name} cannot be setup - {e}")
+                    _LOGGER.warning(f"Device {product_name} cannot be setup - {e}")
 
             if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])

@@ -2,6 +2,7 @@
 
 # pylint: skip-file
 import json
+import logging
 from typing import Optional
 
 import requests
@@ -11,6 +12,8 @@ from pyquery import PyQuery
 
 from ..helper.const import HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
+
+_LOGGER = logging.getLogger(__name__)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -50,6 +53,7 @@ class HiveApiAsync:
         self, method: str, url: str, camera: bool = False, **kwargs
     ) -> ClientResponse:
         """Make a request."""
+        _LOGGER.debug("API %s request to %s", method.upper(), url)
         data = kwargs.get("data", None)
 
         try:
@@ -79,15 +83,16 @@ class HiveApiAsync:
         ) as resp:
             await resp.text()
             if str(resp.status).startswith("20"):
+                _LOGGER.debug("API response %s from %s", resp.status, url)
                 return resp
 
         if resp.status == HTTP_UNAUTHORIZED:
-            self.session.logger.error(
+            _LOGGER.error(
                 f"Hive token has expired when calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
         elif url is not None and resp.status is not None:
-            self.session.logger.error(
+            _LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status}"
             )
@@ -146,6 +151,7 @@ class HiveApiAsync:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
+        _LOGGER.debug("Fetching all nodes from Hive API.")
         try:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
@@ -276,6 +282,7 @@ class HiveApiAsync:
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
+        _LOGGER.debug("Setting state for %s/%s: %s", n_type, n_id, kwargs)
         json_return = {}
         jsc = (
             "{"
@@ -301,6 +308,7 @@ class HiveApiAsync:
 
     async def setAlarm(self, **kwargs):
         """Set the state of the alarm."""
+        _LOGGER.debug("Setting alarm state: %s", kwargs)
         json_return = {}
         jsc = (
             "{"
@@ -326,6 +334,7 @@ class HiveApiAsync:
 
     async def setAction(self, n_id, data):
         """Set the state of a Action."""
+        _LOGGER.debug("Setting action %s", n_id)
         jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
@@ -341,6 +350,7 @@ class HiveApiAsync:
 
     async def error(self):
         """An error has occurred interacting with the Hive API."""
+        _LOGGER.error("HTTP error occurred during Hive API interaction.")
         raise web_exceptions.HTTPError
 
     async def isFileBeingUsed(self):

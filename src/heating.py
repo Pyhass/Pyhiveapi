@@ -1,7 +1,11 @@
 """Hive Heating Module."""
 
 # pylint: skip-file
+import logging
+
 from .helper.const import HIVETOHA
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHeating:
@@ -93,7 +97,7 @@ class HiveHeating:
             f_state = round(float(state), 1)
             final = f_state
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -113,7 +117,7 @@ class HiveHeating:
             state = float(data["state"].get("target", None))
             state = float(data["state"].get("heat", state))
         except (KeyError, TypeError) as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -136,7 +140,7 @@ class HiveHeating:
                 state = data["props"]["previous"]["mode"]
             final = HIVETOHA[self.heatingType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -161,7 +165,7 @@ class HiveHeating:
                 state = "OFF"
             final = HIVETOHA[self.heatingType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -180,7 +184,7 @@ class HiveHeating:
             data = self.session.data.products[device["hiveID"]]
             state = data["props"]["working"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -199,7 +203,7 @@ class HiveHeating:
             data = self.session.data.products[device["hiveID"]]
             state = HIVETOHA["Boost"].get(data["state"].get("boost", False), "ON")
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -219,7 +223,7 @@ class HiveHeating:
                 data = self.session.data.products[device["hiveID"]]
                 state = data["state"]["boost"]
             except KeyError as e:
-                await self.session.log.error(e)
+                _LOGGER.error(e)
 
             return state
         return None
@@ -239,7 +243,7 @@ class HiveHeating:
             data = self.session.data.products[device["hiveID"]]
             state = data["props"]["autoBoost"]["active"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -269,7 +273,9 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            await self.session.hiveRefreshTokens()
+            _LOGGER.debug(
+                "Setting target temperature to %s for %s.", new_temp, device["haName"]
+            )
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], target=new_temp
@@ -298,6 +304,9 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug(
+                "Setting heating mode to %s for %s.", new_mode, device["haName"]
+            )
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], mode=new_mode
@@ -329,6 +338,12 @@ class HiveHeating:
                     device["hiveID"] in self.session.data.products
                     and device["deviceData"]["online"]
                 ):
+                    _LOGGER.debug(
+                        "Setting heating boost ON for %s: %s mins at %s degrees.",
+                        device["haName"],
+                        mins,
+                        temp,
+                    )
                     data = self.session.data.products[device["hiveID"]]
                     resp = await self.session.api.setState(
                         data["type"],
@@ -360,6 +375,7 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting heating boost OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             await self.session.getDevices(device["hiveID"])
@@ -399,6 +415,9 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug(
+                "Setting heat on demand to %s for %s.", state, device["haName"]
+            )
             data = self.session.data.products[device["hiveID"]]
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(
@@ -443,6 +462,7 @@ class Climate(HiveHeating):
         if device["deviceData"]["online"]:
             dev_data = {}
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating climate data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -472,7 +492,7 @@ class Climate(HiveHeating):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
             return device
@@ -495,7 +515,7 @@ class Climate(HiveHeating):
                 data = self.session.data.products[device["hiveID"]]
                 state = self.session.helper.getScheduleNNL(data["state"]["schedule"])
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -515,6 +535,6 @@ class Climate(HiveHeating):
             state = self.session.data.minMax[device["hiveID"]]
             final = state
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
