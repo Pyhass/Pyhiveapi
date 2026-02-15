@@ -357,6 +357,11 @@ class HiveSession:
         else:
             expiry_time = self.tokens.tokenCreated + (self.tokens.tokenExpiry * 0.95)
             # Refresh at 95% of token lifetime to prevent expiration during API calls
+            _LOGGER.debug(
+                "Checking token expiry time ( Current: %s | Expiry: %s)",
+                datetime.now(),
+                expiry_time,
+            )
             if datetime.now() >= expiry_time:
                 async with self._refreshLock:
                     # Re-check after acquiring lock — another caller may have already refreshed
@@ -365,10 +370,14 @@ class HiveSession:
                     )
                     if datetime.now() < expiry_time:
                         return result
+                    actual_expiry = self.tokens.tokenCreated + self.tokens.tokenExpiry
                     _LOGGER.debug(
-                        "Token nearing expiry (created: %s, expiry window: %s), refreshing.",
+                        "Token created: %s | Actual expiry: %s | "
+                        "Early refresh (×0.95): %s | Now: %s",
                         self.tokens.tokenCreated,
-                        self.tokens.tokenExpiry,
+                        actual_expiry,
+                        expiry_time,
+                        datetime.now(),
                     )
                     try:
                         result = await self.auth.refresh_token(
