@@ -540,7 +540,7 @@ class HiveSession:
                     except HiveAuthError as retry_err:
                         raise HiveReauthRequired from retry_err
                 api_call_duration = time.monotonic() - api_call_start
-                if api_call_duration > 8:
+                if api_call_duration > 3:
                     _LOGGER.warning(
                         "Hive API response took %.1fs — marking poll as slow.",
                         api_call_duration,

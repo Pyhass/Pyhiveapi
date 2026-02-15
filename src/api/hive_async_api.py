@@ -43,7 +43,7 @@ class HiveApiAsync:
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
         }
-        self.timeout = 10
+        self.timeout = 5
         self.json_return = {
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
