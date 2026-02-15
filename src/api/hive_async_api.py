@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import time
 from typing import Optional
 
 import requests
@@ -84,12 +85,20 @@ class HiveApiAsync:
         )
 
         timeout = ClientTimeout(total=10)
+        req_start = time.monotonic()
         async with self.websession.request(
             method, url, headers=headers, data=data, timeout=timeout
         ) as resp:
             resp_body = await resp.text()
+            req_duration = time.monotonic() - req_start
+            _LOGGER.debug(
+                "API %s %s completed in %.2fs — HTTP %s",
+                method.upper(),
+                url,
+                req_duration,
+                resp.status,
+            )
             if str(resp.status).startswith("20"):
-                _LOGGER.debug("API response %s from %s", resp.status, url)
                 return resp
 
         if resp.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):

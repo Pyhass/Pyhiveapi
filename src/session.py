@@ -107,6 +107,7 @@ class HiveSession:
         self.devices = {}
         self.deviceList = {}
         self.hub_id = None
+        self._lastPollSlow = False
 
     def openFile(self, file: str):
         """Open a file.
@@ -525,6 +526,7 @@ class HiveSession:
             elif self.tokens is not None:
                 await self.hiveRefreshTokens()
                 _LOGGER.debug("Fetching all devices from Hive API.")
+                api_call_start = time.monotonic()
                 try:
                     api_resp_d = await self.api.getAll()
                 except HiveAuthError:
@@ -537,6 +539,15 @@ class HiveSession:
                         api_resp_d = await self.api.getAll()
                     except HiveAuthError as retry_err:
                         raise HiveReauthRequired from retry_err
+                api_call_duration = time.monotonic() - api_call_start
+                if api_call_duration > 8:
+                    _LOGGER.warning(
+                        "Hive API response took %.1fs — marking poll as slow.",
+                        api_call_duration,
+                    )
+                    self._lastPollSlow = True
+                else:
+                    self._lastPollSlow = False
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
@@ -588,6 +599,7 @@ class HiveSession:
             raise
         except asyncio.TimeoutError:
             _LOGGER.warning("Hive API request timed out — keeping cached device data.")
+            self._lastPollSlow = True
             self.config.lastUpdate = (
                 datetime.now() - self.config.scanInterval + timedelta(seconds=30)
             )
