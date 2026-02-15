@@ -10,8 +10,8 @@ import urllib3
 from aiohttp import ClientResponse, ClientSession, web_exceptions
 from pyquery import PyQuery
 
-from ..helper.const import HTTP_UNAUTHORIZED
-from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
+from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
+from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,45 +56,52 @@ class HiveApiAsync:
         _LOGGER.debug("API %s request to %s", method.upper(), url)
         data = kwargs.get("data", None)
 
+        headers = {
+            "content-type": "application/json",
+            "Accept": "*/*",
+            "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
+        }
         try:
             if camera:
-                headers = {
-                    "content-type": "application/json",
-                    "Accept": "*/*",
-                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData["token"],
-                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
-                }
+                headers["Authorization"] = (
+                    f"Bearer {self.session.tokens.tokenData['token']}"
+                )
+                headers["x-jwt-token"] = self.session.tokens.tokenData["token"]
             else:
-                headers = {
-                    "content-type": "application/json",
-                    "Accept": "*/*",
-                    "Authorization": self.session.tokens.tokenData["token"],
-                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
-                }
+                headers["Authorization"] = self.session.tokens.tokenData["token"]
         except KeyError:
             if "sso" in url:
                 pass
             else:
                 raise NoApiToken
 
+        auth_token = headers.get("Authorization", "")
+        _LOGGER.debug(
+            "Using token (len=%d, tail=…%s)",
+            len(auth_token),
+            auth_token[-4:] if len(auth_token) >= 4 else auth_token,
+        )
+
         async with self.websession.request(
             method, url, headers=headers, data=data
         ) as resp:
-            await resp.text()
+            resp_body = await resp.text()
             if str(resp.status).startswith("20"):
                 _LOGGER.debug("API response %s from %s", resp.status, url)
                 return resp
 
-        if resp.status == HTTP_UNAUTHORIZED:
+        if resp.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
             _LOGGER.error(
-                f"Hive token has expired when calling {url} - "
-                f"HTTP status is - {resp.status}"
+                f"Hive token rejected calling {url} - "
+                f"HTTP {resp.status} — response: {resp_body[:200]}"
+            )
+            raise HiveAuthError(
+                f"Token expired or forbidden calling {url} — HTTP {resp.status}"
             )
         elif url is not None and resp.status is not None:
             _LOGGER.error(
                 f"Something has gone wrong calling {url} - "
-                f"HTTP status is - {resp.status}"
+                f"HTTP status is - {resp.status} — response: {resp_body[:200]}"
             )
 
         raise HiveApiError

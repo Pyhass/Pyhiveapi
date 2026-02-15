@@ -17,6 +17,7 @@ from .device_attributes import HiveAttributes
 from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
+    HiveAuthError,
     HiveFailedToRefreshTokens,
     HiveInvalid2FACode,
     HiveInvalidDeviceAuthentication,
@@ -73,7 +74,7 @@ class HiveSession:
         self.tokens = Map(
             {
                 "tokenData": {},
-                "tokenCreated": datetime.now() - timedelta(seconds=4000),
+                "tokenCreated": datetime.min,
                 "tokenExpiry": timedelta(seconds=3600),
             }
         )
@@ -407,12 +408,16 @@ class HiveSession:
                 if datetime.now() < ep:
                     return updated
                 _LOGGER.debug("Polling Hive API for device updates.")
-                await self.getDevices(device["hiveID"])
-                if len(self.deviceList["camera"]) > 0:
+                updated = await self.getDevices(device["hiveID"])
+                if updated and len(self.deviceList["camera"]) > 0:
                     for camera in self.data.camera:
                         await self.getCamera(self.devices[camera])
-                updated = True
-                _LOGGER.debug("Device update completed successfully.")
+                if updated:
+                    _LOGGER.debug("Device update completed successfully.")
+                else:
+                    _LOGGER.debug(
+                        "Device update failed, will retry after scan interval."
+                    )
 
         return updated
 
@@ -505,7 +510,18 @@ class HiveSession:
             elif self.tokens is not None:
                 await self.hiveRefreshTokens()
                 _LOGGER.debug("Fetching all devices from Hive API.")
-                api_resp_d = await self.api.getAll()
+                try:
+                    api_resp_d = await self.api.getAll()
+                except HiveAuthError:
+                    _LOGGER.warning(
+                        "Auth error (401/403) after token refresh, "
+                        "falling back to full device re-login."
+                    )
+                    await self._retryDeviceLogin()
+                    try:
+                        api_resp_d = await self.api.getAll()
+                    except HiveAuthError as retry_err:
+                        raise HiveReauthRequired from retry_err
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
@@ -551,6 +567,10 @@ class HiveSession:
                 await self.getAlarm()
             self.config.lastUpdate = datetime.now()
             get_nodes_successful = True
+        except HiveReauthRequired:
+            _LOGGER.error("Reauthentication required, propagating to caller.")
+            self.config.lastUpdate = datetime.now()
+            raise
         except (
             OSError,
             RuntimeError,
@@ -559,6 +579,9 @@ class HiveSession:
             HTTPException,
         ) as err:
             _LOGGER.error("Failed to fetch devices: %s", err)
+            self.config.lastUpdate = (
+                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
+            )
             get_nodes_successful = False
 
         return get_nodes_successful
