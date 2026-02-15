@@ -1,13 +1,14 @@
 """Hive API Module."""
 
 # pylint: skip-file
+import asyncio
 import json
 import logging
 from typing import Optional
 
 import requests
 import urllib3
-from aiohttp import ClientResponse, ClientSession, web_exceptions
+from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
 from pyquery import PyQuery
 
 from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
@@ -82,8 +83,9 @@ class HiveApiAsync:
             auth_token[-4:] if len(auth_token) >= 4 else auth_token,
         )
 
+        timeout = ClientTimeout(total=10)
         async with self.websession.request(
-            method, url, headers=headers, data=data
+            method, url, headers=headers, data=data, timeout=timeout
         ) as resp:
             resp_body = await resp.text()
             if str(resp.status).startswith("20"):
@@ -163,6 +165,9 @@ class HiveApiAsync:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
+        except asyncio.TimeoutError:
+            _LOGGER.warning("Hive API request timed out fetching all nodes.")
+            raise
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 

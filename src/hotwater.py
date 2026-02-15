@@ -263,6 +263,13 @@ class WaterHeater(HiveHotwater):
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            cached = self.session.devices.get(device["hiveID"])
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for offline water heater %s.",
+                    device["haName"],
+                )
+                return cached
             return device
 
     async def getScheduleNowNextLater(self, device: dict):

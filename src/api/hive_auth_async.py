@@ -625,7 +625,7 @@ class HiveAuthAsync:
                 _LOGGER.error("Token refresh failed: cannot reach Cognito endpoint.")
                 raise HiveApiError from err
 
-        _LOGGER.debug("Token refresh completed successfully.")
+        _LOGGER.debug("Cognito token refresh completed successfully.")
         return result
 
     async def forget_device(self, access_token, device_key):

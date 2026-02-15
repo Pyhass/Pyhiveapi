@@ -152,4 +152,11 @@ class Sensor(HiveSensor):
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            cached = self.session.devices.get(device["hiveID"])
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for offline sensor %s.",
+                    device["haName"],
+                )
+                return cached
             return device

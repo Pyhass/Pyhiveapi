@@ -420,6 +420,13 @@ class Light(HiveLight):
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            cached = self.session.devices.get(device["hiveID"])
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for offline light %s.",
+                    device["haName"],
+                )
+                return cached
             return device
 
     async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):

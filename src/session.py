@@ -358,7 +358,7 @@ class HiveSession:
             expiry_time = self.tokens.tokenCreated + (self.tokens.tokenExpiry * 0.95)
             # Refresh at 95% of token lifetime to prevent expiration during API calls
             _LOGGER.debug(
-                "Checking token expiry time ( Current: %s | Expiry: %s)",
+                "Session token expiry time ( Current: %s | Expiry: %s)",
                 datetime.now(),
                 expiry_time,
             )
@@ -372,7 +372,7 @@ class HiveSession:
                         return result
                     actual_expiry = self.tokens.tokenCreated + self.tokens.tokenExpiry
                     _LOGGER.debug(
-                        "Token created: %s | Actual expiry: %s | "
+                        "Session Token created: %s | Actual expiry: %s | "
                         "Early refresh (×0.95): %s | Now: %s",
                         self.tokens.tokenCreated,
                         actual_expiry,
@@ -385,11 +385,17 @@ class HiveSession:
                         )
 
                         if result and "AuthenticationResult" in result:
-                            _LOGGER.debug("Token refresh successful.")
                             await self.updateTokens(result)
+                            new_expiry = (
+                                self.tokens.tokenCreated + self.tokens.tokenExpiry
+                            )
+                            _LOGGER.debug(
+                                "Session Token refresh successful. New expiry: %s",
+                                new_expiry,
+                            )
                     except (HiveRefreshTokenExpired, HiveFailedToRefreshTokens) as exc:
                         _LOGGER.warning(
-                            "Token refresh failed (%s), falling back to device login.",
+                            "Session Token refresh failed (%s), falling back to device login.",
                             type(exc).__name__,
                         )
                         await self._retryDeviceLogin()
@@ -580,6 +586,12 @@ class HiveSession:
             _LOGGER.error("Reauthentication required, propagating to caller.")
             self.config.lastUpdate = datetime.now()
             raise
+        except asyncio.TimeoutError:
+            _LOGGER.warning("Hive API request timed out — keeping cached device data.")
+            self.config.lastUpdate = (
+                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
+            )
+            get_nodes_successful = False
         except (
             OSError,
             RuntimeError,
@@ -682,15 +694,6 @@ class HiveSession:
                 a = self.data["actions"][action]  # noqa: F841
                 eval("self." + ACTIONS)
 
-        _LOGGER.debug(
-            "Device discovery found: %d climate, %d light, %d switch, %d sensor, %d camera, %d alarm.",
-            len(self.deviceList["climate"]),
-            len(self.deviceList["light"]),
-            len(self.deviceList["switch"]),
-            len(self.deviceList["sensor"]),
-            len(self.deviceList["camera"]),
-            len(self.deviceList["alarm_control_panel"]),
-        )
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
@@ -712,6 +715,17 @@ class HiveSession:
 
             if self.data.products[aProduct]["type"] in hive_type:
                 self.config.mode.append(p["id"])
+
+        _LOGGER.debug(
+            "Device discovery found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
+            len(self.deviceList.get("parent", [])),
+            len(self.deviceList.get("binary_sensor", [])),
+            len(self.deviceList.get("climate", [])),
+            len(self.deviceList.get("light", [])),
+            len(self.deviceList.get("sensor", [])),
+            len(self.deviceList.get("switch", [])),
+            len(self.deviceList.get("water_heater", [])),
+        )
 
         return self.deviceList
 
