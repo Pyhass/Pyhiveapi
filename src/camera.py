@@ -189,4 +189,5 @@ class Camera(HiveCamera):
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None})
             return device

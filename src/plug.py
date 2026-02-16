@@ -188,6 +188,7 @@ class Switch(HiveSmartPlug):
                         device["haName"],
                     )
                     return cached
+            device.setdefault("status", {"state": None})
             return device
 
     async def getSwitchState(self, device: dict):

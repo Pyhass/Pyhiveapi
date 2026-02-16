@@ -131,4 +131,5 @@ class Alarm(HiveHomeShield):
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None, "mode": None})
             return device

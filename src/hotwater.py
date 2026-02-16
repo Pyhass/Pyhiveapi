@@ -271,6 +271,7 @@ class WaterHeater(HiveHotwater):
                         device["haName"],
                     )
                     return cached
+            device.setdefault("status", {"current_operation": None})
             return device
 
     async def getScheduleNowNextLater(self, device: dict):

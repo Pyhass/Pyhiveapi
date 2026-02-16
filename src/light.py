@@ -428,6 +428,7 @@ class Light(HiveLight):
                         device["haName"],
                     )
                     return cached
+            device.setdefault("status", {"state": None})
             return device
 
     async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):

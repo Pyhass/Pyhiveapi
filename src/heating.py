@@ -54,13 +54,22 @@ class HiveHeating:
         """
         from datetime import datetime
 
-        f_state = None
         state = None
         final = None
 
         try:
             data = self.session.data.products[device["hiveID"]]
             state = data["props"]["temperature"]
+
+            try:
+                state = float(state)
+            except (ValueError, TypeError):
+                _LOGGER.debug(
+                    "Non-numeric temperature value '%s' for %s.",
+                    state,
+                    device.get("haName", device.get("hiveID")),
+                )
+                return None
 
             if device["hiveID"] in self.session.data.minMax:
                 if self.session.data.minMax[device["hiveID"]]["TodayDate"] == str(
@@ -94,8 +103,7 @@ class HiveHeating:
                 }
                 self.session.data.minMax[device["hiveID"]] = data
 
-            f_state = round(float(state), 1)
-            final = f_state
+            final = round(state, 1)
         except KeyError as e:
             _LOGGER.error(e)
 
@@ -159,12 +167,13 @@ class HiveHeating:
         try:
             current_temp = await self.getCurrentTemperature(device)
             target_temp = await self.getTargetTemperature(device)
-            if current_temp < target_temp:
-                state = "ON"
-            else:
-                state = "OFF"
-            final = HIVETOHA[self.heatingType].get(state, state)
-        except KeyError as e:
+            if current_temp is not None and target_temp is not None:
+                if current_temp < target_temp:
+                    state = "ON"
+                else:
+                    state = "OFF"
+                final = HIVETOHA[self.heatingType].get(state, state)
+        except (KeyError, TypeError) as e:
             _LOGGER.error(e)
 
         return final
@@ -503,6 +512,17 @@ class Climate(HiveHeating):
                         device["haName"],
                     )
                     return cached
+            device.setdefault(
+                "status",
+                {
+                    "current_temperature": None,
+                    "target_temperature": None,
+                    "action": None,
+                    "mode": None,
+                    "boost": None,
+                    "state": None,
+                },
+            )
             return device
 
     async def getScheduleNowNextLater(self, device: dict):

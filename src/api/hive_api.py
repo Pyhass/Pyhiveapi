@@ -33,7 +33,7 @@ class HiveApi:
             "actions": "/actions",
             "nodes": "/nodes/{0}/{1}",
         }
-        self.timeout = 10
+        self.timeout = 5
         self.json_return = {
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",

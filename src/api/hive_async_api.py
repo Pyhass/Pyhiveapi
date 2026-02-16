@@ -84,7 +84,7 @@ class HiveApiAsync:
             auth_token[-4:] if len(auth_token) >= 4 else auth_token,
         )
 
-        timeout = ClientTimeout(total=10)
+        timeout = ClientTimeout(total=self.timeout)
         req_start = time.monotonic()
         async with self.websession.request(
             method, url, headers=headers, data=data, timeout=timeout
