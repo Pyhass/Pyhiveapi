@@ -108,6 +108,7 @@ class HiveSession:
         self.deviceList = {}
         self.hub_id = None
         self._lastPollSlow = False
+        self._slowPollThreshold = timedelta(seconds=3)
 
     def openFile(self, file: str):
         """Open a file.
@@ -226,6 +227,29 @@ class HiveSession:
         if "ExpiresIn" in data:
             self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
 
+        _LOGGER.debug(
+            "updateTokens — IdToken: len=%d tail=…%s | "
+            "AccessToken: len=%d tail=…%s | "
+            "RefreshToken: %s | "
+            "ExpiresIn: %s | tokenCreated: %s | tokenExpiry: %s",
+            len(self.tokens.tokenData.get("token", "")),
+            self.tokens.tokenData.get("token", "")[-4:],
+            len(self.tokens.tokenData.get("accessToken", "")),
+            self.tokens.tokenData.get("accessToken", "")[-4:],
+            (
+                "present (len=%d tail=…%s)"
+                % (
+                    len(self.tokens.tokenData.get("refreshToken", "")),
+                    self.tokens.tokenData.get("refreshToken", "")[-4:],
+                )
+                if self.tokens.tokenData.get("refreshToken")
+                else "not present"
+            ),
+            data.get("ExpiresIn", "N/A"),
+            self.tokens.tokenCreated,
+            self.tokens.tokenExpiry,
+        )
+
         return self.tokens
 
     async def login(self):
@@ -255,7 +279,8 @@ class HiveSession:
             raise
 
         if result and "AuthenticationResult" in result:
-            _LOGGER.debug("Login successful, tokens received.")
+            auth_keys = list(result["AuthenticationResult"].keys())
+            _LOGGER.debug("Login successful — AuthenticationResult keys: %s", auth_keys)
             await self.updateTokens(result)
         return result
 
@@ -284,7 +309,10 @@ class HiveSession:
             raise
 
         if result and "AuthenticationResult" in result:
-            _LOGGER.debug("2FA login successful, tokens received.")
+            auth_keys = list(result["AuthenticationResult"].keys())
+            _LOGGER.debug(
+                "2FA login successful — AuthenticationResult keys: %s", auth_keys
+            )
             await self.updateTokens(result)
         return result
 
@@ -311,9 +339,11 @@ class HiveSession:
             raise
 
         if result and "AuthenticationResult" in result:
-            _LOGGER.debug("Device login successful, tokens received.")
+            auth_keys = list(result["AuthenticationResult"].keys())
+            _LOGGER.debug(
+                "Device login successful — AuthenticationResult keys: %s", auth_keys
+            )
             await self.updateTokens(result)
-            self.tokens.tokenExpiry = timedelta(seconds=0)
         return result
 
     async def _retryDeviceLogin(self):
@@ -386,6 +416,11 @@ class HiveSession:
                         )
 
                         if result and "AuthenticationResult" in result:
+                            auth_keys = list(result["AuthenticationResult"].keys())
+                            _LOGGER.debug(
+                                "Token refresh — AuthenticationResult keys: %s",
+                                auth_keys,
+                            )
                             await self.updateTokens(result)
                             new_expiry = (
                                 self.tokens.tokenCreated + self.tokens.tokenExpiry
@@ -535,12 +570,28 @@ class HiveSession:
                         "falling back to full device re-login."
                     )
                     await self._retryDeviceLogin()
-                    try:
-                        api_resp_d = await self.api.getAll()
-                    except HiveAuthError as retry_err:
-                        raise HiveReauthRequired from retry_err
+                    last_auth_err = None
+                    for api_retry_delay in (0, 2, 5):
+                        try:
+                            if api_retry_delay:
+                                _LOGGER.debug(
+                                    "Retrying API call in %ss after device re-login.",
+                                    api_retry_delay,
+                                )
+                                await asyncio.sleep(api_retry_delay)
+                            api_resp_d = await self.api.getAll()
+                            last_auth_err = None
+                            break
+                        except HiveAuthError as retry_err:
+                            _LOGGER.warning(
+                                "API call still rejected after device re-login (attempt delay=%ss).",
+                                api_retry_delay,
+                            )
+                            last_auth_err = retry_err
+                    if last_auth_err is not None:
+                        raise HiveReauthRequired from last_auth_err
                 api_call_duration = time.monotonic() - api_call_start
-                if api_call_duration > 3:
+                if api_call_duration > self._slowPollThreshold:
                     _LOGGER.warning(
                         "Hive API response took %.1fs — marking poll as slow.",
                         api_call_duration,
@@ -595,7 +646,9 @@ class HiveSession:
             get_nodes_successful = True
         except HiveReauthRequired:
             _LOGGER.error("Reauthentication required, propagating to caller.")
-            self.config.lastUpdate = datetime.now()
+            self.config.lastUpdate = (
+                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
+            )
             raise
         except asyncio.TimeoutError:
             _LOGGER.warning("Hive API request timed out — keeping cached device data.")
