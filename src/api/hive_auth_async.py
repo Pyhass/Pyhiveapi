@@ -400,6 +400,18 @@ class HiveAuthAsync:
                 if err.__class__.__name__ == "EndpointConnectionError":
                     raise HiveApiError from err
 
+            if (
+                "AuthenticationResult" in result
+                and "NewDeviceMetadata" in result["AuthenticationResult"]
+            ):
+                self.access_token = result["AuthenticationResult"]["AccessToken"]
+                self.device_group_key = result["AuthenticationResult"][
+                    "NewDeviceMetadata"
+                ]["DeviceGroupKey"]
+                self.device_key = result["AuthenticationResult"][
+                    "NewDeviceMetadata"
+                ]["DeviceKey"]
+
             return result
         challenge_name = response["ChallengeName"]
         raise NotImplementedError(f"The {challenge_name} challenge is not supported")
