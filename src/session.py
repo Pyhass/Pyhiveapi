@@ -108,7 +108,8 @@ class HiveSession:
         self.deviceList = {}
         self.hub_id = None
         self._lastPollSlow = False
-        self._slowPollThreshold = timedelta(seconds=3)
+        self._slowPollThreshold = 3
+        self._refreshThreshold = 0.90
 
     def openFile(self, file: str):
         """Open a file.
@@ -375,8 +376,13 @@ class HiveSession:
             )
             raise HiveReauthRequired from last_err
 
-    async def hiveRefreshTokens(self):
+        await self.hiveRefreshTokens(force_refresh=True)
+
+    async def hiveRefreshTokens(self, force_refresh: bool = False):
         """Refresh Hive tokens.
+
+        Args:
+            force_refresh (bool): Whether to force a token refresh regardless of expiry.
 
         Returns:
             boolean: True/False if update was successful
@@ -386,29 +392,33 @@ class HiveSession:
         if self.config.file:
             return None
         else:
-            expiry_time = self.tokens.tokenCreated + (self.tokens.tokenExpiry * 0.95)
-            # Refresh at 95% of token lifetime to prevent expiration during API calls
+            expiry_time = self.tokens.tokenCreated + (
+                self.tokens.tokenExpiry * self._refreshThreshold
+            )
+            # Refresh at 90% of token lifetime to prevent expiration during API calls
             _LOGGER.debug(
                 "Session token expiry time ( Current: %s | Expiry: %s)",
                 datetime.now(),
                 expiry_time,
             )
-            if datetime.now() >= expiry_time:
+            if datetime.now() >= expiry_time or force_refresh:
                 async with self._refreshLock:
                     # Re-check after acquiring lock — another caller may have already refreshed
                     expiry_time = self.tokens.tokenCreated + (
-                        self.tokens.tokenExpiry * 0.95
+                        self.tokens.tokenExpiry * self._refreshThreshold
                     )
-                    if datetime.now() < expiry_time:
+                    if datetime.now() < expiry_time and not force_refresh:
                         return result
                     actual_expiry = self.tokens.tokenCreated + self.tokens.tokenExpiry
                     _LOGGER.debug(
                         "Session Token created: %s | Actual expiry: %s | "
-                        "Early refresh (×0.95): %s | Now: %s",
+                        "Early refresh (×%s): %s | Now: %s | Force refresh: %s",
                         self.tokens.tokenCreated,
                         actual_expiry,
+                        self._refreshThreshold,
                         expiry_time,
                         datetime.now(),
+                        force_refresh,
                     )
                     try:
                         result = await self.auth.refresh_token(
@@ -434,7 +444,13 @@ class HiveSession:
                             "Session Token refresh failed (%s), falling back to device login.",
                             type(exc).__name__,
                         )
-                        await self._retryDeviceLogin()
+                        if not force_refresh:
+                            await self._retryDeviceLogin()
+                        else:
+                            _LOGGER.error(
+                                "Token refresh failed during retry attempt, giving up."
+                            )
+                            raise HiveReauthRequired from exc
                     except HiveApiError:
                         _LOGGER.error("API error during token refresh.")
                         raise
@@ -646,9 +662,7 @@ class HiveSession:
             get_nodes_successful = True
         except HiveReauthRequired:
             _LOGGER.error("Reauthentication required, propagating to caller.")
-            self.config.lastUpdate = (
-                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
-            )
+            self.config.lastUpdate = datetime.now()
             raise
         except asyncio.TimeoutError:
             _LOGGER.warning("Hive API request timed out — keeping cached device data.")
