@@ -1,8 +1,11 @@
 """Hive Device Attribute Module."""
 
 # pylint: skip-file
+import logging
+
 from .helper.const import HIVETOHA
-from .helper.logger import Logger
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveAttributes:
@@ -15,7 +18,6 @@ class HiveAttributes:
             session (object, optional): Session to interact with hive account. Defaults to None.
         """
         self.session = session
-        self.session.log = Logger()
         self.type = "Attribute"
 
     async def stateAttributes(self, n_id: str, _type: str):
@@ -55,7 +57,7 @@ class HiveAttributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["online"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -76,7 +78,7 @@ class HiveAttributes:
             state = data["state"]["mode"]
             final = HIVETOHA[self.type].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -96,8 +98,8 @@ class HiveAttributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.session.log.errorCheck(n_id, self.type, state)
+            await self.session.helper.errorCheck(n_id, self.type, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final

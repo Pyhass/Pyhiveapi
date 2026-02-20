@@ -27,6 +27,14 @@ class HiveApiError(Exception):
     """
 
 
+class HiveAuthError(HiveApiError):
+    """Auth error (401/403) — token may be expired or invalid.
+
+    Args:
+        HiveApiError (object): Parent API error class
+    """
+
+
 class HiveRefreshTokenExpired(Exception):
     """Refresh token expired.
 

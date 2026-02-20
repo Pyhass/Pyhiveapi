@@ -1,16 +1,21 @@
 """Hive API Module."""
 
 # pylint: skip-file
+import asyncio
 import json
+import logging
+import time
 from typing import Optional
 
 import requests
 import urllib3
-from aiohttp import ClientResponse, ClientSession, web_exceptions
+from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
 from pyquery import PyQuery
 
-from ..helper.const import HTTP_UNAUTHORIZED
-from ..helper.hive_exceptions import FileInUse, HiveApiError, NoApiToken
+from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
+from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
+
+_LOGGER = logging.getLogger(__name__)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -38,7 +43,7 @@ class HiveApiAsync:
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
         }
-        self.timeout = 10
+        self.timeout = 5
         self.json_return = {
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
@@ -50,46 +55,64 @@ class HiveApiAsync:
         self, method: str, url: str, camera: bool = False, **kwargs
     ) -> ClientResponse:
         """Make a request."""
+        _LOGGER.debug("API %s request to %s", method.upper(), url)
         data = kwargs.get("data", None)
 
+        headers = {
+            "content-type": "application/json",
+            "Accept": "*/*",
+            "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
+        }
         try:
             if camera:
-                headers = {
-                    "content-type": "application/json",
-                    "Accept": "*/*",
-                    "Authorization": f"Bearer {self.session.tokens.tokenData['token']}",
-                    "x-jwt-token": self.session.tokens.tokenData["token"],
-                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
-                }
+                headers["Authorization"] = (
+                    f"Bearer {self.session.tokens.tokenData['token']}"
+                )
+                headers["x-jwt-token"] = self.session.tokens.tokenData["token"]
             else:
-                headers = {
-                    "content-type": "application/json",
-                    "Accept": "*/*",
-                    "Authorization": self.session.tokens.tokenData["token"],
-                    "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
-                }
+                headers["Authorization"] = self.session.tokens.tokenData["token"]
         except KeyError:
             if "sso" in url:
                 pass
             else:
                 raise NoApiToken
 
+        auth_token = headers.get("Authorization", "")
+        _LOGGER.debug(
+            "Using token (len=%d, tail=…%s)",
+            len(auth_token),
+            auth_token[-4:] if len(auth_token) >= 4 else auth_token,
+        )
+
+        timeout = ClientTimeout(total=self.timeout)
+        req_start = time.monotonic()
         async with self.websession.request(
-            method, url, headers=headers, data=data
+            method, url, headers=headers, data=data, timeout=timeout
         ) as resp:
-            await resp.text()
+            resp_body = await resp.text()
+            req_duration = time.monotonic() - req_start
+            _LOGGER.debug(
+                "API %s %s completed in %.2fs — HTTP %s",
+                method.upper(),
+                url,
+                req_duration,
+                resp.status,
+            )
             if str(resp.status).startswith("20"):
                 return resp
 
-        if resp.status == HTTP_UNAUTHORIZED:
-            self.session.logger.error(
-                f"Hive token has expired when calling {url} - "
-                f"HTTP status is - {resp.status}"
+        if resp.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
+            _LOGGER.error(
+                f"Hive token rejected calling {url} - "
+                f"HTTP {resp.status} — response: {resp_body[:200]}"
+            )
+            raise HiveAuthError(
+                f"Token expired or forbidden calling {url} — HTTP {resp.status}"
             )
         elif url is not None and resp.status is not None:
-            self.session.logger.error(
+            _LOGGER.error(
                 f"Something has gone wrong calling {url} - "
-                f"HTTP status is - {resp.status}"
+                f"HTTP status is - {resp.status} — response: {resp_body[:200]}"
             )
 
         raise HiveApiError
@@ -146,10 +169,14 @@ class HiveApiAsync:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
+        _LOGGER.debug("Fetching all nodes from Hive API.")
         try:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
+        except asyncio.TimeoutError:
+            _LOGGER.warning("Hive API request timed out fetching all nodes.")
+            raise
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
@@ -276,6 +303,7 @@ class HiveApiAsync:
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
+        _LOGGER.debug("Setting state for %s/%s: %s", n_type, n_id, kwargs)
         json_return = {}
         jsc = (
             "{"
@@ -301,6 +329,7 @@ class HiveApiAsync:
 
     async def setAlarm(self, **kwargs):
         """Set the state of the alarm."""
+        _LOGGER.debug("Setting alarm state: %s", kwargs)
         json_return = {}
         jsc = (
             "{"
@@ -326,6 +355,7 @@ class HiveApiAsync:
 
     async def setAction(self, n_id, data):
         """Set the state of a Action."""
+        _LOGGER.debug("Setting action %s", n_id)
         jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
@@ -341,6 +371,7 @@ class HiveApiAsync:
 
     async def error(self):
         """An error has occurred interacting with the Hive API."""
+        _LOGGER.error("HTTP error occurred during Hive API interaction.")
         raise web_exceptions.HTTPError
 
     async def isFileBeingUsed(self):

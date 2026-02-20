@@ -1,6 +1,9 @@
 """Hive Action Module."""
 
 # pylint: skip-file
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveAction:
@@ -67,7 +70,7 @@ class HiveAction:
             data = self.session.data.actions[device.hive_id]
             final = data["enabled"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -85,6 +88,7 @@ class HiveAction:
         final = False
 
         if device.hive_id in self.session.data.actions:
+            _LOGGER.debug("Enabling action %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device.hive_id]
             data.update({"enabled": True})
@@ -110,6 +114,7 @@ class HiveAction:
         final = False
 
         if device.hive_id in self.session.data.actions:
+            _LOGGER.debug("Disabling action %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device.hive_id]
             data.update({"enabled": False})

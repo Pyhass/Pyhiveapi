@@ -1,6 +1,9 @@
 """Hive Alarm Module."""
 
 # pylint: skip-file
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHomeShield:
@@ -24,7 +27,7 @@ class HiveHomeShield:
             data = self.session.data.alarm
             state = data["mode"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -40,7 +43,7 @@ class HiveHomeShield:
             data = self.session.data.devices[device.hive_id]
             state = data["state"]["alarmActive"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -56,6 +59,11 @@ class HiveHomeShield:
         final = False
 
         if device.hive_id in self.session.data.devices and device.device_data["online"]:
+        if (
+            device["hiveID"] in self.session.data.devices
+            and device["deviceData"]["online"]
+        ):
+            _LOGGER.debug("Setting alarm mode to %s.", mode)
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setAlarm(mode=mode)
             if resp["original"] == 200:
@@ -96,6 +104,7 @@ class Alarm(HiveHomeShield):
 
         if device.device_data["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating alarm data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device.hive_id,
@@ -122,5 +131,8 @@ class Alarm(HiveHomeShield):
         else:
             await self.session.log.errorCheck(
                 device["device_id"], "ERROR", device.device_data["online"]
+            await self.session.helper.errorCheck(
+                device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None, "mode": None})
             return device
