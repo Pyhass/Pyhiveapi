@@ -354,7 +354,7 @@ class HiveSession:
             HiveReauthRequired: All retry attempts have been exhausted.
         """
         last_err = None
-        for delay_s in (0, 5, 15):
+        for delay_s in (0, 5, 10):
             try:
                 if delay_s:
                     _LOGGER.debug("Retrying device login in %s seconds.", delay_s)
@@ -587,7 +587,7 @@ class HiveSession:
                     )
                     await self._retryDeviceLogin()
                     last_auth_err = None
-                    for api_retry_delay in (0, 2, 5):
+                    for api_retry_delay in (0, 5, 10):
                         try:
                             if api_retry_delay:
                                 _LOGGER.debug(

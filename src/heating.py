@@ -116,14 +116,26 @@ class HiveHeating:
             device (dict): Device to get target temperature for.
 
         Returns:
-            str: Target temperature.
+            float: Target temperature or None if invalid
         """
         state = None
 
         try:
             data = self.session.data.products[device["hiveID"]]
-            state = float(data["state"].get("target", None))
-            state = float(data["state"].get("heat", state))
+            state = data["state"].get("target", None)
+            if state is None:
+                state = data["state"].get("heat", None)
+
+            if state is not None:
+                try:
+                    state = float(state)
+                except (ValueError, TypeError):
+                    _LOGGER.debug(
+                        "Non-numeric target temperature value '%s' for %s.",
+                        state,
+                        device.get("haName", device.get("hiveID")),
+                    )
+                    return None
         except (KeyError, TypeError) as e:
             _LOGGER.error(e)
 
