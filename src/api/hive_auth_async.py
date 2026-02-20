@@ -417,6 +417,18 @@ class HiveAuthAsync:
                     )
                     raise HiveApiError from err
 
+            if (
+                "AuthenticationResult" in result
+                and "NewDeviceMetadata" in result["AuthenticationResult"]
+            ):
+                self.access_token = result["AuthenticationResult"]["AccessToken"]
+                self.device_group_key = result["AuthenticationResult"][
+                    "NewDeviceMetadata"
+                ]["DeviceGroupKey"]
+                self.device_key = result["AuthenticationResult"][
+                    "NewDeviceMetadata"
+                ]["DeviceKey"]
+
             _LOGGER.debug("SRP auth challenge completed successfully.")
             return result
         challenge_name = response["ChallengeName"]
