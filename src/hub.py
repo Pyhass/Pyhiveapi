@@ -1,7 +1,11 @@
 """Hive Hub Module."""
 
 # pylint: skip-file
+import logging
+
 from .helper.const import HIVETOHA
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHub:
@@ -39,7 +43,7 @@ class HiveHub:
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
             final = HIVETOHA[self.hubType]["Smoke"].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -60,7 +64,7 @@ class HiveHub:
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
             final = HIVETOHA[self.hubType]["Dog"].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -81,6 +85,6 @@ class HiveHub:
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
             final = HIVETOHA[self.hubType]["Glass"].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final

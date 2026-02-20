@@ -1,8 +1,11 @@
 """Hive Hotwater Module."""
 
 # pylint: skip-file
+import logging
 
 from .helper.const import HIVETOHA
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHotwater:
@@ -33,7 +36,7 @@ class HiveHotwater:
                 state = data["props"]["previous"]["mode"]
             final = HIVETOHA[self.hotwaterType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -63,7 +66,7 @@ class HiveHotwater:
             state = data["state"]["boost"]
             final = HIVETOHA["Boost"].get(state, "ON")
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -82,7 +85,7 @@ class HiveHotwater:
                 data = self.session.data.products[device["hiveID"]]
                 state = data["state"]["boost"]
             except KeyError as e:
-                await self.session.log.error(e)
+                _LOGGER.error(e)
 
         return state
 
@@ -111,7 +114,7 @@ class HiveHotwater:
 
             final = HIVETOHA[self.hotwaterType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -128,6 +131,9 @@ class HiveHotwater:
         final = False
 
         if device["hiveID"] in self.session.data.products:
+            _LOGGER.debug(
+                "Setting hot water mode to %s for %s.", new_mode, device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -156,6 +162,9 @@ class HiveHotwater:
             and device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug(
+                "Setting hot water boost ON for %s: %s mins.", device["haName"], mins
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -183,6 +192,7 @@ class HiveHotwater:
             and await self.getBoost(device) == "ON"
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting hot water boost OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
@@ -228,6 +238,7 @@ class WaterHeater(HiveHotwater):
 
             dev_data = {}
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating hot water data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -249,9 +260,18 @@ class WaterHeater(HiveHotwater):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            if self.session._lastPollSlow:
+                cached = self.session.devices.get(device["hiveID"])
+                if cached is not None:
+                    _LOGGER.debug(
+                        "Returning cached state for offline water heater %s (slow poll).",
+                        device["haName"],
+                    )
+                    return cached
+            device.setdefault("status", {"current_operation": None})
             return device
 
     async def getScheduleNowNextLater(self, device: dict):
@@ -271,6 +291,6 @@ class WaterHeater(HiveHotwater):
                 data = self.session.data.products[device["hiveID"]]
                 state = self.session.helper.getScheduleNNL(data["state"]["schedule"])
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state

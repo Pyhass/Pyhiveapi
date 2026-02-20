@@ -2,8 +2,11 @@
 
 # pylint: skip-file
 import colorsys
+import logging
 
 from .helper.const import HIVETOHA
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveLight:
@@ -32,7 +35,7 @@ class HiveLight:
             state = data["state"]["status"]
             final = HIVETOHA[self.lightType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -53,7 +56,7 @@ class HiveLight:
             state = data["state"]["brightness"]
             final = (state / 100) * 255
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -74,7 +77,7 @@ class HiveLight:
             state = data["props"]["colourTemperature"]["max"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -95,7 +98,7 @@ class HiveLight:
             state = data["props"]["colourTemperature"]["min"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -116,7 +119,7 @@ class HiveLight:
             state = data["state"]["colourTemperature"]
             final = round((1 / state) * 1000000)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -143,7 +146,7 @@ class HiveLight:
                 int(i * 255) for i in colorsys.hsv_to_rgb(state[0], state[1], state[2])
             )
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -162,7 +165,7 @@ class HiveLight:
             data = self.session.data.products[device["hiveID"]]
             state = data["state"]["colourMode"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -181,6 +184,7 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Turning light OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -208,6 +212,7 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Turning light ON for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
@@ -236,6 +241,9 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug(
+                "Setting brightness to %s for %s.", n_brightness, device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -266,6 +274,9 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug(
+                "Setting colour temperature to %s for %s.", color_temp, device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
@@ -305,6 +316,7 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting colour to %s for %s.", new_color, device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
@@ -354,6 +366,7 @@ class Light(HiveLight):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating light data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -404,9 +417,18 @@ class Light(HiveLight):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            if self.session._lastPollSlow:
+                cached = self.session.devices.get(device["hiveID"])
+                if cached is not None:
+                    _LOGGER.debug(
+                        "Returning cached state for light %s (slow poll).",
+                        device["haName"],
+                    )
+                    return cached
+            device.setdefault("status", {"state": None})
             return device
 
     async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):

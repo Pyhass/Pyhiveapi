@@ -2,9 +2,12 @@
 
 # pylint: skip-file
 import datetime
+import logging
 import operator
 
 from .const import HIVE_TYPES
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHelper:
@@ -55,6 +58,22 @@ class HiveHelper:
         # name = HiveHelper.getDeviceName(n_id)
         if n_id in self.session.config.errorList:
             self.session.config.errorList.pop(n_id)
+
+    async def errorCheck(self, n_id, n_type, error_type, **kwargs):
+        """Error has occurred."""
+        message = None
+        name = self.getDeviceName(n_id)
+
+        if error_type is False:
+            message = "Device offline could not update entity - " + str(name)
+            if n_id not in self.session.config.errorList:
+                _LOGGER.warning(message)
+                self.session.config.errorList.update({n_id: datetime.datetime.now()})
+        elif error_type == "Failed":
+            message = "ERROR - No data found for device - " + str(name)
+            if n_id not in self.session.config.errorList:
+                _LOGGER.error(message)
+                self.session.config.errorList.update({n_id: datetime.datetime.now()})
 
     def getDeviceFromID(self, n_id: str):
         """Get product/device data from ID.
