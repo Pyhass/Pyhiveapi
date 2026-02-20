@@ -8,6 +8,7 @@ import datetime
 import functools
 import hashlib
 import hmac
+import logging
 import os
 import re
 import socket
@@ -22,8 +23,12 @@ from ..helper.hive_exceptions import (
     HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
+    HiveReauthRequired,
+    HiveRefreshTokenExpired,
 )
 from .hive_api import HiveApi
+
+_LOGGER = logging.getLogger(__name__)
 
 # https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
 N_HEX = (
@@ -353,6 +358,7 @@ class HiveAuthAsync:
     async def login(self):
         """Login into a Hive account."""
         if self.use_file:
+            _LOGGER.debug("Using file-based authentication.")
             return self.file_response
 
         if self.client is None:
@@ -360,6 +366,7 @@ class HiveAuthAsync:
         auth_params = await self.get_auth_params()
         response = None
         result = None
+        _LOGGER.debug("Initiating SRP auth with Cognito.")
         try:
             response = await self.loop.run_in_executor(
                 None,
@@ -372,12 +379,15 @@ class HiveAuthAsync:
             )
         except botocore.exceptions.ClientError as err:
             if err.__class__.__name__ == "UserNotFoundException":
+                _LOGGER.error("Cognito auth failed: user not found.")
                 raise HiveInvalidUsername from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
+                _LOGGER.error("Cognito auth failed: cannot reach endpoint.")
                 raise HiveApiError from err
 
         if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
+            _LOGGER.debug("Processing PASSWORD_VERIFIER challenge.")
             challenge_response = await self.process_challenge(
                 response["ChallengeParameters"]
             )
@@ -393,11 +403,18 @@ class HiveAuthAsync:
                 )
             except botocore.exceptions.ClientError as err:
                 if err.__class__.__name__ == "NotAuthorizedException":
+                    _LOGGER.error("Cognito auth challenge failed: not authorised.")
                     raise HiveInvalidPassword from err
                 if err.__class__.__name__ == "ResourceNotFoundException":
+                    _LOGGER.error(
+                        "Cognito auth challenge failed: device resource not found."
+                    )
                     raise HiveInvalidDeviceAuthentication from err
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
+                    _LOGGER.error(
+                        "Cognito auth challenge failed: cannot reach endpoint."
+                    )
                     raise HiveApiError from err
 
             if (
@@ -412,17 +429,27 @@ class HiveAuthAsync:
                     "NewDeviceMetadata"
                 ]["DeviceKey"]
 
+            _LOGGER.debug("SRP auth challenge completed successfully.")
             return result
         challenge_name = response["ChallengeName"]
+        _LOGGER.error("Unsupported Cognito challenge: %s", challenge_name)
         raise NotImplementedError(f"The {challenge_name} challenge is not supported")
 
     async def device_login(self):
         """Perform device login instead."""
+        _LOGGER.debug("Starting device SRP authentication.")
         login_result = await self.login()
+
+        if "AuthenticationResult" in login_result:
+            # Login succeeded without a device challenge (e.g. device tracking
+            # not enforced). Tokens are already valid, return them directly.
+            return login_result
+
         auth_params = await self.get_auth_params()
         auth_params["DEVICE_KEY"] = self.device_key
 
         if login_result.get("ChallengeName") == self.DEVICE_VERIFIER_CHALLENGE:
+            _LOGGER.debug("Processing DEVICE_SRP_AUTH challenge.")
             try:
                 initial_result = await self.loop.run_in_executor(
                     None,
@@ -448,10 +475,20 @@ class HiveAuthAsync:
                 )
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
+                    _LOGGER.error("Device login failed: cannot reach endpoint.")
                     raise HiveApiError from err
+        elif login_result.get("ChallengeName") == self.SMS_MFA_CHALLENGE:
+            # Account has 2FA enabled and device is not remembered by Cognito.
+            # Automatic re-authentication is not possible without user interaction.
+            raise HiveReauthRequired
         else:
+            _LOGGER.error(
+                "Device login failed: expected DEVICE_SRP_AUTH challenge, got %s.",
+                login_result.get("ChallengeName"),
+            )
             raise HiveInvalidDeviceAuthentication
 
+        _LOGGER.debug("Device authentication completed successfully.")
         return result
 
     async def sms_2fa(
@@ -463,6 +500,7 @@ class HiveAuthAsync:
         session = challenge_parameters.get("Session")
         code = str(entered_code)
         result = None
+        _LOGGER.debug("Submitting SMS 2FA code to Cognito.")
         try:
             result = await self.loop.run_in_executor(
                 None,
@@ -490,15 +528,19 @@ class HiveAuthAsync:
                 "NotAuthorizedException",
                 "CodeMismatchException",
             ):
+                _LOGGER.error("2FA code rejected by Cognito.")
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
+                _LOGGER.error("2FA failed: cannot reach Cognito endpoint.")
                 raise HiveApiError from err
 
+        _LOGGER.debug("2FA authentication completed successfully.")
         return result
 
     async def device_registration(self, device_name: str = None):
         """Register device with Hive."""
+        _LOGGER.debug("Registering device with Hive.")
         await self.confirm_device(device_name)
         await self.update_device_status()
 
@@ -569,6 +611,7 @@ class HiveAuthAsync:
         """Refresh Hive Tokens."""
         if self.client is None:
             await self.async_init()
+        _LOGGER.debug("Requesting token refresh from Cognito.")
         result = None
         auth_params = {"REFRESH_TOKEN": token}
         if self.device_key is not None:
@@ -588,11 +631,24 @@ class HiveAuthAsync:
                 ),
             )
         except botocore.exceptions.ClientError as err:
+            error = (err.response or {}).get("Error", {})
+            error_code = error.get("Code")
+            error_message = error.get("Message", "")
+            if (
+                error_code == "NotAuthorizedException"
+                and "Invalid Refresh Token" in str(error_message)
+            ):
+                _LOGGER.warning("Refresh token is invalid or expired.")
+                raise HiveRefreshTokenExpired from err
+
+            _LOGGER.error("Token refresh failed: %s - %s", error_code, error_message)
             raise HiveFailedToRefreshTokens from err
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
+                _LOGGER.error("Token refresh failed: cannot reach Cognito endpoint.")
                 raise HiveApiError from err
 
+        _LOGGER.debug("Cognito token refresh completed successfully.")
         return result
 
     async def forget_device(self, access_token, device_key):

@@ -1,13 +1,13 @@
 """Start Hive Session."""
 
 # pylint: skip-file
+import logging
 import sys
 import traceback
 from os.path import expanduser
 from typing import Optional
 
 from aiohttp import ClientSession
-from loguru import logger
 
 from .action import HiveAction
 from .alarm import Alarm
@@ -20,17 +20,10 @@ from .plug import Switch
 from .sensor import Sensor
 from .session import HiveSession
 
+_LOGGER = logging.getLogger(__name__)
+
 debug = []
 home = expanduser("~")
-logger.add(
-    home + "/pyhiveapi_debug.log", filter=lambda record: record["level"].name == "DEBUG"
-)
-logger.add(
-    home + "/pyhiveapi_info.log", filter=lambda record: record["level"].name == "INFO"
-)
-logger.add(
-    home + "/pyhiveapi_error.log", filter=lambda record: record["level"].name == "ERROR"
-)
 
 
 def exception_handler(exctype, value, tb):
@@ -42,7 +35,7 @@ def exception_handler(exctype, value, tb):
         tb ([type]): [description]
     """
     last = len(traceback.extract_tb(tb)) - 1
-    logger.error(
+    _LOGGER.error(
         f"-> \n"
         f"Error in {traceback.extract_tb(tb)[last].filename}\n"
         f"when running {traceback.extract_tb(tb)[last].name} function\n"
@@ -78,13 +71,13 @@ def trace_debug(frame, event, arg):
                 caller_line_no = caller.f_lineno
                 caller_filename = caller.f_code.co_filename.rsplit("/", 1)
 
-                logger.debug(
+                _LOGGER.debug(
                     f"Call to {func_name} on line {func_line_no} "
                     f"of {func_filename[1]} from line {caller_line_no} "
                     f"of {caller_filename[1]}"
                 )
             elif event == "return":
-                logger.debug(f"returning {arg}")
+                _LOGGER.debug(f"returning {arg}")
 
         return trace_debug
 
@@ -120,7 +113,7 @@ class Hive(HiveSession):
         self.light = Light(self.session)
         self.switch = Switch(self.session)
         self.sensor = Sensor(self.session)
-        self.logger = logger
+        _LOGGER.debug("Hive session initialised with all device handlers.")
         if debug:
             sys.settrace(trace_debug)
 

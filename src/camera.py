@@ -1,6 +1,9 @@
 """Hive Camera Module."""
 
 # pylint: skip-file
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveCamera:
@@ -24,7 +27,7 @@ class HiveCamera:
             data = self.session.data.devices[device["hiveID"]]
             state = data["props"]["temperature"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -40,7 +43,7 @@ class HiveCamera:
             data = self.session.data.devices[device["hiveID"]]
             state = True if data["state"]["mode"] == "ARMED" else False
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -57,7 +60,7 @@ class HiveCamera:
                 "thumbnailUrls"
             ][0]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -72,7 +75,7 @@ class HiveCamera:
         try:
             state = self.session.data.camera[device["hiveID"]]["cameraRecording"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -91,6 +94,7 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting camera ON for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
@@ -114,6 +118,7 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting camera OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
@@ -154,6 +159,7 @@ class Camera(HiveCamera):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating camera data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -180,7 +186,8 @@ class Camera(HiveCamera):
             self.session.devices.update({device["hiveID"]: dev_data})
             return self.session.devices[device["hiveID"]]
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None})
             return device
