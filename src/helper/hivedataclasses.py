@@ -36,8 +36,6 @@ class EntityConfig:
         "light",
         "switch",
         "water_heater",
-        "alarm_control_panel",
-        "camera",
     ]
     ha_name: str = ""
     hive_type: str = ""

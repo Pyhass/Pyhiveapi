@@ -27,7 +27,6 @@ HTTP_SERVICE_UNAVAILABLE = 503
 
 
 HIVETOHA = {
-    "Alarm": {"home": "armed_home", "away": "armed_away", "asleep": "armed_night"},
     "Attribute": {True: "Online", False: "Offline"},
     "Boost": {None: "OFF", False: "OFF"},
     "Heating": {False: "OFF", "ENABLED": True, "DISABLED": False},
@@ -61,7 +60,6 @@ sensor_commands = {
     "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
     "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
     "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
-    "Camera_Temp": "self.session.camera.getCameraTemperature(device)",
     "Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",

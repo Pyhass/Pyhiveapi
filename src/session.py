@@ -28,11 +28,9 @@ from .helper.hive_exceptions import (
     HiveReauthRequired,
     HiveRefreshTokenExpired,
     HiveUnknownConfiguration,
-    NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
 from .helper.hivedataclasses import Device
-from .helper.logger import Logger
 from .helper.map import Map
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,9 +82,7 @@ class HiveSession:
         )
         self.config = Map(
             {
-                "alarm": False,
                 "battery": [],
-                "camera": False,
                 "errorList": {},
                 "file": False,
                 "home_id": None,
@@ -104,8 +100,6 @@ class HiveSession:
                 "actions": {},
                 "user": {},
                 "minMax": {},
-                "alarm": {},
-                "camera": {},
             }
         )
         self.devices = {}
@@ -482,9 +476,6 @@ class HiveSession:
                     return updated
                 _LOGGER.debug("Polling Hive API for device updates.")
                 updated = await self.getDevices(device["hiveID"])
-                if updated and len(self.deviceList["camera"]) > 0:
-                    for camera in self.data.camera:
-                        await self.getCamera(self.devices[camera])
                 if updated:
                     _LOGGER.debug("Device update completed successfully.")
                 else:
@@ -493,72 +484,6 @@ class HiveSession:
                     )
 
         return updated
-
-    async def getAlarm(self):
-        """Get alarm data.
-
-        Raises:
-            HTTPException: HTTP error has occurred updating the devices.
-            HiveApiError: An API error code has been returned.
-        """
-        if self.config.file:
-            api_resp_d = self.openFile("alarm.json")
-        elif self.tokens is not None:
-            api_resp_d = await self.api.getAlarm()
-            if operator.contains(str(api_resp_d["original"]), "20") is False:
-                raise HTTPException
-            elif api_resp_d["parsed"] is None:
-                raise HiveApiError
-
-        self.data.alarm = api_resp_d["parsed"]
-
-    async def getCamera(self, device):
-        """Get camera data.
-
-        Raises:
-            HTTPException: HTTP error has occurred updating the devices.
-            HiveApiError: An API error code has been returned.
-        """
-        cameraImage = None
-        cameraRecording = None
-        hasCameraImage = False
-        hasCameraRecording = False
-
-        if self.config.file:
-            cameraImage = self.openFile("camera.json")
-            cameraRecording = self.openFile("camera.json")
-        elif self.tokens is not None:
-            cameraImage = await self.api.getCameraImage(device)
-            hasCameraRecording = bool(
-                cameraImage["parsed"]["events"][0]["hasRecording"]
-            )
-            if hasCameraRecording:
-                cameraRecording = await self.api.getCameraRecording(
-                    device, cameraImage["parsed"]["events"][0]["eventId"]
-                )
-
-            if operator.contains(str(cameraImage["original"]), "20") is False:
-                raise HTTPException
-            elif cameraImage["parsed"] is None:
-                raise HiveApiError
-        else:
-            raise NoApiToken
-
-        hasCameraImage = bool(cameraImage["parsed"]["events"][0])
-
-        self.data.camera[device["id"]] = {}
-        self.data.camera[device["id"]]["cameraImage"] = None
-        self.data.camera[device["id"]]["cameraRecording"] = None
-
-        if cameraImage is not None and hasCameraImage:
-            self.data.camera[device["id"]] = {}
-            self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
-                "events"
-            ][0]
-        if cameraRecording is not None and hasCameraRecording:
-            self.data.camera[device["id"]]["cameraRecording"] = cameraRecording[
-                "parsed"
-            ]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
@@ -641,10 +566,6 @@ class HiveSession:
                 if hiveType == "devices":
                     for aDevice in api_resp_p[hiveType]:
                         tmpDevices.update({aDevice["id"]: aDevice})
-                        if aDevice["type"] == "siren":
-                            self.config.alarm = True
-                        # if aDevice["type"] == "hivecamera":
-                        #    await self.getCamera(aDevice)
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
@@ -662,8 +583,6 @@ class HiveSession:
             if len(tmpDevices) > 0:
                 self.data.devices = copy.deepcopy(tmpDevices)
             self.data.actions = copy.deepcopy(tmpActions)
-            if self.config.alarm:
-                await self.getAlarm()
             self.config.last_updated = datetime.now()
             get_nodes_successful = True
         except HiveReauthRequired:
@@ -751,9 +670,7 @@ class HiveSession:
             list: List of devices
         """
         self.deviceList["parent_device"] = []
-        self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
-        self.deviceList["camera"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
         self.deviceList["sensor"] = []
