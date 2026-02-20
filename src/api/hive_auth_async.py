@@ -24,6 +24,7 @@ from ..helper.hive_exceptions import (
     HiveInvalidPassword,
     HiveInvalidUsername,
     HiveRefreshTokenExpired,
+    HiveReauthRequired,
 )
 from .hive_api import HiveApi
 
@@ -426,6 +427,12 @@ class HiveAuthAsync:
         """Perform device login instead."""
         _LOGGER.debug("Starting device SRP authentication.")
         login_result = await self.login()
+
+        if "AuthenticationResult" in login_result:
+            # Login succeeded without a device challenge (e.g. device tracking
+            # not enforced). Tokens are already valid, return them directly.
+            return login_result
+
         auth_params = await self.get_auth_params()
         auth_params["DEVICE_KEY"] = self.device_key
 
@@ -458,6 +465,10 @@ class HiveAuthAsync:
                 if err.__class__.__name__ == "EndpointConnectionError":
                     _LOGGER.error("Device login failed: cannot reach endpoint.")
                     raise HiveApiError from err
+        elif login_result.get("ChallengeName") == self.SMS_MFA_CHALLENGE:
+            # Account has 2FA enabled and device is not remembered by Cognito.
+            # Automatic re-authentication is not possible without user interaction.
+            raise HiveReauthRequired
         else:
             _LOGGER.error(
                 "Device login failed: expected DEVICE_SRP_AUTH challenge, got %s.",
