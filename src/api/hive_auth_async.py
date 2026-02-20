@@ -23,8 +23,8 @@ from ..helper.hive_exceptions import (
     HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
-    HiveRefreshTokenExpired,
     HiveReauthRequired,
+    HiveRefreshTokenExpired,
 )
 from .hive_api import HiveApi
 
