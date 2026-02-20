@@ -58,7 +58,7 @@ class HiveApiAsync:
             "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
         }
         try:
-            headers["Authorization"] = self.session.tokens.tokenData["token"]
+            headers["Authorization"] = self.session.tokens.token_data["token"]
         except KeyError:
             if "sso" in url:
                 pass

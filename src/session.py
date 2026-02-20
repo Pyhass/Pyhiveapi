@@ -103,7 +103,7 @@ class HiveSession:
             }
         )
         self.devices = {}
-        self.deviceList = {}
+        self.device_list = {}
         self.hub_id = None
         self._lastPollSlow = False
         self._slowPollThreshold = 3
@@ -166,10 +166,10 @@ class HiveSession:
             )
 
             if data.get("type", "") == "hub":
-                self.deviceList["parent_device"].append(device_obj)
-                self.deviceList[entity_type].append(device_obj)
+                self.device_list["parent_device"].append(device_obj)
+                self.device_list[entity_type].append(device_obj)
             else:
-                self.deviceList[entity_type].append(device_obj)
+                self.device_list[entity_type].append(device_obj)
 
             return device_obj
         except KeyError as error:
@@ -233,22 +233,22 @@ class HiveSession:
             "AccessToken: len=%d tail=…%s | "
             "RefreshToken: %s | "
             "ExpiresIn: %s | tokenCreated: %s | tokenExpiry: %s",
-            len(self.tokens.tokenData.get("token", "")),
-            self.tokens.tokenData.get("token", "")[-4:],
-            len(self.tokens.tokenData.get("accessToken", "")),
-            self.tokens.tokenData.get("accessToken", "")[-4:],
+            len(self.tokens.token_data.get("token", "")),
+            self.tokens.token_data.get("token", "")[-4:],
+            len(self.tokens.token_data.get("accessToken", "")),
+            self.tokens.token_data.get("accessToken", "")[-4:],
             (
                 "present (len=%d tail=…%s)"
                 % (
-                    len(self.tokens.tokenData.get("refreshToken", "")),
-                    self.tokens.tokenData.get("refreshToken", "")[-4:],
+                    len(self.tokens.token_data.get("refreshToken", "")),
+                    self.tokens.token_data.get("refreshToken", "")[-4:],
                 )
-                if self.tokens.tokenData.get("refreshToken")
+                if self.tokens.token_data.get("refreshToken")
                 else "not present"
             ),
             data.get("ExpiresIn", "N/A"),
-            self.tokens.tokenCreated,
-            self.tokens.tokenExpiry,
+            self.tokens.token_created,
+            self.tokens.token_expiry,
         )
 
         return self.tokens
@@ -669,13 +669,13 @@ class HiveSession:
         Returns:
             list: List of devices
         """
-        self.deviceList["parent_device"] = []
-        self.deviceList["binary_sensor"] = []
-        self.deviceList["climate"] = []
-        self.deviceList["light"] = []
-        self.deviceList["sensor"] = []
-        self.deviceList["switch"] = []
-        self.deviceList["water_heater"] = []
+        self.device_list["parent_device"] = []
+        self.device_list["binary_sensor"] = []
+        self.device_list["climate"] = []
+        self.device_list["light"] = []
+        self.device_list["sensor"] = []
+        self.device_list["switch"] = []
+        self.device_list["water_heater"] = []
 
         hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
         for device_id, device_data in self.data["devices"].items():
@@ -720,17 +720,17 @@ class HiveSession:
                 self.config.mode.append(product_data["id"])
 
         _LOGGER.debug(
-            "Device discovery found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
-            len(self.deviceList.get("parent", [])),
-            len(self.deviceList.get("binary_sensor", [])),
-            len(self.deviceList.get("climate", [])),
-            len(self.deviceList.get("light", [])),
-            len(self.deviceList.get("sensor", [])),
-            len(self.deviceList.get("switch", [])),
-            len(self.deviceList.get("water_heater", [])),
+            "Device discovery found: %d parent_device, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
+            len(self.device_list.get("parent_device", [])),
+            len(self.device_list.get("binary_sensor", [])),
+            len(self.device_list.get("climate", [])),
+            len(self.device_list.get("light", [])),
+            len(self.device_list.get("sensor", [])),
+            len(self.device_list.get("switch", [])),
+            len(self.device_list.get("water_heater", [])),
         )
 
-        return self.deviceList
+        return self.device_list
 
     @staticmethod
     def epochTime(date_time: any, pattern: str, action: str):
