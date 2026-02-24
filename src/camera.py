@@ -152,6 +152,14 @@ class Camera(HiveCamera):
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for camera %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -183,8 +191,7 @@ class Camera(HiveCamera):
                 ),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]

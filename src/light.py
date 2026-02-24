@@ -359,6 +359,14 @@ class Light(HiveLight):
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for light %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -414,20 +422,11 @@ class Light(HiveLight):
                         }
                     )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
-            if self.session._lastPollSlow:
-                cached = self.session.devices.get(device["hiveID"])
-                if cached is not None:
-                    _LOGGER.debug(
-                        "Returning cached state for light %s (slow poll).",
-                        device["haName"],
-                    )
-                    return cached
             device.setdefault("status", {"state": None})
             return device
 

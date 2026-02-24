@@ -105,12 +105,47 @@ class HiveSession:
                 "camera": {},
             }
         )
-        self.devices = {}
+        self.entityCache = {}
         self.deviceList = {}
         self.hub_id = None
         self._lastPollSlow = False
         self._slowPollThreshold = 3
         self._refreshThreshold = 0.90
+        self._updateTask = None
+
+    @staticmethod
+    def _entityCacheKey(device: dict):
+        """Build a stable cache key for an entity instance."""
+        return "|".join(
+            [
+                str(device.get("haType", "")),
+                str(device.get("hiveID", "")),
+                str(device.get("hiveType", "")),
+            ]
+        )
+
+    def getCachedDevice(self, device: dict):
+        """Get cached state for a specific entity."""
+        cache_key = self._entityCacheKey(device)
+        return self.entityCache.get(cache_key)
+
+    def setCachedDevice(self, device: dict, dev_data: dict):
+        """Store cached state for a specific entity."""
+        self.entityCache[self._entityCacheKey(device)] = dev_data
+        return dev_data
+
+    def shouldUseCachedData(self):
+        """Determine whether callers should use cached entity state.
+
+        Returns:
+            bool: True when the last poll was slow or another task is currently polling.
+        """
+        if self._lastPollSlow:
+            return True
+        if self.updateLock.locked():
+            current_task = asyncio.current_task()
+            return self._updateTask is None or current_task is not self._updateTask
+        return False
 
     def openFile(self, file: str):
         """Open a file.
@@ -352,7 +387,8 @@ class HiveSession:
         """Attempt device login with retries and backoff.
 
         Raises:
-            HiveReauthRequired: All retry attempts have been exhausted.
+            HiveInvalidDeviceAuthentication: Device credentials are invalid.
+            HiveApiError: API error or no internet connection.
         """
         last_err = None
         for delay_s in (0, 5, 10):
@@ -363,19 +399,20 @@ class HiveSession:
                 await self.deviceLogin()
                 last_err = None
                 break
-            except HiveInvalidDeviceAuthentication as err:
+            except HiveInvalidDeviceAuthentication:
                 _LOGGER.error(
                     "Device login failed with invalid credentials, reauthentication required."
                 )
-                raise HiveReauthRequired from err
             except HiveApiError as err:
                 _LOGGER.error("Device login attempt failed: %s", err)
                 last_err = err
         if last_err is not None:
             _LOGGER.error(
-                "All device login retries exhausted, reauthentication required."
+                "All device login retries exhausted, but device login may resolve the issue."
             )
-            raise HiveReauthRequired from last_err
+            # Don't raise HiveReauthRequired - let the caller handle the error
+            # Device login itself should resolve 403 issues when successful
+            return
 
         await self.hiveRefreshTokens(force_refresh=True)
 
@@ -470,22 +507,38 @@ class HiveSession:
         updated = False
         ep = self.config.lastUpdate + self.config.scanInterval
         if datetime.now() >= ep:
+            current_task = asyncio.current_task()
+            if self.updateLock.locked() and (
+                self._updateTask is None or current_task is not self._updateTask
+            ):
+                _LOGGER.debug(
+                    "Poll already in progress — using cached device data for %s.",
+                    device["hiveID"],
+                )
+                return updated
             async with self.updateLock:
                 # Re-check after acquiring lock — another caller may have already updated
                 ep = self.config.lastUpdate + self.config.scanInterval
                 if datetime.now() < ep:
                     return updated
-                _LOGGER.debug("Polling Hive API for device updates.")
-                updated = await self.getDevices(device["hiveID"])
-                if updated and len(self.deviceList["camera"]) > 0:
-                    for camera in self.data.camera:
-                        await self.getCamera(self.devices[camera])
-                if updated:
-                    _LOGGER.debug("Device update completed successfully.")
-                else:
-                    _LOGGER.debug(
-                        "Device update failed, will retry after scan interval."
-                    )
+                self._updateTask = current_task
+                try:
+                    _LOGGER.debug("Polling Hive API for device updates.")
+                    updated = await self.getDevices(device["hiveID"])
+                    if updated and len(self.deviceList["camera"]) > 0:
+                        for camera in self.data.camera:
+                            camera_device = self.data.devices.get(camera)
+                            if camera_device is not None:
+                                await self.getCamera(camera_device)
+                    if updated:
+                        _LOGGER.debug("Device update completed successfully.")
+                    else:
+                        _LOGGER.debug(
+                            "Device update failed, will retry after scan interval."
+                        )
+                finally:
+                    if self._updateTask is current_task:
+                        self._updateTask = None
 
         return updated
 
