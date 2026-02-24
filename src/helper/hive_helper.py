@@ -84,13 +84,11 @@ class HiveHelper:
         Returns:
             dict: Device data.
         """
-        data = False
-        try:
-            data = self.session.devices[n_id]
-        except KeyError:
-            pass
-
-        return data
+        if hasattr(self.session, "entityCache"):
+            for cached in self.session.entityCache.values():
+                if cached.get("hiveID") == n_id or cached.get("device_id") == n_id:
+                    return cached
+        return False
 
     def getDeviceData(self, product: dict):
         """Get device from product data.

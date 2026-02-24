@@ -425,9 +425,9 @@ class HiveAuthAsync:
                 self.device_group_key = result["AuthenticationResult"][
                     "NewDeviceMetadata"
                 ]["DeviceGroupKey"]
-                self.device_key = result["AuthenticationResult"][
-                    "NewDeviceMetadata"
-                ]["DeviceKey"]
+                self.device_key = result["AuthenticationResult"]["NewDeviceMetadata"][
+                    "DeviceKey"
+                ]
 
             _LOGGER.debug("SRP auth challenge completed successfully.")
             return result

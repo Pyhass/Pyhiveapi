@@ -32,6 +32,14 @@ class HiveAction:
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for action %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         dev_data = {}
 
         if device["hiveID"] in self.data["action"]:
@@ -47,8 +55,7 @@ class HiveAction:
                 "custom": device.get("custom", None),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
             exists = self.session.data.actions.get("hiveID", False)
             if exists is False:
