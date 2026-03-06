@@ -1,7 +1,11 @@
 """Hive Switch Module."""
 
 # pylint: skip-file
+import logging
+
 from .helper.const import HIVETOHA
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveSmartPlug:
@@ -29,7 +33,7 @@ class HiveSmartPlug:
             state = data["state"]["status"]
             state = HIVETOHA["Switch"].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -48,7 +52,7 @@ class HiveSmartPlug:
             data = self.session.data.products[device["hiveID"]]
             state = data["props"]["powerConsumption"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -67,6 +71,7 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Turning plug ON for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -93,6 +98,7 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Turning plug OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -129,6 +135,14 @@ class Switch(HiveSmartPlug):
         Returns:
             dict: Return device after update is complete.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for switch %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -136,6 +150,7 @@ class Switch(HiveSmartPlug):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating switch data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -167,12 +182,12 @@ class Switch(HiveSmartPlug):
                     }
                 )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None})
             return device
 
     async def getSwitchState(self, device: dict):

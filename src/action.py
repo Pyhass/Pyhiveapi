@@ -1,6 +1,9 @@
 """Hive Action Module."""
 
 # pylint: skip-file
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveAction:
@@ -29,6 +32,14 @@ class HiveAction:
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for action %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         dev_data = {}
 
         if device["hiveID"] in self.data["action"]:
@@ -44,8 +55,7 @@ class HiveAction:
                 "custom": device.get("custom", None),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
             exists = self.session.data.actions.get("hiveID", False)
             if exists is False:
@@ -67,7 +77,7 @@ class HiveAction:
             data = self.session.data.actions[device["hiveID"]]
             final = data["enabled"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -85,6 +95,7 @@ class HiveAction:
         final = False
 
         if device["hiveID"] in self.session.data.actions:
+            _LOGGER.debug("Enabling action %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": True})
@@ -110,6 +121,7 @@ class HiveAction:
         final = False
 
         if device["hiveID"] in self.session.data.actions:
+            _LOGGER.debug("Disabling action %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.actions[device["hiveID"]]
             data.update({"enabled": False})

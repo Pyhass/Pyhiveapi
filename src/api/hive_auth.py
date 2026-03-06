@@ -18,6 +18,7 @@ from ..helper.hive_exceptions import (
     HiveInvalidDeviceAuthentication,
     HiveInvalidPassword,
     HiveInvalidUsername,
+    HiveReauthRequired,
 )
 from .hive_api import HiveApi
 
@@ -383,6 +384,12 @@ class HiveAuth:
     def device_login(self):
         """Perform device login instead."""
         login_result = self.login()
+
+        if "AuthenticationResult" in login_result:
+            # Login succeeded without a device challenge (e.g. device tracking
+            # not enforced). Tokens are already valid, return them directly.
+            return login_result
+
         auth_params = self.get_auth_params()
         auth_params["DEVICE_KEY"] = self.device_key
 
@@ -405,6 +412,10 @@ class HiveAuth:
             except botocore.exceptions.EndpointConnectionError as err:
                 if err.__class__.__name__ == "EndpointConnectionError":
                     raise HiveApiError from err
+        elif login_result.get("ChallengeName") == self.SMS_MFA_CHALLENGE:
+            # Account has 2FA enabled and device is not remembered by Cognito.
+            # Automatic re-authentication is not possible without user interaction.
+            raise HiveReauthRequired
         else:
             raise HiveInvalidDeviceAuthentication
 

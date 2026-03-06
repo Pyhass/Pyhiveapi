@@ -1,7 +1,11 @@
 """Hive Sensor Module."""
 
 # pylint: skip-file
+import logging
+
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveSensor:
@@ -29,7 +33,7 @@ class HiveSensor:
             elif data["type"] == "motionsensor":
                 final = data["props"]["motion"]["status"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -50,7 +54,7 @@ class HiveSensor:
             state = data["props"]["online"]
             final = HIVETOHA[self.sensorType].get(state, state)
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return final
 
@@ -79,6 +83,14 @@ class Sensor(HiveSensor):
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for sensor %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -91,6 +103,11 @@ class Sensor(HiveSensor):
             if device["hiveType"] not in ("Availability", "Connectivity"):
                 self.session.helper.deviceRecovered(device["device_id"])
 
+            _LOGGER.debug(
+                "Updating sensor data for %s (%s).",
+                device["haName"],
+                device["hiveType"],
+            )
             dev_data = {}
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -137,10 +154,10 @@ class Sensor(HiveSensor):
                     }
                 )
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None})
             return device

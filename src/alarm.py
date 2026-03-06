@@ -1,6 +1,9 @@
 """Hive Alarm Module."""
 
 # pylint: skip-file
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class HiveHomeShield:
@@ -24,7 +27,7 @@ class HiveHomeShield:
             data = self.session.data.alarm
             state = data["mode"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -40,7 +43,7 @@ class HiveHomeShield:
             data = self.session.data.devices[device["hiveID"]]
             state = data["state"]["alarmActive"]
         except KeyError as e:
-            await self.session.log.error(e)
+            _LOGGER.error(e)
 
         return state
 
@@ -59,6 +62,7 @@ class HiveHomeShield:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
+            _LOGGER.debug("Setting alarm mode to %s.", mode)
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setAlarm(mode=mode)
             if resp["original"] == 200:
@@ -92,6 +96,14 @@ class Alarm(HiveHomeShield):
         Returns:
             dict: Updated device.
         """
+        if self.session.shouldUseCachedData():
+            cached = self.session.getCachedDevice(device)
+            if cached is not None:
+                _LOGGER.debug(
+                    "Returning cached state for alarm %s (slow/busy poll).",
+                    device["haName"],
+                )
+                return cached
         device["deviceData"].update(
             {"online": await self.session.attr.onlineOffline(device["device_id"])}
         )
@@ -99,6 +111,7 @@ class Alarm(HiveHomeShield):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
+            _LOGGER.debug("Updating alarm data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -120,10 +133,10 @@ class Alarm(HiveHomeShield):
                 ),
             }
 
-            self.session.devices.update({device["hiveID"]: dev_data})
-            return self.session.devices[device["hiveID"]]
+            return self.session.setCachedDevice(device, dev_data)
         else:
-            await self.session.log.errorCheck(
+            await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]
             )
+            device.setdefault("status", {"state": None, "mode": None})
             return device
