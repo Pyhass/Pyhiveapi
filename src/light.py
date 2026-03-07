@@ -29,13 +29,16 @@ class HiveLight:
         """
         state = None
         final = None
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
 
         try:
             data = self.session.data.products[device["hiveID"]]
             state = data["state"]["status"]
             final = HIVETOHA[self.lightType].get(state, state)
         except KeyError as e:
-            _LOGGER.error(e)
+            _LOGGER.error(
+                "KeyError getting light state for %s: %s", device_name, str(e)
+            )
 
         return final
 
@@ -50,13 +53,16 @@ class HiveLight:
         """
         state = None
         final = None
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
 
         try:
             data = self.session.data.products[device["hiveID"]]
             state = data["state"]["brightness"]
             final = (state / 100) * 255
         except KeyError as e:
-            _LOGGER.error(e)
+            _LOGGER.error(
+                "KeyError getting light brightness for %s: %s", device_name, str(e)
+            )
 
         return final
 
@@ -176,24 +182,44 @@ class HiveLight:
             device (dict): Device to turn off.
 
         Returns:
-            boolean: True/False if successful.
+            boolean: True/False if successful
         """
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
+        _LOGGER.info("Turning off light %s", device_name)
+
+        await self.session.hiveRefreshTokens()
         final = False
 
         if (
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Turning light OFF for %s.", device["haName"])
-            await self.session.hiveRefreshTokens()
+            _LOGGER.debug(
+                "setStatusOff - Device %s is online, proceeding with turn off",
+                device_name,
+            )
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
                 data["type"], device["hiveID"], status="OFF"
             )
 
             if resp["original"] == 200:
-                final = True
+                _LOGGER.debug(
+                    "setStatusOff - Light turned off successfully for %s, refreshing device data",
+                    device_name,
+                )
                 await self.session.getDevices(device["hiveID"])
+                final = True
+            else:
+                _LOGGER.error(
+                    "Failed to turn off light %s, response: %s",
+                    device_name,
+                    resp["original"],
+                )
+        else:
+            _LOGGER.warning(
+                "Device %s not found or offline, cannot turn off", device_name
+            )
 
         return final
 
@@ -204,37 +230,12 @@ class HiveLight:
             device (dict): Device to turn on.
 
         Returns:
-            boolean: True/False if successful.
+            boolean: True/False if successful
         """
-        final = False
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
+        _LOGGER.info("Turning on light %s", device_name)
 
-        if (
-            device["hiveID"] in self.session.data.products
-            and device["deviceData"]["online"]
-        ):
-            _LOGGER.debug("Turning light ON for %s.", device["haName"])
-            await self.session.hiveRefreshTokens()
-            data = self.session.data.products[device["hiveID"]]
-
-            resp = await self.session.api.setState(
-                data["type"], device["hiveID"], status="ON"
-            )
-            if resp["original"] == 200:
-                final = True
-                await self.session.getDevices(device["hiveID"])
-
-        return final
-
-    async def setBrightness(self, device: dict, n_brightness: int):
-        """Set brightness of the light.
-
-        Args:
-            device (dict): Device to set brightness for.
-            n_brightness (int): Brightness value
-
-        Returns:
-            boolean: True/False if successful.
-        """
+        await self.session.hiveRefreshTokens()
         final = False
 
         if (
@@ -242,16 +243,63 @@ class HiveLight:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting brightness to %s for %s.", n_brightness, device["haName"]
+                "setStatusOn - Device %s is online, proceeding with turn on",
+                device_name,
             )
-            await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
-                data["type"],
-                device["hiveID"],
-                status="ON",
-                brightness=n_brightness,
+                data["type"], device["hiveID"], status="ON"
             )
+
+            if resp["original"] == 200:
+                _LOGGER.debug(
+                    "setStatusOn - Light turned on successfully for %s, refreshing device data",
+                    device_name,
+                )
+                await self.session.getDevices(device["hiveID"])
+                final = True
+            else:
+                _LOGGER.error(
+                    "Failed to turn on light %s, response: %s",
+                    device_name,
+                    resp["original"],
+                )
+        else:
+            _LOGGER.warning(
+                "Device %s not found or offline, cannot turn on", device_name
+            )
+
+        return final
+
+    async def setBrightness(self, device: dict, n_brightness: int):
+        """Set brightness of the light.
+
+        Args:
+            device (dict): Device to set brightness of.
+            n_brightness (int): Brightness value to set the light to.
+
+        Returns:
+            boolean: True/False if successful
+        """
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
+        _LOGGER.info("Setting brightness to %s for light %s", n_brightness, device_name)
+
+        await self.session.hiveRefreshTokens()
+        final = False
+
+        if (
+            device["hiveID"] in self.session.data.products
+            and device["deviceData"]["online"]
+        ):
+            _LOGGER.debug(
+                "setBrightness - Device %s is online, proceeding with brightness change",
+                device_name,
+            )
+            data = self.session.data.products[device["hiveID"]]
+            resp = await self.session.api.setState(
+                data["type"], device["hiveID"], status="ON", brightness=n_brightness
+            )
+
             if resp["original"] == 200:
                 final = True
                 await self.session.getDevices(device["hiveID"])
@@ -275,7 +323,9 @@ class HiveLight:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting colour temperature to %s for %s.", color_temp, device["haName"]
+                "setColorTemp - Setting colour temperature to %s for %s.",
+                color_temp,
+                device["haName"],
             )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
@@ -316,7 +366,9 @@ class HiveLight:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Setting colour to %s for %s.", new_color, device["haName"])
+            _LOGGER.debug(
+                "setColor - Setting colour to %s for %s.", new_color, device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
 
@@ -363,7 +415,7 @@ class Light(HiveLight):
             cached = self.session.getCachedDevice(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "Returning cached state for light %s (slow/busy poll).",
+                    "getLight - Returning cached state for light %s (slow/busy poll).",
                     device["haName"],
                 )
                 return cached
@@ -374,7 +426,7 @@ class Light(HiveLight):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
-            _LOGGER.debug("Updating light data for %s.", device["haName"])
+            _LOGGER.debug("getLight - Updating light data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -421,6 +473,11 @@ class Light(HiveLight):
                             "mode": await self.getColorMode(device),
                         }
                     )
+            _LOGGER.debug(
+                "getLight - Light device data for %s: %s",
+                device["haName"],
+                dev_data["status"],
+            )
 
             return self.session.setCachedDevice(device, dev_data)
         else:

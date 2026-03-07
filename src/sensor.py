@@ -104,7 +104,7 @@ class Sensor(HiveSensor):
                 self.session.helper.deviceRecovered(device["device_id"])
 
             _LOGGER.debug(
-                "Updating sensor data for %s (%s).",
+                "getSensor - Updating sensor data for %s (%s).",
                 device["haName"],
                 device["hiveType"],
             )
@@ -153,6 +153,12 @@ class Sensor(HiveSensor):
                         ),
                     }
                 )
+
+            _LOGGER.debug(
+                "getSensor - Sensor device data for %s: %s",
+                device["haName"],
+                dev_data["status"],
+            )
 
             return self.session.setCachedDevice(device, dev_data)
         else:

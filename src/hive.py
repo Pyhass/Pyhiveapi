@@ -113,7 +113,7 @@ class Hive(HiveSession):
         self.light = Light(self.session)
         self.switch = Switch(self.session)
         self.sensor = Sensor(self.session)
-        _LOGGER.debug("Hive session initialised with all device handlers.")
+
         if debug:
             sys.settrace(trace_debug)
 

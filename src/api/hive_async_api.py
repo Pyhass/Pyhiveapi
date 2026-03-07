@@ -169,7 +169,6 @@ class HiveApiAsync:
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
-        _LOGGER.debug("Fetching all nodes from Hive API.")
         try:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
@@ -303,7 +302,7 @@ class HiveApiAsync:
 
     async def setState(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        _LOGGER.debug("Setting state for %s/%s: %s", n_type, n_id, kwargs)
+        _LOGGER.debug("setState - Setting state for %s/%s: %s", n_type, n_id, kwargs)
         json_return = {}
         jsc = (
             "{"

@@ -247,6 +247,9 @@ class HiveSession:
             dict: Parsed dictionary of tokens
         """
         data = {}
+        _LOGGER.debug(
+            "updateTokens - Input tokens: %s", self.helper._sanitize_payload(tokens)
+        )
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
             self.tokens.tokenData.update({"token": data["IdToken"]})
@@ -265,7 +268,7 @@ class HiveSession:
             self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
 
         _LOGGER.debug(
-            "updateTokens — IdToken: len=%d tail=…%s | "
+            "updateTokens — Final session tokens: IdToken: len=%d tail=…%s | "
             "AccessToken: len=%d tail=…%s | "
             "RefreshToken: %s | "
             "ExpiresIn: %s | tokenCreated: %s | tokenExpiry: %s",
@@ -302,7 +305,7 @@ class HiveSession:
         if not self.auth:
             raise HiveUnknownConfiguration
 
-        _LOGGER.debug("Attempting login to Hive account.")
+        _LOGGER.debug("login - Attempting login to Hive account.")
         try:
             result = await self.auth.login()
         except HiveInvalidUsername:
@@ -317,7 +320,9 @@ class HiveSession:
 
         if result and "AuthenticationResult" in result:
             auth_keys = list(result["AuthenticationResult"].keys())
-            _LOGGER.debug("Login successful — AuthenticationResult keys: %s", auth_keys)
+            _LOGGER.debug(
+                "login - Login successful — AuthenticationResult keys: %s", auth_keys
+            )
             await self.updateTokens(result)
         return result
 
@@ -335,7 +340,7 @@ class HiveSession:
             _LOGGER.error("2FA failed: authentication not initialised.")
             raise HiveUnknownConfiguration
 
-        _LOGGER.debug("Submitting 2FA code.")
+        _LOGGER.debug("sms_2fa - Submitting 2FA code.")
         try:
             result = await self.auth.sms_2fa(code, session)
         except HiveInvalid2FACode:
@@ -348,7 +353,8 @@ class HiveSession:
         if result and "AuthenticationResult" in result:
             auth_keys = list(result["AuthenticationResult"].keys())
             _LOGGER.debug(
-                "2FA login successful — AuthenticationResult keys: %s", auth_keys
+                "sms_2fa - 2FA login successful — AuthenticationResult keys: %s",
+                auth_keys,
             )
             await self.updateTokens(result)
         return result
@@ -368,7 +374,7 @@ class HiveSession:
             _LOGGER.error("Device login failed: authentication not initialised.")
             raise HiveUnknownConfiguration
 
-        _LOGGER.debug("Attempting device login.")
+        _LOGGER.debug("deviceLogin - Attempting device login.")
         try:
             result = await self.auth.device_login()
         except HiveInvalidDeviceAuthentication:
@@ -378,7 +384,8 @@ class HiveSession:
         if result and "AuthenticationResult" in result:
             auth_keys = list(result["AuthenticationResult"].keys())
             _LOGGER.debug(
-                "Device login successful — AuthenticationResult keys: %s", auth_keys
+                "deviceLogin - Device login successful — AuthenticationResult keys: %s",
+                auth_keys,
             )
             await self.updateTokens(result)
         return result
@@ -394,7 +401,9 @@ class HiveSession:
         for delay_s in (0, 5, 10):
             try:
                 if delay_s:
-                    _LOGGER.debug("Retrying device login in %s seconds.", delay_s)
+                    _LOGGER.debug(
+                        "deviceLogin - Retrying device login in %s seconds.", delay_s
+                    )
                     await asyncio.sleep(delay_s)
                 await self.deviceLogin()
                 last_err = None
@@ -435,7 +444,7 @@ class HiveSession:
             )
             # Refresh at 90% of token lifetime to prevent expiration during API calls
             _LOGGER.debug(
-                "Session token expiry time ( Current: %s | Expiry: %s)",
+                "hiveRefreshTokens - Session token expiry time ( Current: %s | Expiry: %s)",
                 datetime.now(),
                 expiry_time,
             )
@@ -449,7 +458,7 @@ class HiveSession:
                         return result
                     actual_expiry = self.tokens.tokenCreated + self.tokens.tokenExpiry
                     _LOGGER.debug(
-                        "Session Token created: %s | Actual expiry: %s | "
+                        "hiveRefreshTokens - Session Token created: %s | Actual expiry: %s | "
                         "Early refresh (×%s): %s | Now: %s | Force refresh: %s",
                         self.tokens.tokenCreated,
                         actual_expiry,
@@ -466,7 +475,7 @@ class HiveSession:
                         if result and "AuthenticationResult" in result:
                             auth_keys = list(result["AuthenticationResult"].keys())
                             _LOGGER.debug(
-                                "Token refresh — AuthenticationResult keys: %s",
+                                "hiveRefreshTokens - Token refresh — AuthenticationResult keys: %s",
                                 auth_keys,
                             )
                             await self.updateTokens(result)
@@ -474,7 +483,7 @@ class HiveSession:
                                 self.tokens.tokenCreated + self.tokens.tokenExpiry
                             )
                             _LOGGER.debug(
-                                "Session Token refresh successful. New expiry: %s",
+                                "hiveRefreshTokens - Session Token refresh successful. New expiry: %s",
                                 new_expiry,
                             )
                     except (HiveRefreshTokenExpired, HiveFailedToRefreshTokens) as exc:
@@ -512,7 +521,7 @@ class HiveSession:
                 self._updateTask is None or current_task is not self._updateTask
             ):
                 _LOGGER.debug(
-                    "Poll already in progress — using cached device data for %s.",
+                    "updateData - Poll already in progress — using cached device data for %s.",
                     device["hiveID"],
                 )
                 return updated
@@ -523,7 +532,7 @@ class HiveSession:
                     return updated
                 self._updateTask = current_task
                 try:
-                    _LOGGER.debug("Polling Hive API for device updates.")
+                    _LOGGER.debug("updateData - Polling Hive API for device updates.")
                     updated = await self.getDevices(device["hiveID"])
                     if updated and len(self.deviceList["camera"]) > 0:
                         for camera in self.data.camera:
@@ -531,10 +540,12 @@ class HiveSession:
                             if camera_device is not None:
                                 await self.getCamera(camera_device)
                     if updated:
-                        _LOGGER.debug("Device update completed successfully.")
+                        _LOGGER.debug(
+                            "updateData - Device update completed successfully."
+                        )
                     else:
                         _LOGGER.debug(
-                            "Device update failed, will retry after scan interval."
+                            "updateData - Device update failed, will retry after scan interval."
                         )
                 finally:
                     if self._updateTask is current_task:
@@ -626,11 +637,12 @@ class HiveSession:
 
         try:
             if self.config.file:
-                _LOGGER.debug("Loading device data from file.")
+                _LOGGER.debug("getDevices - Loading device data from file.")
                 api_resp_d = self.openFile("data.json")
             elif self.tokens is not None:
+                _LOGGER.debug("getDevices - Refreshing tokens before fetching devices.")
                 await self.hiveRefreshTokens()
-                _LOGGER.debug("Fetching all devices from Hive API.")
+                _LOGGER.debug("getDevices - Fetching all devices from Hive API.")
                 api_call_start = time.monotonic()
                 try:
                     api_resp_d = await self.api.getAll()
@@ -645,7 +657,7 @@ class HiveSession:
                         try:
                             if api_retry_delay:
                                 _LOGGER.debug(
-                                    "Retrying API call in %ss after device re-login.",
+                                    "getDevices - Retrying API call in %ss after device re-login.",
                                     api_retry_delay,
                                 )
                                 await asyncio.sleep(api_retry_delay)
@@ -662,8 +674,8 @@ class HiveSession:
                         raise HiveReauthRequired from last_auth_err
                 api_call_duration = time.monotonic() - api_call_start
                 if api_call_duration > self._slowPollThreshold:
-                    _LOGGER.warning(
-                        "Hive API response took %.1fs — marking poll as slow.",
+                    _LOGGER.debug(
+                        "getDevices - Hive API response took %.1fs — marking poll as slow.",
                         api_call_duration,
                     )
                     self._lastPollSlow = True
@@ -700,7 +712,7 @@ class HiveSession:
                     self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
 
             _LOGGER.debug(
-                "API returned %d products, %d devices, %d actions.",
+                "getDevices - API returned %d products, %d devices, %d actions.",
                 len(tmpProducts),
                 len(tmpDevices),
                 len(tmpActions),
@@ -755,7 +767,10 @@ class HiveSession:
         """
         if config is None:
             config = {}
-        _LOGGER.debug("Starting Hive session.")
+        _LOGGER.debug("startSession - Starting Hive session.")
+        _LOGGER.debug(
+            "startSession - Config: %s", self.helper._sanitize_payload(config)
+        )
         await self.useFile(config.get("username", self.config.username))
         await self.updateInterval(
             config.get("options", {}).get("scan_interval", self.config.scanInterval)
@@ -763,6 +778,7 @@ class HiveSession:
 
         if config != {}:
             if "tokens" in config and not self.config.file:
+                _LOGGER.debug("startSession - Updating tokens from config")
                 await self.updateTokens(config["tokens"], False)
 
             if "username" in config and not self.config.file:
@@ -798,6 +814,8 @@ class HiveSession:
         Returns:
             list: List of devices
         """
+        _LOGGER.info("createDevices - Starting device discovery process")
+
         self.deviceList["parent"] = []
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
@@ -809,48 +827,127 @@ class HiveSession:
         self.deviceList["water_heater"] = []
 
         hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
+
+        # Find hub device first
         for aDevice in self.data["devices"]:
             if self.data["devices"][aDevice]["type"] == "hub":
                 self.hub_id = aDevice
+                hub_name = (
+                    self.data["devices"][aDevice].get("state", {}).get("name", aDevice)
+                )
+                _LOGGER.debug(
+                    "createDevices - Found hub device: %s (ID: %s)", hub_name, aDevice
+                )
                 break
+        else:
+            _LOGGER.warning("createDevices - No hub device found in device list")
+
+        # Process devices
+        device_count = 0
         for aDevice in self.data["devices"]:
             d = self.data.devices[aDevice]
+            device_name = d.get("state", {}).get("name", aDevice)
+            device_type = d.get("type", "Unknown")
+            _LOGGER.debug(
+                "createDevices - Processing device: %s (%s - %s)",
+                device_name,
+                aDevice,
+                device_type,
+            )
+
             device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
             for code in device_list:
-                eval("self." + code)
+                try:
+                    eval("self." + code)
+                except Exception as e:
+                    _LOGGER.error(
+                        "Failed to execute device code '%s' for %s: %s",
+                        code,
+                        device_name,
+                        str(e),
+                    )
 
             if self.data["devices"][aDevice]["type"] in hive_type:
                 self.config.battery.append(d["id"])
+                _LOGGER.debug(
+                    "createDevices - Added device %s to battery monitoring list",
+                    device_name,
+                )
 
+            device_count += 1
+
+        # Process actions
         if "action" in HIVE_TYPES["Switch"]:
+            _LOGGER.debug(
+                "createDevices - Processing %d actions", len(self.data["actions"])
+            )
             for action in self.data["actions"]:
                 a = self.data["actions"][action]  # noqa: F841
-                eval("self." + ACTIONS)
+                try:
+                    eval("self." + ACTIONS)
+                except Exception as e:
+                    _LOGGER.error(
+                        "Failed to execute action code for action %s: %s",
+                        action,
+                        str(e),
+                    )
 
+        # Process products
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
+        product_count = 0
         for aProduct in self.data.products:
             p = self.data.products[aProduct]
             if "error" in p:
+                _LOGGER.warning(
+                    "Skipping product %s due to error: %s", aProduct, p["error"]
+                )
                 continue
+
+            product_name = p.get("state", {}).get("name", aProduct)
+            product_type = p.get("type", "Unknown")
+            _LOGGER.debug(
+                "createDevices - Processing product: %s (%s - %s)",
+                product_name,
+                aProduct,
+                product_type,
+            )
+
             # Only consider single items or heating groups
             if (
                 p.get("isGroup", False)
-                and self.data.products[aProduct]["type"] not in HIVE_TYPES["Heating"]
+                and self.data.products[product_type] not in HIVE_TYPES["Heating"]
             ):
+                _LOGGER.debug(
+                    "createDevices - Skipping group product %s (type: %s)",
+                    product_name,
+                    product_type,
+                )
                 continue
-            product_list = PRODUCTS.get(self.data.products[aProduct]["type"], [])
-            product_name = self.data.products[aProduct]["state"].get("name", "Unknown")
+
+            product_list = PRODUCTS.get(product_type, [])
             for code in product_list:
                 try:
                     eval("self." + code)
                 except (NameError, AttributeError) as e:
-                    _LOGGER.warning(f"Device {product_name} cannot be setup - {e}")
+                    _LOGGER.warning(
+                        "createDevices - Device %s cannot be setup - %s",
+                        product_name,
+                        e,
+                    )
 
-            if self.data.products[aProduct]["type"] in hive_type:
+            if product_type in hive_type:
                 self.config.mode.append(p["id"])
+                _LOGGER.debug(
+                    "createDevices - Added product %s to mode list", product_name
+                )
 
-        _LOGGER.debug(
-            "Device discovery found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
+            product_count += 1
+
+        _LOGGER.info(
+            "Device discovery completed: %d devices, %d products processed. "
+            "Found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
+            device_count,
+            product_count,
             len(self.deviceList.get("parent", [])),
             len(self.deviceList.get("binary_sensor", [])),
             len(self.deviceList.get("climate", [])),
