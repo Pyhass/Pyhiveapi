@@ -520,10 +520,7 @@ class HiveSession:
             if self.updateLock.locked() and (
                 self._updateTask is None or current_task is not self._updateTask
             ):
-                _LOGGER.debug(
-                    "updateData - Poll already in progress — using cached device data for %s.",
-                    device["hiveID"],
-                )
+                _LOGGER.debug("updateData - Update poll already in progress")
                 return updated
             async with self.updateLock:
                 # Re-check after acquiring lock — another caller may have already updated
@@ -915,10 +912,10 @@ class HiveSession:
             # Only consider single items or heating groups
             if (
                 p.get("isGroup", False)
-                and self.data.products[product_type] not in HIVE_TYPES["Heating"]
+                and self.data.products[aProduct]["type"] not in HIVE_TYPES["Heating"]
             ):
                 _LOGGER.debug(
-                    "createDevices - Skipping group product %s (type: %s)",
+                    "createDevices - Skipping group product currently not supported %s (type: %s)",
                     product_name,
                     product_type,
                 )
