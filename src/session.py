@@ -293,7 +293,14 @@ class HiveSession:
         return self.tokens
 
     async def login(self):
-        """Login to hive account.
+        """Login to hive account with business logic routing.
+
+        Business Rules:
+        1) Login successfully - tokens returned, no device login or SMS2FA needed
+        2) Check for device login or SMS challenges
+        3) Direct flow to one of the two
+        4) If device login, process ends but check if device is registered
+        5) If SMS, follow on with device registration
 
         Raises:
             HiveUnknownConfiguration: Login information is unknown.
@@ -318,22 +325,88 @@ class HiveSession:
             _LOGGER.error("Login failed: API error or no internet connection.")
             raise
 
+        # Rule 1: Login successful - tokens returned, no challenges needed
         if result and "AuthenticationResult" in result:
             auth_keys = list(result["AuthenticationResult"].keys())
             _LOGGER.debug(
                 "login - Login successful — AuthenticationResult keys: %s", auth_keys
             )
             await self.updateTokens(result)
+            return result
+
+        # Rule 2 & 3: Check for device login or SMS challenges and route
+        challenge_name = result.get("ChallengeName")
+        _LOGGER.debug("login - Challenge detected: %s", challenge_name)
+
+        if challenge_name == self.auth.DEVICE_VERIFIER_CHALLENGE:
+            # Rule 4: Device login flow - check if device is registered
+            _LOGGER.debug("login - Routing to device login flow")
+            return await self._handleDeviceLoginChallenge(result)
+        elif challenge_name == self.auth.SMS_MFA_CHALLENGE:
+            # Rule 5: SMS flow - will need device registration after 2FA
+            _LOGGER.debug("login - Routing to SMS 2FA flow (requires user input)")
+            return result
+        else:
+            _LOGGER.error("login - Unsupported challenge: %s", challenge_name)
+            raise HiveUnknownConfiguration
+
+    async def _handleDeviceLoginChallenge(self, login_result):
+        """Handle device login challenge.
+
+        Args:
+            login_result (dict): Result from initial login with DEVICE_SRP_AUTH challenge.
+
+        Returns:
+            dict: Authentication result with tokens.
+
+        Raises:
+            HiveReauthRequired: If device login encounters SMS_MFA (device not remembered).
+            HiveInvalidDeviceAuthentication: If device is not registered.
+        """
+        _LOGGER.debug("_handleDeviceLoginChallenge - Processing device login")
+
+        # Check if device is registered before attempting device login
+        is_registered = await self.auth.is_device_registered()
+        if not is_registered:
+            _LOGGER.warning(
+                "_handleDeviceLoginChallenge - Device not registered, "
+                "cannot complete device login. User must complete SMS 2FA."
+            )
+            raise HiveInvalidDeviceAuthentication
+
+        # Device is registered, proceed with device login
+        _LOGGER.debug("_handleDeviceLoginChallenge - Device is registered, proceeding")
+        result = await self.auth.device_login()
+
+        # Check if device login returned SMS_MFA challenge (device not remembered by Cognito)
+        if result and result.get("ChallengeName") == self.auth.SMS_MFA_CHALLENGE:
+            _LOGGER.error(
+                "_handleDeviceLoginChallenge - Device login failed: SMS MFA challenge detected. "
+                "Device is not remembered by Cognito. User must reauthenticate."
+            )
+            raise HiveReauthRequired
+
+        if result and "AuthenticationResult" in result:
+            auth_keys = list(result["AuthenticationResult"].keys())
+            _LOGGER.debug(
+                "_handleDeviceLoginChallenge - Device login successful — AuthenticationResult keys: %s",
+                auth_keys,
+            )
+            await self.updateTokens(result)
+
         return result
 
     async def sms2fa(self, code, session):
         """Login to hive account with 2 factor authentication.
 
+        After successful SMS 2FA, checks if device needs registration and
+        handles it automatically (Rule 5).
+
         Raises:
             HiveUnknownConfiguration: Login information is unknown.
 
         Returns:
-            dict: result of the authentication request.
+            dict: result of the authentication request with device data if registered.
         """
         result = None
         if not self.auth:
@@ -357,43 +430,17 @@ class HiveSession:
                 auth_keys,
             )
             await self.updateTokens(result)
+
         return result
 
-    async def deviceLogin(self):
-        """Login to hive account using device authentication.
+    async def _retryLogin(self):
+        """Attempt login with retries and backoff.
+
+        This is called when token refresh fails. It attempts to login again,
+        which may succeed via device login or may require user interaction (SMS 2FA).
 
         Raises:
-            HiveUnknownConfiguration: Login information is unknown.
-            HiveInvalidDeviceAuthentication: Device information is unknown.
-
-        Returns:
-            dict: result of the authentication request.
-        """
-        result = None
-        if not self.auth:
-            _LOGGER.error("Device login failed: authentication not initialised.")
-            raise HiveUnknownConfiguration
-
-        _LOGGER.debug("deviceLogin - Attempting device login.")
-        try:
-            result = await self.auth.device_login()
-        except HiveInvalidDeviceAuthentication:
-            _LOGGER.error("Device login failed: invalid device credentials.")
-            raise
-
-        if result and "AuthenticationResult" in result:
-            auth_keys = list(result["AuthenticationResult"].keys())
-            _LOGGER.debug(
-                "deviceLogin - Device login successful — AuthenticationResult keys: %s",
-                auth_keys,
-            )
-            await self.updateTokens(result)
-        return result
-
-    async def _retryDeviceLogin(self):
-        """Attempt device login with retries and backoff.
-
-        Raises:
+            HiveReauthRequired: User interaction required (SMS 2FA challenge).
             HiveInvalidDeviceAuthentication: Device credentials are invalid.
             HiveApiError: API error or no internet connection.
         """
@@ -402,26 +449,37 @@ class HiveSession:
             try:
                 if delay_s:
                     _LOGGER.debug(
-                        "deviceLogin - Retrying device login in %s seconds.", delay_s
+                        "_retryLogin - Retrying login in %s seconds.", delay_s
                     )
                     await asyncio.sleep(delay_s)
-                await self.deviceLogin()
+                result = await self.login()
+
+                # Check if login returned SMS_MFA challenge (requires user interaction)
+                if (
+                    result
+                    and result.get("ChallengeName") == self.auth.SMS_MFA_CHALLENGE
+                ):
+                    _LOGGER.error(
+                        "_retryLogin - Login requires SMS 2FA. User must reauthenticate."
+                    )
+                    raise HiveReauthRequired
+
                 last_err = None
                 break
-            except HiveInvalidDeviceAuthentication:
+            except (HiveInvalidUsername, HiveInvalidPassword):
                 _LOGGER.error(
-                    "Device login failed with invalid credentials, reauthentication required."
+                    "_retryLogin - Login failed with invalid credentials, reauthentication required."
                 )
+                raise HiveReauthRequired
+            except HiveReauthRequired:
+                # Propagate reauthentication requirement immediately
+                raise
             except HiveApiError as err:
-                _LOGGER.error("Device login attempt failed: %s", err)
+                _LOGGER.error("_retryLogin - Login attempt failed: %s", err)
                 last_err = err
         if last_err is not None:
-            _LOGGER.error(
-                "All device login retries exhausted, but device login may resolve the issue."
-            )
-            # Don't raise HiveReauthRequired - let the caller handle the error
-            # Device login itself should resolve 403 issues when successful
-            return
+            _LOGGER.error("_retryLogin - All login retries exhausted.")
+            raise HiveReauthRequired from last_err
 
         await self.hiveRefreshTokens(force_refresh=True)
 
@@ -488,11 +546,11 @@ class HiveSession:
                             )
                     except (HiveRefreshTokenExpired, HiveFailedToRefreshTokens) as exc:
                         _LOGGER.warning(
-                            "Session Token refresh failed (%s), falling back to device login.",
+                            "Session Token refresh failed (%s), falling back to login.",
                             type(exc).__name__,
                         )
                         if not force_refresh:
-                            await self._retryDeviceLogin()
+                            await self._retryLogin()
                         else:
                             _LOGGER.error(
                                 "Token refresh failed during retry attempt, giving up."
@@ -648,7 +706,7 @@ class HiveSession:
                         "Auth error (401/403) after token refresh, "
                         "falling back to full device re-login."
                     )
-                    await self._retryDeviceLogin()
+                    await self._retryLogin()
                     last_auth_err = None
                     for api_retry_delay in (0, 5, 10):
                         try:
