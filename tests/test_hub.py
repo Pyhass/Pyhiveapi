@@ -30,7 +30,7 @@ async def test_force_update_skips_when_locked():
     hive = Hive(username="test@example.com", password="pass")
     hive._pollDevices = AsyncMock(return_value=True)
 
-    async with hive.updateLock:
+    async with hive.update_lock:
         result = await hive.forceUpdate()
 
     assert result is False
