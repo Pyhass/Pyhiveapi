@@ -83,8 +83,8 @@ class Sensor(HiveSensor):
         Returns:
             dict: Updated device.
         """
-        if self.session.shouldUseCachedData():
-            cached = self.session.getCachedDevice(device)
+        if self.session.should_use_cached_data():
+            cached = self.session.get_cached_device(device)
             if cached is not None:
                 _LOGGER.debug(
                     "Returning cached state for sensor %s (slow/busy poll).",
@@ -160,7 +160,7 @@ class Sensor(HiveSensor):
                 dev_data["status"],
             )
 
-            return self.session.setCachedDevice(device, dev_data)
+            return self.session.set_cached_device(device, dev_data)
         else:
             await self.session.helper.errorCheck(
                 device["device_id"], "ERROR", device["deviceData"]["online"]

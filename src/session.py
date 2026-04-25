@@ -101,8 +101,8 @@ class HiveSession:
                 "minMax": {},
             }
         )
-        self.entityCache = {}
-        self.deviceList = {}
+        self.entity_cache = {}
+        self.device_list = {}
         self.hub_id = None
         self._last_poll_slow = False
         self._slow_poll_threshold = 3
@@ -110,7 +110,7 @@ class HiveSession:
         self._update_task = None
 
     @staticmethod
-    def _entityCacheKey(device: dict):
+    def _entity_cache_key(device: dict):
         """Build a stable cache key for an entity instance."""
         return "|".join(
             [
@@ -120,17 +120,17 @@ class HiveSession:
             ]
         )
 
-    def getCachedDevice(self, device: dict):
+    def get_cached_device(self, device: dict):
         """Get cached state for a specific entity."""
-        cache_key = self._entityCacheKey(device)
-        return self.entityCache.get(cache_key)
+        cache_key = self._entity_cache_key(device)
+        return self.entity_cache.get(cache_key)
 
-    def setCachedDevice(self, device: dict, dev_data: dict):
+    def set_cached_device(self, device: dict, dev_data: dict):
         """Store cached state for a specific entity."""
-        self.entityCache[self._entityCacheKey(device)] = dev_data
+        self.entity_cache[self._entity_cache_key(device)] = dev_data
         return dev_data
 
-    def shouldUseCachedData(self):
+    def should_use_cached_data(self):
         """Determine whether callers should use cached entity state.
 
         Returns:
@@ -202,10 +202,10 @@ class HiveSession:
             formatted_data.update(kwargs)
 
             if data.get("type", "") == "hub":
-                self.deviceList["parent"].append(formatted_data)
-                self.deviceList[entityType].append(formatted_data)
+                self.device_list["parent"].append(formatted_data)
+                self.device_list[entityType].append(formatted_data)
             else:
-                self.deviceList[entityType].append(formatted_data)
+                self.device_list[entityType].append(formatted_data)
 
             return formatted_data
         except KeyError as error:
@@ -777,13 +777,13 @@ class HiveSession:
         """
         _LOGGER.info("createDevices - Starting device discovery process")
 
-        self.deviceList["parent"] = []
-        self.deviceList["binary_sensor"] = []
-        self.deviceList["climate"] = []
-        self.deviceList["light"] = []
-        self.deviceList["sensor"] = []
-        self.deviceList["switch"] = []
-        self.deviceList["water_heater"] = []
+        self.device_list["parent"] = []
+        self.device_list["binary_sensor"] = []
+        self.device_list["climate"] = []
+        self.device_list["light"] = []
+        self.device_list["sensor"] = []
+        self.device_list["switch"] = []
+        self.device_list["water_heater"] = []
 
         hive_type = HIVE_TYPES["Thermo"] + HIVE_TYPES["Sensor"]
 
@@ -907,16 +907,16 @@ class HiveSession:
             "Found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
             device_count,
             product_count,
-            len(self.deviceList.get("parent", [])),
-            len(self.deviceList.get("binary_sensor", [])),
-            len(self.deviceList.get("climate", [])),
-            len(self.deviceList.get("light", [])),
-            len(self.deviceList.get("sensor", [])),
-            len(self.deviceList.get("switch", [])),
-            len(self.deviceList.get("water_heater", [])),
+            len(self.device_list.get("parent", [])),
+            len(self.device_list.get("binary_sensor", [])),
+            len(self.device_list.get("climate", [])),
+            len(self.device_list.get("light", [])),
+            len(self.device_list.get("sensor", [])),
+            len(self.device_list.get("switch", [])),
+            len(self.device_list.get("water_heater", [])),
         )
 
-        return self.deviceList
+        return self.device_list
 
     @staticmethod
     def epochTime(date_time: any, pattern: str, action: str):
