@@ -70,25 +70,25 @@ class HiveSession:
         self.api = API(hiveSession=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
-        self.updateLock = asyncio.Lock()
-        self._refreshLock = asyncio.Lock()
+        self.update_lock = asyncio.Lock()
+        self._refresh_lock = asyncio.Lock()
         self.tokens = Map(
             {
-                "tokenData": {},
-                "tokenCreated": datetime.min,
-                "tokenExpiry": timedelta(seconds=3600),
+                "token_data": {},
+                "token_created": datetime.min,
+                "token_expiry": timedelta(seconds=3600),
             }
         )
         self.config = Map(
             {
                 "battery": [],
-                "errorList": {},
+                "error_list": {},
                 "file": False,
-                "homeID": None,
-                "lastUpdate": datetime.now(),
+                "home_id": None,
+                "last_update": datetime.now(),
                 "mode": [],
-                "scanInterval": _SCAN_INTERVAL,
-                "userID": None,
+                "scan_interval": _SCAN_INTERVAL,
+                "user_id": None,
                 "username": username,
             }
         )
@@ -104,10 +104,10 @@ class HiveSession:
         self.entityCache = {}
         self.deviceList = {}
         self.hub_id = None
-        self._lastPollSlow = False
-        self._slowPollThreshold = 3
-        self._refreshThreshold = 0.90
-        self._updateTask = None
+        self._last_poll_slow = False
+        self._slow_poll_threshold = 3
+        self._refresh_threshold = 0.90
+        self._update_task = None
 
     @staticmethod
     def _entityCacheKey(device: dict):
@@ -136,11 +136,11 @@ class HiveSession:
         Returns:
             bool: True when the last poll was slow or another task is currently polling.
         """
-        if self._lastPollSlow:
+        if self._last_poll_slow:
             return True
-        if self.updateLock.locked():
+        if self.update_lock.locked():
             current_task = asyncio.current_task()
-            return self._updateTask is None or current_task is not self._updateTask
+            return self._update_task is None or current_task is not self._update_task
         return False
 
     async def _pollDevices(self) -> bool:
@@ -238,42 +238,42 @@ class HiveSession:
         )
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult")
-            self.tokens.tokenData.update({"token": data["IdToken"]})
+            self.tokens.token_data.update({"token": data["IdToken"]})
             if "RefreshToken" in data:
-                self.tokens.tokenData.update({"refreshToken": data["RefreshToken"]})
-            self.tokens.tokenData.update({"accessToken": data["AccessToken"]})
+                self.tokens.token_data.update({"refreshToken": data["RefreshToken"]})
+            self.tokens.token_data.update({"accessToken": data["AccessToken"]})
             if update_expiry_time:
-                self.tokens.tokenCreated = datetime.now()
+                self.tokens.token_created = datetime.now()
         elif "token" in tokens:
             data = tokens
-            self.tokens.tokenData.update({"token": data["token"]})
-            self.tokens.tokenData.update({"refreshToken": data["refreshToken"]})
-            self.tokens.tokenData.update({"accessToken": data["accessToken"]})
+            self.tokens.token_data.update({"token": data["token"]})
+            self.tokens.token_data.update({"refreshToken": data["refreshToken"]})
+            self.tokens.token_data.update({"accessToken": data["accessToken"]})
 
         if "ExpiresIn" in data:
-            self.tokens.tokenExpiry = timedelta(seconds=data["ExpiresIn"])
+            self.tokens.token_expiry = timedelta(seconds=data["ExpiresIn"])
 
         _LOGGER.debug(
             "updateTokens — Final session tokens: IdToken: len=%d tail=…%s | "
             "AccessToken: len=%d tail=…%s | "
             "RefreshToken: %s | "
-            "ExpiresIn: %s | tokenCreated: %s | tokenExpiry: %s",
-            len(self.tokens.tokenData.get("token", "")),
-            self.tokens.tokenData.get("token", "")[-4:],
-            len(self.tokens.tokenData.get("accessToken", "")),
-            self.tokens.tokenData.get("accessToken", "")[-4:],
+            "ExpiresIn: %s | token_created: %s | token_expiry: %s",
+            len(self.tokens.token_data.get("token", "")),
+            self.tokens.token_data.get("token", "")[-4:],
+            len(self.tokens.token_data.get("accessToken", "")),
+            self.tokens.token_data.get("accessToken", "")[-4:],
             (
                 "present (len=%d tail=…%s)"
                 % (
-                    len(self.tokens.tokenData.get("refreshToken", "")),
-                    self.tokens.tokenData.get("refreshToken", "")[-4:],
+                    len(self.tokens.token_data.get("refreshToken", "")),
+                    self.tokens.token_data.get("refreshToken", "")[-4:],
                 )
-                if self.tokens.tokenData.get("refreshToken")
+                if self.tokens.token_data.get("refreshToken")
                 else "not present"
             ),
             data.get("ExpiresIn", "N/A"),
-            self.tokens.tokenCreated,
-            self.tokens.tokenExpiry,
+            self.tokens.token_created,
+            self.tokens.token_expiry,
         )
 
         return self.tokens
@@ -483,8 +483,8 @@ class HiveSession:
         if self.config.file:
             return None
         else:
-            expiry_time = self.tokens.tokenCreated + (
-                self.tokens.tokenExpiry * self._refreshThreshold
+            expiry_time = self.tokens.token_created + (
+                self.tokens.token_expiry * self._refresh_threshold
             )
             # Refresh at 90% of token lifetime to prevent expiration during API calls
             _LOGGER.debug(
@@ -493,27 +493,27 @@ class HiveSession:
                 expiry_time,
             )
             if datetime.now() >= expiry_time or force_refresh:
-                async with self._refreshLock:
+                async with self._refresh_lock:
                     # Re-check after acquiring lock — another caller may have already refreshed
-                    expiry_time = self.tokens.tokenCreated + (
-                        self.tokens.tokenExpiry * self._refreshThreshold
+                    expiry_time = self.tokens.token_created + (
+                        self.tokens.token_expiry * self._refresh_threshold
                     )
                     if datetime.now() < expiry_time and not force_refresh:
                         return result
-                    actual_expiry = self.tokens.tokenCreated + self.tokens.tokenExpiry
+                    actual_expiry = self.tokens.token_created + self.tokens.token_expiry
                     _LOGGER.debug(
                         "hiveRefreshTokens - Session Token created: %s | Actual expiry: %s | "
                         "Early refresh (×%s): %s | Now: %s | Force refresh: %s",
-                        self.tokens.tokenCreated,
+                        self.tokens.token_created,
                         actual_expiry,
-                        self._refreshThreshold,
+                        self._refresh_threshold,
                         expiry_time,
                         datetime.now(),
                         force_refresh,
                     )
                     try:
                         result = await self.auth.refresh_token(
-                            self.tokens.tokenData["refreshToken"]
+                            self.tokens.token_data["refreshToken"]
                         )
 
                         if result and "AuthenticationResult" in result:
@@ -524,7 +524,7 @@ class HiveSession:
                             )
                             await self.updateTokens(result)
                             new_expiry = (
-                                self.tokens.tokenCreated + self.tokens.tokenExpiry
+                                self.tokens.token_created + self.tokens.token_expiry
                             )
                             _LOGGER.debug(
                                 "hiveRefreshTokens - Session Token refresh successful. New expiry: %s",
@@ -558,20 +558,20 @@ class HiveSession:
             boolean: True/False if update was successful
         """
         updated = False
-        ep = self.config.lastUpdate + self.config.scanInterval
+        ep = self.config.last_update + self.config.scan_interval
         if datetime.now() >= ep:
             current_task = asyncio.current_task()
-            if self.updateLock.locked() and (
-                self._updateTask is None or current_task is not self._updateTask
+            if self.update_lock.locked() and (
+                self._update_task is None or current_task is not self._update_task
             ):
                 _LOGGER.debug("updateData - Update poll already in progress")
                 return updated
-            async with self.updateLock:
+            async with self.update_lock:
                 # Re-check after acquiring lock — another caller may have already updated
-                ep = self.config.lastUpdate + self.config.scanInterval
+                ep = self.config.last_update + self.config.scan_interval
                 if datetime.now() < ep:
                     return updated
-                self._updateTask = current_task
+                self._update_task = current_task
                 try:
                     _LOGGER.debug("Polling Hive API for device updates.")
                     updated = await self._pollDevices()
@@ -584,8 +584,8 @@ class HiveSession:
                             "updateData - Device update failed, will retry after scan interval."
                         )
                 finally:
-                    if self._updateTask is current_task:
-                        self._updateTask = None
+                    if self._update_task is current_task:
+                        self._update_task = None
 
         return updated
 
@@ -643,14 +643,14 @@ class HiveSession:
                     if last_auth_err is not None:
                         raise HiveReauthRequired from last_auth_err
                 api_call_duration = time.monotonic() - api_call_start
-                if api_call_duration > self._slowPollThreshold:
+                if api_call_duration > self._slow_poll_threshold:
                     _LOGGER.debug(
                         "getDevices - Hive API response took %.1fs — marking poll as slow.",
                         api_call_duration,
                     )
-                    self._lastPollSlow = True
+                    self._last_poll_slow = True
                 else:
-                    self._lastPollSlow = False
+                    self._last_poll_slow = False
                 if operator.contains(str(api_resp_d["original"]), "20") is False:
                     raise HTTPException
                 elif api_resp_d["parsed"] is None:
@@ -664,7 +664,7 @@ class HiveSession:
             for hiveType in api_resp_p:
                 if hiveType == "user":
                     self.data.user = api_resp_p[hiveType]
-                    self.config.userID = api_resp_p[hiveType]["id"]
+                    self.config.user_id = api_resp_p[hiveType]["id"]
                 if hiveType == "products":
                     for aProduct in api_resp_p[hiveType]:
                         tmpProducts.update({aProduct["id"]: aProduct})
@@ -675,7 +675,7 @@ class HiveSession:
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
                 if hiveType == "homes":
-                    self.config.homeID = api_resp_p[hiveType]["homes"][0]["id"]
+                    self.config.home_id = api_resp_p[hiveType]["homes"][0]["id"]
 
             _LOGGER.debug(
                 "getDevices - API returned %d products, %d devices, %d actions.",
@@ -688,17 +688,17 @@ class HiveSession:
             if len(tmpDevices) > 0:
                 self.data.devices = copy.deepcopy(tmpDevices)
             self.data.actions = copy.deepcopy(tmpActions)
-            self.config.lastUpdate = datetime.now()
+            self.config.last_update = datetime.now()
             get_nodes_successful = True
         except HiveReauthRequired:
             _LOGGER.error("Reauthentication required, propagating to caller.")
-            self.config.lastUpdate = datetime.now()
+            self.config.last_update = datetime.now()
             raise
         except asyncio.TimeoutError:
             _LOGGER.warning("Hive API request timed out — keeping cached device data.")
-            self._lastPollSlow = True
-            self.config.lastUpdate = (
-                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
+            self._last_poll_slow = True
+            self.config.last_update = (
+                datetime.now() - self.config.scan_interval + timedelta(seconds=30)
             )
             get_nodes_successful = False
         except (
@@ -709,8 +709,8 @@ class HiveSession:
             HTTPException,
         ) as err:
             _LOGGER.error("Failed to fetch devices: %s", err)
-            self.config.lastUpdate = (
-                datetime.now() - self.config.scanInterval + timedelta(seconds=30)
+            self.config.last_update = (
+                datetime.now() - self.config.scan_interval + timedelta(seconds=30)
             )
             get_nodes_successful = False
 

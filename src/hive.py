@@ -135,12 +135,12 @@ class Hive(HiveSession):
         For power users only. If a poll is already in progress, skips and
         returns False. Otherwise polls and returns True on success.
         """
-        if self.updateLock.locked():
+        if self.update_lock.locked():
             _LOGGER.debug("forceUpdate called while poll in progress — skipping.")
             return False
-        async with self.updateLock:
-            self._updateTask = asyncio.current_task()
+        async with self.update_lock:
+            self._update_task = asyncio.current_task()
             try:
                 return await self._pollDevices()
             finally:
-                self._updateTask = None
+                self._update_task = None

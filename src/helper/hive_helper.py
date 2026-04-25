@@ -68,8 +68,8 @@ class HiveHelper:
             n_id (str): ID of the device.
         """
         # name = HiveHelper.getDeviceName(n_id)
-        if n_id in self.session.config.errorList:
-            self.session.config.errorList.pop(n_id)
+        if n_id in self.session.config.error_list:
+            self.session.config.error_list.pop(n_id)
 
     async def errorCheck(self, n_id, n_type, error_type, **kwargs):
         """Error has occurred."""
@@ -79,14 +79,14 @@ class HiveHelper:
 
         if error_type is False:
             message = "Device offline could not update entity - " + str(device_name)
-            if n_id not in self.session.config.errorList:
+            if n_id not in self.session.config.error_list:
                 _LOGGER.warning(message)
-                self.session.config.errorList.update({n_id: datetime.datetime.now()})
+                self.session.config.error_list.update({n_id: datetime.datetime.now()})
         elif error_type == "Failed":
             message = "ERROR - No data found for device - " + str(device_name)
-            if n_id not in self.session.config.errorList:
+            if n_id not in self.session.config.error_list:
                 _LOGGER.error(message)
-                self.session.config.errorList.update({n_id: datetime.datetime.now()})
+                self.session.config.error_list.update({n_id: datetime.datetime.now()})
 
     def getDeviceFromID(self, n_id: str):
         """Get product/device data from ID.

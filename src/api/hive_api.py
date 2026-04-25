@@ -50,7 +50,7 @@ class HiveApi:
             self.headers = {
                 "content-type": "application/json",
                 "Accept": "*/*",
-                "authorization": self.session.tokens.tokenData["token"],
+                "authorization": self.session.tokens.token_data["token"],
             }
         else:
             self.headers = {
@@ -83,7 +83,7 @@ class HiveApi:
         _LOGGER.debug("refreshTokens - Attempting token refresh (deprecated method)")
         url = self.urls["refresh"]
         if self.session is not None:
-            tokens = self.session.tokens.tokenData
+            tokens = self.session.tokens.token_data
         jsc = (
             "{"
             + ",".join(

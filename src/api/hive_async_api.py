@@ -58,7 +58,7 @@ class HiveApiAsync:
             "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
         }
         try:
-            headers["Authorization"] = self.session.tokens.tokenData["token"]
+            headers["Authorization"] = self.session.tokens.token_data["token"]
         except KeyError:
             if "sso" in url:
                 pass
@@ -130,7 +130,7 @@ class HiveApiAsync:
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
-            tokens = self.session.tokens.tokenData
+            tokens = self.session.tokens.token_data
         jsc = (
             "{"
             + ",".join(
