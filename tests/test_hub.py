@@ -4,7 +4,6 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
 from apyhiveapi import Hive
 
 
