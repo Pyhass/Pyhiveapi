@@ -1,22 +1,42 @@
-"""Device data class."""
-
-# pylint: skip-file
+"""Device data classes."""
 
 from dataclasses import dataclass
+from typing import Literal, Optional
 
 
 @dataclass
 class Device:
-    """Class for keeping track of an device."""
+    """Class for keeping track of a device."""
 
-    hiveID: str
-    hiveName: str
-    hiveType: str
-    haType: str
-    deviceData: dict
-    status: dict
-    data: dict
-    parentDevice: str
-    isGroup: bool
+    hive_id: str
+    hive_name: str
+    hive_type: str
+    ha_type: str
     device_id: str
     device_name: str
+    device_data: dict
+    parent_device: Optional[str] = None
+    is_group: bool = False
+    ha_name: str = ""
+    category: Optional[str] = None
+    temperature_unit: Optional[str] = None
+    status: Optional[dict] = None
+    data: Optional[dict] = None
+
+
+@dataclass
+class EntityConfig:
+    """Configuration for creating a device entity."""
+
+    entity_type: Literal[
+        "sensor",
+        "binary_sensor",
+        "climate",
+        "light",
+        "switch",
+        "water_heater",
+    ]
+    ha_name: str = ""
+    hive_type: str = ""
+    category: Optional[str] = None
+    temperature_unit: Optional[str] = None

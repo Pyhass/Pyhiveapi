@@ -14,7 +14,7 @@ from aiohttp.web import HTTPException
 from apyhiveapi import API, Auth
 
 from .device_attributes import HiveAttributes
-from .helper.const import ACTIONS, DEVICES, HIVE_TYPES, PRODUCTS
+from .helper.const import DEVICES, HIVE_TYPES, PRODUCTS
 from .helper.hive_exceptions import (
     HiveApiError,
     HiveAuthError,
@@ -28,6 +28,7 @@ from .helper.hive_exceptions import (
     HiveUnknownConfiguration,
 )
 from .helper.hive_helper import HiveHelper
+from .helper.hivedataclasses import Device
 from .helper.map import Map
 
 _SCAN_INTERVAL = timedelta(seconds=120)
@@ -110,22 +111,22 @@ class HiveSession:
         self._update_task = None
 
     @staticmethod
-    def _entity_cache_key(device: dict):
+    def _entity_cache_key(device) -> str:
         """Build a stable cache key for an entity instance."""
         return "|".join(
             [
-                str(device.get("haType", "")),
-                str(device.get("hiveID", "")),
-                str(device.get("hiveType", "")),
+                str(getattr(device, "ha_type", "")),
+                str(getattr(device, "hive_id", "")),
+                str(getattr(device, "hive_type", "")),
             ]
         )
 
-    def get_cached_device(self, device: dict):
+    def get_cached_device(self, device):
         """Get cached state for a specific entity."""
         cache_key = self._entity_cache_key(device)
         return self.entity_cache.get(cache_key)
 
-    def set_cached_device(self, device: dict, dev_data: dict):
+    def set_cached_device(self, device, dev_data: dict):
         """Store cached state for a specific entity."""
         self.entity_cache[self._entity_cache_key(device)] = dev_data
         return dev_data
@@ -163,51 +164,52 @@ class HiveSession:
 
         return data
 
-    def addList(self, entityType: str, data: dict, **kwargs: dict):
-        """Add entity to the list.
+    def addList(self, entity_type: str, data: dict, **kwargs) -> Device:
+        """Add entity to the device list.
 
         Args:
-            type (str): Type of entity
-            data (dict): Information to create entity.
+            entity_type (str): HA entity type (e.g. "climate", "sensor").
+            data (dict): Raw product or device data from the Hive API.
 
         Returns:
-            dict: Entity.
+            Device: Created device entity, or None on error.
         """
         try:
-            device = self.helper.getDeviceData(data)
+            device_data = self.helper.getDeviceData(data)
             device_name = (
-                device["state"]["name"]
-                if device["state"]["name"] != "Receiver"
+                device_data["state"]["name"]
+                if device_data["state"]["name"] != "Receiver"
                 else "Heating"
             )
-            formatted_data = {}
 
-            formatted_data = {
-                "hiveID": data.get("id", ""),
-                "hiveName": device_name,
-                "hiveType": data.get("type", ""),
-                "haType": entityType,
-                "deviceData": device.get("props", data.get("props", {})),
-                "parentDevice": self.hub_id,
-                "isGroup": data.get("isGroup", False),
-                "device_id": device["id"],
-                "device_name": device_name,
-            }
+            ha_name = kwargs.get("ha_name", "")
+            if ha_name.startswith(" "):
+                ha_name = device_name + ha_name
+            elif not ha_name:
+                ha_name = device_name
 
-            if kwargs.get("haName", "FALSE")[0] == " ":
-                kwargs["haName"] = device_name + kwargs["haName"]
-            else:
-                formatted_data["haName"] = device_name
-
-            formatted_data.update(kwargs)
+            device_obj = Device(
+                hive_id=data.get("id", ""),
+                hive_name=device_name,
+                hive_type=kwargs.get("hive_type", data.get("type", "")),
+                ha_type=entity_type,
+                device_id=device_data["id"],
+                device_name=device_name,
+                device_data=device_data.get("props", data.get("props", {})),
+                parent_device=self.hub_id,
+                is_group=data.get("isGroup", False),
+                ha_name=ha_name,
+                category=kwargs.get("category"),
+                temperature_unit=kwargs.get("temperature_unit"),
+            )
 
             if data.get("type", "") == "hub":
-                self.device_list["parent"].append(formatted_data)
-                self.device_list[entityType].append(formatted_data)
+                self.device_list["parent_device"].append(device_obj)
+                self.device_list[entity_type].append(device_obj)
             else:
-                self.device_list[entityType].append(formatted_data)
+                self.device_list[entity_type].append(device_obj)
 
-            return formatted_data
+            return device_obj
         except KeyError as error:
             _LOGGER.error(error)
             return None
@@ -777,7 +779,7 @@ class HiveSession:
         """
         _LOGGER.info("createDevices - Starting device discovery process")
 
-        self.device_list["parent"] = []
+        self.device_list["parent_device"] = []
         self.device_list["binary_sensor"] = []
         self.device_list["climate"] = []
         self.device_list["light"] = []
@@ -814,14 +816,19 @@ class HiveSession:
                 device_type,
             )
 
-            device_list = DEVICES.get(self.data.devices[aDevice]["type"], [])
-            for code in device_list:
+            for config in DEVICES.get(self.data.devices[aDevice]["type"], []):
+                kwargs = {}
+                if config.ha_name:
+                    kwargs["ha_name"] = config.ha_name
+                if config.hive_type:
+                    kwargs["hive_type"] = config.hive_type
+                if config.category:
+                    kwargs["category"] = config.category
                 try:
-                    eval("self." + code)
+                    self.addList(config.entity_type, d, **kwargs)
                 except Exception as e:
                     _LOGGER.error(
-                        "Failed to execute device code '%s' for %s: %s",
-                        code,
+                        "Failed to create device entity for %s: %s",
                         device_name,
                         str(e),
                     )
@@ -836,20 +843,21 @@ class HiveSession:
             device_count += 1
 
         # Process actions
-        if "action" in HIVE_TYPES["Switch"]:
-            _LOGGER.debug(
-                "createDevices - Processing %d actions", len(self.data["actions"])
-            )
-            for action in self.data["actions"]:
-                a = self.data["actions"][action]  # noqa: F841
-                try:
-                    eval("self." + ACTIONS)
-                except Exception as e:
-                    _LOGGER.error(
-                        "Failed to execute action code for action %s: %s",
-                        action,
-                        str(e),
-                    )
+        _LOGGER.debug(
+            "createDevices - Processing %d actions", len(self.data["actions"])
+        )
+        for action_id in self.data["actions"]:
+            action = self.data["actions"][action_id]
+            try:
+                self.addList(
+                    "switch", action, ha_name=action["name"], hive_type="action"
+                )
+            except Exception as e:
+                _LOGGER.error(
+                    "Failed to create action entity for %s: %s",
+                    action_id,
+                    str(e),
+                )
 
         # Process products
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
@@ -883,10 +891,22 @@ class HiveSession:
                 )
                 continue
 
-            product_list = PRODUCTS.get(product_type, [])
-            for code in product_list:
+            for config in PRODUCTS.get(product_type, []):
+                kwargs = {}
+                if config.ha_name:
+                    kwargs["ha_name"] = config.ha_name
+                if config.hive_type:
+                    kwargs["hive_type"] = config.hive_type
+                if config.category:
+                    kwargs["category"] = config.category
+                if config.entity_type == "climate":
+                    kwargs["temperature_unit"] = self.data["user"].get(
+                        "temperatureUnit"
+                    )
+                elif config.temperature_unit is not None:
+                    kwargs["temperature_unit"] = config.temperature_unit
                 try:
-                    eval("self." + code)
+                    self.addList(config.entity_type, p, **kwargs)
                 except (NameError, AttributeError) as e:
                     _LOGGER.warning(
                         "createDevices - Device %s cannot be setup - %s",
@@ -907,7 +927,7 @@ class HiveSession:
             "Found: %d parent, %d binary_sensor, %d climate, %d light, %d sensor, %d switch, %d water_heater",
             device_count,
             product_count,
-            len(self.device_list.get("parent", [])),
+            len(self.device_list.get("parent_device", [])),
             len(self.device_list.get("binary_sensor", [])),
             len(self.device_list.get("climate", [])),
             len(self.device_list.get("light", [])),

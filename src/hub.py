@@ -39,7 +39,7 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
             final = HIVETOHA[self.hubType]["Smoke"].get(state, state)
         except KeyError as e:
@@ -60,7 +60,7 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
             final = HIVETOHA[self.hubType]["Dog"].get(state, state)
         except KeyError as e:
@@ -81,7 +81,7 @@ class HiveHub:
         final = None
 
         try:
-            data = self.session.data.products[device["hiveID"]]
+            data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
             final = HIVETOHA[self.hubType]["Glass"].get(state, state)
         except KeyError as e:

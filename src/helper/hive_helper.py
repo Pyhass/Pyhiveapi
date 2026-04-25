@@ -99,11 +99,26 @@ class HiveHelper:
         """
         if hasattr(self.session, "entity_cache"):
             for cached_id, cached in self.session.entity_cache.items():
-                if cached.get("hiveID") == n_id or cached.get("device_id") == n_id:
+                hive_id = (
+                    cached.get("hive_id")
+                    if isinstance(cached, dict)
+                    else getattr(cached, "hive_id", None)
+                )
+                device_id = (
+                    cached.get("device_id")
+                    if isinstance(cached, dict)
+                    else getattr(cached, "device_id", None)
+                )
+                if hive_id == n_id or device_id == n_id:
+                    ha_name = (
+                        cached.get("haName", cached_id)
+                        if isinstance(cached, dict)
+                        else getattr(cached, "ha_name", cached_id)
+                    )
                     _LOGGER.debug(
                         "getDeviceFromID - Found cached device for ID %s: %s",
                         n_id,
-                        cached.get("haName", cached_id),
+                        ha_name,
                     )
                     return cached
         return False
