@@ -74,6 +74,7 @@ class HiveApi:
                 return requests.post(
                     url=url, headers=self.headers, data=jsc, timeout=self.timeout
                 )
+            raise ValueError(f"Unsupported request type: {type}")
         except Exception as e:
             _LOGGER.error("Request failed: %s", e)
             raise
