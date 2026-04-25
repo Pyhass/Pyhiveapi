@@ -32,7 +32,6 @@ class HiveApiAsync:
             "refresh": f"{self.baseUrl}/cognito/refresh-token",
             "holiday_mode": f"{self.baseUrl}/holiday-mode",
             "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
-            "alarm": f"{self.baseUrl}/security-lite?homeId=",
             "devices": f"{self.baseUrl}/devices",
             "products": f"{self.baseUrl}/products",
             "actions": f"{self.baseUrl}/actions",
@@ -169,19 +168,6 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getAlarm(self):
-        """Build and query alarm endpoint."""
-        json_return = {}
-        url = self.urls["alarm"] + self.session.config.homeID
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
-
     async def getDevices(self):
         """Call the get devices endpoint."""
         json_return = {}
@@ -272,32 +258,6 @@ class HiveApiAsync:
         )
 
         url = self.urls["nodes"].format(n_type, n_id)
-        try:
-            await self.isFileBeingUsed()
-            resp = await self.request("post", url, data=jsc)
-            json_return["original"] = resp.status
-            json_return["parsed"] = await resp.json(content_type=None)
-        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
-            if e.__class__.__name__ == "FileInUse":
-                return {"original": "file"}
-            else:
-                await self.error()
-
-        return json_return
-
-    async def setAlarm(self, **kwargs):
-        """Set the state of the alarm."""
-        _LOGGER.debug("Setting alarm state: %s", kwargs)
-        json_return = {}
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
-            )
-            + "}"
-        )
-
-        url = f"{self.urls['alarm']}{self.session.config.homeID}"
         try:
             await self.isFileBeingUsed()
             resp = await self.request("post", url, data=jsc)

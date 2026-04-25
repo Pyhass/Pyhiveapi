@@ -27,7 +27,6 @@ class HiveApi:
             "weather": "https://weather.prod.bgchprod.info/weather",
             "holiday_mode": "/holiday-mode",
             "all": "/nodes/all?products=true&devices=true&actions=true",
-            "alarm": "/security-lite?homeId=",
             "devices": "/devices",
             "products": "/products",
             "actions": "/actions",
@@ -166,20 +165,6 @@ class HiveApi:
             self.error()
 
         return json_return
-
-    def getAlarm(self, homeID=None):
-        """Build and query alarm endpoint."""
-        if self.session is not None:
-            homeID = self.session.config.homeID
-        url = self.urls["base"] + self.urls["alarm"] + homeID
-        try:
-            info = self.request("GET", url)
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
 
     def getDevices(self):
         """Call the get devices endpoint."""

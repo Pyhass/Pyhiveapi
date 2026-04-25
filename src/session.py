@@ -81,7 +81,6 @@ class HiveSession:
         )
         self.config = Map(
             {
-                "alarm": False,
                 "battery": [],
                 "errorList": {},
                 "file": False,
@@ -100,7 +99,6 @@ class HiveSession:
                 "actions": {},
                 "user": {},
                 "minMax": {},
-                "alarm": {},
             }
         )
         self.entityCache = {}
@@ -591,24 +589,6 @@ class HiveSession:
 
         return updated
 
-    async def getAlarm(self):
-        """Get alarm data.
-
-        Raises:
-            HTTPException: HTTP error has occurred updating the devices.
-            HiveApiError: An API error code has been returned.
-        """
-        if self.config.file:
-            api_resp_d = self.openFile("alarm.json")
-        elif self.tokens is not None:
-            api_resp_d = await self.api.getAlarm()
-            if operator.contains(str(api_resp_d["original"]), "20") is False:
-                raise HTTPException
-            elif api_resp_d["parsed"] is None:
-                raise HiveApiError
-
-        self.data.alarm = api_resp_d["parsed"]
-
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
 
@@ -691,8 +671,6 @@ class HiveSession:
                 if hiveType == "devices":
                     for aDevice in api_resp_p[hiveType]:
                         tmpDevices.update({aDevice["id"]: aDevice})
-                        if aDevice["type"] == "siren":
-                            self.config.alarm = True
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
@@ -710,8 +688,6 @@ class HiveSession:
             if len(tmpDevices) > 0:
                 self.data.devices = copy.deepcopy(tmpDevices)
             self.data.actions = copy.deepcopy(tmpActions)
-            if self.config.alarm:
-                await self.getAlarm()
             self.config.lastUpdate = datetime.now()
             get_nodes_successful = True
         except HiveReauthRequired:
@@ -802,7 +778,6 @@ class HiveSession:
         _LOGGER.info("createDevices - Starting device discovery process")
 
         self.deviceList["parent"] = []
-        self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
