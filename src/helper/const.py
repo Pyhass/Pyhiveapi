@@ -60,7 +60,6 @@ sensor_commands = {
     "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
     "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
     "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
-    "Camera_Temp": "self.session.camera.getCameraTemperature(device)",
     "Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
     "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",
@@ -127,12 +126,6 @@ PRODUCTS = {
         'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
         'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
     ],
-    #    "hivecamera": [
-    #        'addList("camera", p)',
-    #        'addList("sensor", p, haName=" Mode", hiveType="Mode", category="diagnostic")',
-    #        'addList("sensor", p, haName=" Availability", hiveType="Availability", category="diagnostic")',
-    #        'addList("sensor", p, haName=" Temperature", hiveType="Camera_Temp", category="diagnostic")',
-    #    ],
     "motionsensor": [
         'addList("binary_sensor", p)',
         'addList("sensor", p, haName=" Current Temperature", hiveType="Current_Temperature", category="diagnostic")',

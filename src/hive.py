@@ -1,6 +1,7 @@
 """Start Hive Session."""
 
 # pylint: skip-file
+import asyncio
 import logging
 import sys
 import traceback
@@ -11,7 +12,6 @@ from aiohttp import ClientSession
 
 from .action import HiveAction
 from .alarm import Alarm
-from .camera import Camera
 from .heating import Climate
 from .hotwater import WaterHeater
 from .hub import HiveHub
@@ -106,7 +106,6 @@ class Hive(HiveSession):
         self.session = self
         self.action = HiveAction(self.session)
         self.alarm = Alarm(self.session)
-        self.camera = Camera(self.session)
         self.heating = Climate(self.session)
         self.hotwater = WaterHeater(self.session)
         self.hub = HiveHub(self.session)
@@ -131,3 +130,19 @@ class Hive(HiveSession):
         if debug:
             return sys.settrace(trace_debug)
         return sys.settrace(None)
+
+    async def forceUpdate(self) -> bool:
+        """Immediately poll the Hive API, bypassing the 2-minute interval.
+
+        For power users only. If a poll is already in progress, skips and
+        returns False. Otherwise polls and returns True on success.
+        """
+        if self.updateLock.locked():
+            _LOGGER.debug("forceUpdate called while poll in progress — skipping.")
+            return False
+        async with self.updateLock:
+            self._updateTask = asyncio.current_task()
+            try:
+                return await self._pollDevices()
+            finally:
+                self._updateTask = None

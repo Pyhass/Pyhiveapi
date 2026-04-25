@@ -19,3 +19,38 @@ custom_tests/*
 
 # virtual environment folder
 .venv/
+
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+
+
+# Python cache files
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+
+# Claude superpowers
+superpowers/

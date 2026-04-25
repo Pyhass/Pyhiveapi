@@ -26,7 +26,6 @@ class HiveApiAsync:
     def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
         self.baseUrl = "https://beekeeper.hivehome.com/1.0"
-        self.cameraBaseUrl = "prod.hcam.bgchtest.info"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
             "login": f"{self.baseUrl}/cognito/login",
@@ -34,8 +33,6 @@ class HiveApiAsync:
             "holiday_mode": f"{self.baseUrl}/holiday-mode",
             "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
             "alarm": f"{self.baseUrl}/security-lite?homeId=",
-            "cameraImages": f"https://event-history-service.{self.cameraBaseUrl}/v1/events/cameras?latest=true&cameraId={{0}}",
-            "cameraRecordings": f"https://event-history-service.{self.cameraBaseUrl}/v1/playlist/cameras/{{0}}/events/{{1}}.m3u8",
             "devices": f"{self.baseUrl}/devices",
             "products": f"{self.baseUrl}/products",
             "actions": f"{self.baseUrl}/actions",
@@ -51,9 +48,7 @@ class HiveApiAsync:
         self.session = hiveSession
         self.websession = ClientSession() if websession is None else websession
 
-    async def request(
-        self, method: str, url: str, camera: bool = False, **kwargs
-    ) -> ClientResponse:
+    async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
         _LOGGER.debug("API %s request to %s", method.upper(), url)
         data = kwargs.get("data", None)
@@ -64,13 +59,7 @@ class HiveApiAsync:
             "User-Agent": "Hive/12.04.0 iOS/18.3.1 Apple",
         }
         try:
-            if camera:
-                headers["Authorization"] = (
-                    f"Bearer {self.session.tokens.tokenData['token']}"
-                )
-                headers["x-jwt-token"] = self.session.tokens.tokenData["token"]
-            else:
-                headers["Authorization"] = self.session.tokens.tokenData["token"]
+            headers["Authorization"] = self.session.tokens.tokenData["token"]
         except KeyError:
             if "sso" in url:
                 pass
@@ -158,7 +147,6 @@ class HiveApiAsync:
                 if "token" in info:
                     await self.session.updateTokens(info)
                     self.baseUrl = info["platform"]["endpoint"]
-                    self.cameraBaseUrl = info["platform"]["cameraPlatform"]
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
@@ -189,35 +177,6 @@ class HiveApiAsync:
             resp = await self.request("get", url)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
-
-    async def getCameraImage(self, device):
-        """Build and query alarm endpoint."""
-        json_return = {}
-        url = self.urls["cameraImages"].format(device["props"]["hardwareIdentifier"])
-        try:
-            resp = await self.request("get", url, True)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
-
-    async def getCameraRecording(self, device, eventId):
-        """Build and query alarm endpoint."""
-        json_return = {}
-        url = self.urls["cameraRecordings"].format(
-            device["props"]["hardwareIdentifier"], eventId
-        )
-        try:
-            resp = await self.request("get", url, True)
-            recUrl = await resp.text()
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": recUrl.split("\n")[3]})
         except (OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 

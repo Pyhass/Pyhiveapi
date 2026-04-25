@@ -26,10 +26,11 @@ from .helper.hive_exceptions import (
     HiveReauthRequired,
     HiveRefreshTokenExpired,
     HiveUnknownConfiguration,
-    NoApiToken,
 )
 from .helper.hive_helper import HiveHelper
 from .helper.map import Map
+
+_SCAN_INTERVAL = timedelta(seconds=120)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,13 +83,12 @@ class HiveSession:
             {
                 "alarm": False,
                 "battery": [],
-                "camera": False,
                 "errorList": {},
                 "file": False,
                 "homeID": None,
                 "lastUpdate": datetime.now(),
                 "mode": [],
-                "scanInterval": timedelta(seconds=120),
+                "scanInterval": _SCAN_INTERVAL,
                 "userID": None,
                 "username": username,
             }
@@ -101,7 +101,6 @@ class HiveSession:
                 "user": {},
                 "minMax": {},
                 "alarm": {},
-                "camera": {},
             }
         )
         self.entityCache = {}
@@ -145,6 +144,10 @@ class HiveSession:
             current_task = asyncio.current_task()
             return self._updateTask is None or current_task is not self._updateTask
         return False
+
+    async def _pollDevices(self) -> bool:
+        """Fetch latest device state from the Hive API."""
+        return await self.getDevices("No_ID")
 
     def openFile(self, file: str):
         """Open a file.
@@ -210,20 +213,6 @@ class HiveSession:
         except KeyError as error:
             _LOGGER.error(error)
             return None
-
-    async def updateInterval(self, new_interval: timedelta):
-        """Update the scan interval.
-
-        Args:
-            new_interval (int): New interval for polling.
-        """
-        if isinstance(new_interval, int):
-            new_interval = timedelta(seconds=new_interval)
-
-        interval = new_interval
-        if interval < timedelta(seconds=15):
-            interval = timedelta(seconds=15)
-        self.config.scanInterval = interval
 
     async def useFile(self, username: str = None):
         """Update to check if file is being used.
@@ -586,13 +575,8 @@ class HiveSession:
                     return updated
                 self._updateTask = current_task
                 try:
-                    _LOGGER.debug("updateData - Polling Hive API for device updates.")
-                    updated = await self.getDevices(device["hiveID"])
-                    if updated and len(self.deviceList["camera"]) > 0:
-                        for camera in self.data.camera:
-                            camera_device = self.data.devices.get(camera)
-                            if camera_device is not None:
-                                await self.getCamera(camera_device)
+                    _LOGGER.debug("Polling Hive API for device updates.")
+                    updated = await self._pollDevices()
                     if updated:
                         _LOGGER.debug(
                             "updateData - Device update completed successfully."
@@ -624,54 +608,6 @@ class HiveSession:
                 raise HiveApiError
 
         self.data.alarm = api_resp_d["parsed"]
-
-    async def getCamera(self, device):
-        """Get camera data.
-
-        Raises:
-            HTTPException: HTTP error has occurred updating the devices.
-            HiveApiError: An API error code has been returned.
-        """
-        cameraImage = None
-        cameraRecording = None
-        hasCameraImage = False
-        hasCameraRecording = False
-
-        if self.config.file:
-            cameraImage = self.openFile("camera.json")
-            cameraRecording = self.openFile("camera.json")
-        elif self.tokens is not None:
-            cameraImage = await self.api.getCameraImage(device)
-            hasCameraRecording = bool(
-                cameraImage["parsed"]["events"][0]["hasRecording"]
-            )
-            if hasCameraRecording:
-                cameraRecording = await self.api.getCameraRecording(
-                    device, cameraImage["parsed"]["events"][0]["eventId"]
-                )
-
-            if operator.contains(str(cameraImage["original"]), "20") is False:
-                raise HTTPException
-            elif cameraImage["parsed"] is None:
-                raise HiveApiError
-        else:
-            raise NoApiToken
-
-        hasCameraImage = bool(cameraImage["parsed"]["events"][0])
-
-        self.data.camera[device["id"]] = {}
-        self.data.camera[device["id"]]["cameraImage"] = None
-        self.data.camera[device["id"]]["cameraRecording"] = None
-
-        if cameraImage is not None and hasCameraImage:
-            self.data.camera[device["id"]] = {}
-            self.data.camera[device["id"]]["cameraImage"] = cameraImage["parsed"][
-                "events"
-            ][0]
-        if cameraRecording is not None and hasCameraRecording:
-            self.data.camera[device["id"]]["cameraRecording"] = cameraRecording[
-                "parsed"
-            ]
 
     async def getDevices(self, n_id: str):
         """Get latest data for Hive nodes.
@@ -757,8 +693,6 @@ class HiveSession:
                         tmpDevices.update({aDevice["id"]: aDevice})
                         if aDevice["type"] == "siren":
                             self.config.alarm = True
-                        # if aDevice["type"] == "hivecamera":
-                        #    await self.getCamera(aDevice)
                 if hiveType == "actions":
                     for aAction in api_resp_p[hiveType]:
                         tmpActions.update({aAction["id"]: aAction})
@@ -826,9 +760,6 @@ class HiveSession:
             "startSession - Config: %s", self.helper._sanitize_payload(config)
         )
         await self.useFile(config.get("username", self.config.username))
-        await self.updateInterval(
-            config.get("options", {}).get("scan_interval", self.config.scanInterval)
-        )
 
         if config != {}:
             if "tokens" in config and not self.config.file:
@@ -873,7 +804,6 @@ class HiveSession:
         self.deviceList["parent"] = []
         self.deviceList["alarm_control_panel"] = []
         self.deviceList["binary_sensor"] = []
-        self.deviceList["camera"] = []
         self.deviceList["climate"] = []
         self.deviceList["light"] = []
         self.deviceList["sensor"] = []
