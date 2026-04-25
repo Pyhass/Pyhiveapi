@@ -41,7 +41,7 @@ repos:
     rev: 6.0.1
     hooks:
       - id: isort
-        args: ["--profile", "black"]
+        args: ["--profile", "black", "-o", "aiohttp", "-o", "apyhiveapi", "-o", "boto3", "-o", "botocore", "-o", "pyquery", "-o", "requests", "-o", "setuptools", "-o", "six", "-o", "urllib3"]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
     hooks:

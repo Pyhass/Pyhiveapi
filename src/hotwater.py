@@ -132,7 +132,9 @@ class HiveHotwater:
 
         if device["hiveID"] in self.session.data.products:
             _LOGGER.debug(
-                "Setting hot water mode to %s for %s.", new_mode, device["haName"]
+                "setMode - Setting hot water mode to %s for %s.",
+                new_mode,
+                device["haName"],
             )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
@@ -163,7 +165,9 @@ class HiveHotwater:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting hot water boost ON for %s: %s mins.", device["haName"], mins
+                "setBoostOn - Setting hot water boost ON for %s: %s mins.",
+                device["haName"],
+                mins,
             )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
@@ -192,7 +196,9 @@ class HiveHotwater:
             and await self.getBoost(device) == "ON"
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Setting hot water boost OFF for %s.", device["haName"])
+            _LOGGER.debug(
+                "setBoostOff - Setting hot water boost OFF for %s.", device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             prev_mode = data["props"]["previous"]["mode"]
@@ -234,7 +240,7 @@ class WaterHeater(HiveHotwater):
             cached = self.session.getCachedDevice(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "Returning cached state for water heater %s (slow/busy poll).",
+                    "getWaterHeater - Returning cached state for water heater %s (slow/busy poll).",
                     device["haName"],
                 )
                 return cached
@@ -246,7 +252,9 @@ class WaterHeater(HiveHotwater):
 
             dev_data = {}
             self.session.helper.deviceRecovered(device["device_id"])
-            _LOGGER.debug("Updating hot water data for %s.", device["haName"])
+            _LOGGER.debug(
+                "getWaterHeater - Updating hot water data for %s.", device["haName"]
+            )
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -264,6 +272,12 @@ class WaterHeater(HiveHotwater):
                     device["device_id"], device["hiveType"]
                 ),
             }
+
+            _LOGGER.debug(
+                "getWaterHeater - Water heater device data for %s: %s",
+                device["haName"],
+                dev_data["status"],
+            )
 
             return self.session.setCachedDevice(device, dev_data)
         else:

@@ -71,7 +71,7 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Turning plug ON for %s.", device["haName"])
+            _LOGGER.debug("setStatusOn - Turning plug ON for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -98,7 +98,7 @@ class HiveSmartPlug:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Turning plug OFF for %s.", device["haName"])
+            _LOGGER.debug("setStatusOff - Turning plug OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -139,7 +139,7 @@ class Switch(HiveSmartPlug):
             cached = self.session.getCachedDevice(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "Returning cached state for switch %s (slow/busy poll).",
+                    "getSwitch - Returning cached state for switch %s (slow/busy poll).",
                     device["haName"],
                 )
                 return cached
@@ -150,7 +150,7 @@ class Switch(HiveSmartPlug):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
-            _LOGGER.debug("Updating switch data for %s.", device["haName"])
+            _LOGGER.debug("getSwitch - Updating switch data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -181,6 +181,12 @@ class Switch(HiveSmartPlug):
                         ),
                     }
                 )
+
+            _LOGGER.debug(
+                "getSwitch - Switch device data for %s: %s",
+                device["haName"],
+                dev_data["status"],
+            )
 
             return self.session.setCachedDevice(device, dev_data)
         else:

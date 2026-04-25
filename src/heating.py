@@ -56,6 +56,7 @@ class HiveHeating:
 
         state = None
         final = None
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
 
         try:
             data = self.session.data.products[device["hiveID"]]
@@ -64,10 +65,10 @@ class HiveHeating:
             try:
                 state = float(state)
             except (ValueError, TypeError):
-                _LOGGER.debug(
-                    "Non-numeric temperature value '%s' for %s.",
+                _LOGGER.warning(
+                    "getCurrentTemperature - Non-numeric temperature value '%s' for %s.",
                     state,
-                    device.get("haName", device.get("hiveID")),
+                    device_name,
                 )
                 return None
 
@@ -105,7 +106,11 @@ class HiveHeating:
 
             final = round(state, 1)
         except KeyError as e:
-            _LOGGER.error(e)
+            _LOGGER.error(
+                "getCurrentTemperature - KeyError getting temperature for %s: %s",
+                device_name,
+                str(e),
+            )
 
         return final
 
@@ -119,6 +124,7 @@ class HiveHeating:
             float: Target temperature or None if invalid
         """
         state = None
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
 
         try:
             data = self.session.data.products[device["hiveID"]]
@@ -130,14 +136,18 @@ class HiveHeating:
                 try:
                     state = float(state)
                 except (ValueError, TypeError):
-                    _LOGGER.debug(
-                        "Non-numeric target temperature value '%s' for %s.",
+                    _LOGGER.warning(
+                        "getTargetTemperature - Non-numeric target temperature value '%s' for %s.",
                         state,
-                        device.get("haName", device.get("hiveID")),
+                        device_name,
                     )
                     return None
         except (KeyError, TypeError) as e:
-            _LOGGER.error(e)
+            _LOGGER.error(
+                "getTargetTemperature - Error getting target temperature for %s: %s",
+                device_name,
+                str(e),
+            )
 
         return state
 
@@ -287,6 +297,13 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
+        _LOGGER.info(
+            "setTargetTemperature - Setting target temperature to %s°C for %s",
+            new_temp,
+            device_name,
+        )
+
         await self.session.hiveRefreshTokens()
         final = False
 
@@ -295,7 +312,8 @@ class HiveHeating:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting target temperature to %s for %s.", new_temp, device["haName"]
+                "setTargetTemperature - Device %s is online, proceeding with temperature change",
+                device_name,
             )
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -303,8 +321,23 @@ class HiveHeating:
             )
 
             if resp["original"] == 200:
+                _LOGGER.debug(
+                    "setTargetTemperature - Temperature set successfully for %s, refreshing device data",
+                    device_name,
+                )
                 await self.session.getDevices(device["hiveID"])
                 final = True
+            else:
+                _LOGGER.error(
+                    "setTargetTemperature - Failed to set temperature for %s, response: %s",
+                    device_name,
+                    resp["original"],
+                )
+        else:
+            _LOGGER.warning(
+                "setTargetTemperature - Device %s not found or offline, cannot set temperature",
+                device_name,
+            )
 
         return final
 
@@ -318,6 +351,11 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
+        device_name = device.get("haName", device.get("hiveID", "Unknown"))
+        _LOGGER.info(
+            "setMode - Setting heating mode to %s for %s", new_mode, device_name
+        )
+
         await self.session.hiveRefreshTokens()
         final = False
 
@@ -326,7 +364,8 @@ class HiveHeating:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting heating mode to %s for %s.", new_mode, device["haName"]
+                "setMode - Device %s is online, proceeding with mode change",
+                device_name,
             )
             data = self.session.data.products[device["hiveID"]]
             resp = await self.session.api.setState(
@@ -334,8 +373,22 @@ class HiveHeating:
             )
 
             if resp["original"] == 200:
+                _LOGGER.debug(
+                    "setMode - Mode set successfully for %s, refreshing device data",
+                    device_name,
+                )
                 await self.session.getDevices(device["hiveID"])
                 final = True
+            else:
+                _LOGGER.error(
+                    "setMode - Failed to set mode for %s, response: %s",
+                    device_name,
+                    resp["original"],
+                )
+        else:
+            _LOGGER.warning(
+                "setMode - Device %s not found or offline, cannot set mode", device_name
+            )
 
         return final
 
@@ -360,7 +413,7 @@ class HiveHeating:
                     and device["deviceData"]["online"]
                 ):
                     _LOGGER.debug(
-                        "Setting heating boost ON for %s: %s mins at %s degrees.",
+                        "setBoostOn - Setting heating boost ON for %s: %s mins at %s degrees.",
                         device["haName"],
                         mins,
                         temp,
@@ -396,7 +449,9 @@ class HiveHeating:
             device["hiveID"] in self.session.data.products
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Setting heating boost OFF for %s.", device["haName"])
+            _LOGGER.debug(
+                "setBoostOff - Setting heating boost OFF for %s.", device["haName"]
+            )
             await self.session.hiveRefreshTokens()
             data = self.session.data.products[device["hiveID"]]
             await self.session.getDevices(device["hiveID"])
@@ -437,7 +492,9 @@ class HiveHeating:
             and device["deviceData"]["online"]
         ):
             _LOGGER.debug(
-                "Setting heat on demand to %s for %s.", state, device["haName"]
+                "setHeatOnDemand - Setting heat on demand to %s for %s.",
+                state,
+                device["haName"],
             )
             data = self.session.data.products[device["hiveID"]]
             await self.session.hiveRefreshTokens()
@@ -480,7 +537,7 @@ class Climate(HiveHeating):
             cached = self.session.getCachedDevice(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "Returning cached state for climate %s (slow/busy poll).",
+                    "getClimate - Returning cached state for climate %s (slow/busy poll).",
                     device["haName"],
                 )
                 return cached
@@ -491,7 +548,9 @@ class Climate(HiveHeating):
         if device["deviceData"]["online"]:
             dev_data = {}
             self.session.helper.deviceRecovered(device["device_id"])
-            _LOGGER.debug("Updating climate data for %s.", device["haName"])
+            _LOGGER.debug(
+                "getClimate - Updating climate data for %s.", device["haName"]
+            )
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
@@ -518,6 +577,11 @@ class Climate(HiveHeating):
                     device["device_id"], device["hiveType"]
                 ),
             }
+            _LOGGER.debug(
+                "getHeating - Heating device data for %s: %s",
+                device["haName"],
+                dev_data["status"],
+            )
             return self.session.setCachedDevice(device, dev_data)
         else:
             await self.session.helper.errorCheck(

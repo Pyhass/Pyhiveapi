@@ -94,7 +94,7 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Setting camera ON for %s.", device["haName"])
+            _LOGGER.debug("setCameraOn - Setting camera ON for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
@@ -118,7 +118,7 @@ class HiveCamera:
             device["hiveID"] in self.session.data.devices
             and device["deviceData"]["online"]
         ):
-            _LOGGER.debug("Setting camera OFF for %s.", device["haName"])
+            _LOGGER.debug("setCameraOff - Setting camera OFF for %s.", device["haName"])
             await self.session.hiveRefreshTokens()
             resp = await self.session.api.setState(mode=mode)
             if resp["original"] == 200:
@@ -156,7 +156,7 @@ class Camera(HiveCamera):
             cached = self.session.getCachedDevice(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "Returning cached state for camera %s (slow/busy poll).",
+                    "getCamera - Returning cached state for camera %s (slow/busy poll).",
                     device["haName"],
                 )
                 return cached
@@ -167,7 +167,7 @@ class Camera(HiveCamera):
 
         if device["deviceData"]["online"]:
             self.session.helper.deviceRecovered(device["device_id"])
-            _LOGGER.debug("Updating camera data for %s.", device["haName"])
+            _LOGGER.debug("getCamera - Updating camera data for %s.", device["haName"])
             data = self.session.data.devices[device["device_id"]]
             dev_data = {
                 "hiveID": device["hiveID"],
