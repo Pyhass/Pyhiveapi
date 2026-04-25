@@ -1,6 +1,7 @@
 """Hive Hotwater Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1101
+
 import logging
 
 from .helper.const import HIVETOHA
@@ -280,12 +281,11 @@ class WaterHeater(HiveHotwater):
             )
 
             return self.session.set_cached_device(device, dev_data)
-        else:
-            await self.session.helper.errorCheck(
-                device.device_id, "ERROR", device.device_data["online"]
-            )
-            device.status = device.status or {"current_operation": None}
-            return device
+        await self.session.helper.errorCheck(
+            device.device_id, "ERROR", device.device_data["online"]
+        )
+        device.status = device.status or {"current_operation": None}
+        return device
 
     async def getScheduleNowNextLater(self, device: dict):
         """Hive get hotwater schedule now, next and later.

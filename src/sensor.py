@@ -1,6 +1,7 @@
 """Hive Sensor Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1101,W0123
+
 import logging
 
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
@@ -161,9 +162,8 @@ class Sensor(HiveSensor):
             )
 
             return self.session.set_cached_device(device, dev_data)
-        else:
-            await self.session.helper.errorCheck(
-                device.device_id, "ERROR", device.device_data["online"]
-            )
-            device.status = device.status or {"state": None}
-            return device
+        await self.session.helper.errorCheck(
+            device.device_id, "ERROR", device.device_data["online"]
+        )
+        device.status = device.status or {"state": None}
+        return device

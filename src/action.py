@@ -1,6 +1,7 @@
 """Hive Action Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1101,C0415
+
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,11 +57,10 @@ class HiveAction:
             }
 
             return self.session.set_cached_device(device, dev_data)
-        else:
-            exists = self.session.data.actions.get("hiveID", False)
-            if exists is False:
-                return "REMOVE"
-            return device
+        exists = self.session.data.actions.get("hiveID", False)
+        if exists is False:
+            return "REMOVE"
+        return device
 
     async def getState(self, device: dict):
         """Get action state.

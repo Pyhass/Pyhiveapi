@@ -1,6 +1,7 @@
 """Hive API Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,W0613,W0622,W0102,W0201
+
 import json
 import logging
 
@@ -144,6 +145,7 @@ class HiveApi:
         ) as e:
             _LOGGER.error("Failed to get login info: %s", str(e))
             self.error()
+            return None
 
     def getAll(self):
         """Build and query all endpoint."""

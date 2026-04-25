@@ -1,6 +1,7 @@
 """Helper class for pyhiveapi."""
 
-# pylint: skip-file
+# pylint: disable=C0103,W0613,W0622,R0914,C0200
+
 import copy
 import datetime
 import logging
@@ -109,7 +110,7 @@ class HiveHelper:
                     if isinstance(cached, dict)
                     else getattr(cached, "device_id", None)
                 )
-                if hive_id == n_id or device_id == n_id:
+                if n_id in (hive_id, device_id):
                     ha_name = (
                         cached.get("haName", cached_id)
                         if isinstance(cached, dict)
@@ -150,7 +151,6 @@ class HiveHelper:
                             aDevice,
                             str(e),
                         )
-                        pass
         elif type == "trvcontrol":
             trv_present = len(product["props"]["trvs"]) > 0
             if trv_present:
@@ -302,12 +302,11 @@ class HiveHelper:
                 if len(value) <= 8:
                     return "***"
                 return f"{value[:4]}...{value[-4:]}"
-            elif isinstance(value, dict):
+            if isinstance(value, dict):
                 return {k: _mask(v) for k, v in value.items()}
-            elif isinstance(value, list):
+            if isinstance(value, list):
                 return [_mask(item) for item in value]
-            else:
-                return value
+            return value
 
         def _walk(node: Any) -> Any:
             if isinstance(node, dict):

@@ -1,6 +1,7 @@
 """Hive API Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1126,W0707,W1203
+
 import asyncio
 import json
 import logging
@@ -97,7 +98,7 @@ class HiveApiAsync:
             raise HiveAuthError(
                 f"Token expired or forbidden calling {url} — HTTP {resp.status}"
             )
-        elif url is not None and resp.status is not None:
+        if url is not None and resp.status is not None:
             _LOGGER.error(
                 f"Something has gone wrong calling {url} - "
                 f"HTTP status is - {resp.status} — response: {resp_body[:200]}"
@@ -266,8 +267,7 @@ class HiveApiAsync:
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
-            else:
-                await self.error()
+            await self.error()
 
         return json_return
 
@@ -282,8 +282,7 @@ class HiveApiAsync:
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
                 return {"original": "file"}
-            else:
-                await self.error()
+            await self.error()
 
         return self.json_return
 

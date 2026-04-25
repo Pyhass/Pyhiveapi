@@ -1,6 +1,7 @@
 """Hive Light Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1101
+
 import colorsys
 import logging
 
@@ -480,12 +481,11 @@ class Light(HiveLight):
             )
 
             return self.session.set_cached_device(device, dev_data)
-        else:
-            await self.session.helper.errorCheck(
-                device.device_id, "ERROR", device.device_data["online"]
-            )
-            device.status = device.status or {"state": None}
-            return device
+        await self.session.helper.errorCheck(
+            device.device_id, "ERROR", device.device_data["online"]
+        )
+        device.status = device.status or {"state": None}
+        return device
 
     async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):
         """Set light to turn on.

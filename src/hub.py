@@ -1,6 +1,7 @@
 """Hive Hub Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103
+
 import logging
 
 from .helper.const import HIVETOHA

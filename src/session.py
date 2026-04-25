@@ -1,6 +1,7 @@
 """Hive Session Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,R0914,R0915,W0613,W0212,W0706,W0707,W1514,C0301,C0209,R1719,R1705,R1720,R1710
+
 import asyncio
 import copy
 import json
@@ -330,13 +331,12 @@ class HiveSession:
             # Rule 4: Device login flow - check if device is registered
             _LOGGER.debug("login - Routing to device login flow")
             return await self._handleDeviceLoginChallenge(result)
-        elif challenge_name == self.auth.SMS_MFA_CHALLENGE:
+        if challenge_name == self.auth.SMS_MFA_CHALLENGE:
             # Rule 5: SMS flow - will need device registration after 2FA
             _LOGGER.debug("login - Routing to SMS 2FA flow (requires user input)")
             return result
-        else:
-            _LOGGER.error("login - Unsupported challenge: %s", challenge_name)
-            raise HiveUnknownConfiguration
+        _LOGGER.error("login - Unsupported challenge: %s", challenge_name)
+        raise HiveUnknownConfiguration
 
     async def _handleDeviceLoginChallenge(self, login_result):
         """Handle device login challenge.

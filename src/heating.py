@@ -1,6 +1,7 @@
 """Hive Heating Module."""
 
-# pylint: skip-file
+# pylint: disable=C0103,E1101,C0415,C0301
+
 import logging
 
 from .helper.const import HIVETOHA
@@ -457,7 +458,7 @@ class HiveHeating:
             await self.session.getDevices(device.hive_id)
             if await self.getBoostStatus(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
-                if prev_mode == "MANUAL" or prev_mode == "OFF":
+                if prev_mode in ("MANUAL", "OFF"):
                     pre_temp = data["props"]["previous"].get("target", 7)
                     resp = await self.session.api.setState(
                         data["type"],
@@ -581,19 +582,18 @@ class Climate(HiveHeating):
                 dev_data["status"],
             )
             return self.session.set_cached_device(device, dev_data)
-        else:
-            await self.session.helper.errorCheck(
-                device.device_id, "ERROR", device.device_data["online"]
-            )
-            device.status = device.status or {
-                "current_temperature": None,
-                "target_temperature": None,
-                "action": None,
-                "mode": None,
-                "boost": None,
-                "state": None,
-            }
-            return device
+        await self.session.helper.errorCheck(
+            device.device_id, "ERROR", device.device_data["online"]
+        )
+        device.status = device.status or {
+            "current_temperature": None,
+            "target_temperature": None,
+            "action": None,
+            "mode": None,
+            "boost": None,
+            "state": None,
+        }
+        return device
 
     async def getScheduleNowNextLater(self, device: dict):
         """Hive get heating schedule now, next and later.

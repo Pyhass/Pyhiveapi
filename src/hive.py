@@ -1,6 +1,7 @@
 """Start Hive Session."""
 
-# pylint: skip-file
+# pylint: disable=C0103,W0613,W0603
+
 import asyncio
 import logging
 import sys
@@ -34,13 +35,14 @@ def exception_handler(exctype, value, tb):
         tb ([type]): [description]
     """
     last = len(traceback.extract_tb(tb)) - 1
+    tb_entry = traceback.extract_tb(tb)[last]
     _LOGGER.error(
-        f"-> \n"
-        f"Error in {traceback.extract_tb(tb)[last].filename}\n"
-        f"when running {traceback.extract_tb(tb)[last].name} function\n"
-        f"on line {traceback.extract_tb(tb)[last].lineno} - "
-        f"{traceback.extract_tb(tb)[last].line} \n"
-        f"with vars {traceback.extract_tb(tb)[last].locals}"
+        "-> \nError in %s\nwhen running %s function\non line %s - %s \nwith vars %s",
+        tb_entry.filename,
+        tb_entry.name,
+        tb_entry.lineno,
+        tb_entry.line,
+        tb_entry.locals,
     )
     traceback.print_exc(tb)
 
@@ -71,14 +73,17 @@ def trace_debug(frame, event, arg):
                 caller_filename = caller.f_code.co_filename.rsplit("/", 1)
 
                 _LOGGER.debug(
-                    f"Call to {func_name} on line {func_line_no} "
-                    f"of {func_filename[1]} from line {caller_line_no} "
-                    f"of {caller_filename[1]}"
+                    "Call to %s on line %s of %s from line %s of %s",
+                    func_name,
+                    func_line_no,
+                    func_filename[1],
+                    caller_line_no,
+                    caller_filename[1],
                 )
             elif event == "return":
-                _LOGGER.debug(f"returning {arg}")
+                _LOGGER.debug("returning %s", arg)
 
-        return trace_debug
+    return trace_debug
 
 
 class Hive(HiveSession):
@@ -97,7 +102,8 @@ class Hive(HiveSession):
         """Generate a Hive session.
 
         Args:
-            websession (Optional[ClientSession], optional): This is a websession that can be used for the api. Defaults to None.
+            websession (Optional[ClientSession], optional): Websession for API calls.
+                Defaults to None.
             username (str, optional): This is the Hive username used for login. Defaults to None.
             password (str, optional): This is the Hive password used for login. Defaults to None.
         """
