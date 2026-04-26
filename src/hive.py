@@ -1,7 +1,5 @@
 """Start Hive Session."""
 
-# pylint: disable=C0103,W0613,W0603
-
 import asyncio
 import logging
 import sys
@@ -26,7 +24,7 @@ debug = []
 home = expanduser("~")
 
 
-def exception_handler(exctype, value, tb):
+def exception_handler(_exctype, _value, tb):
     """Custom exception handler.
 
     Args:
@@ -120,7 +118,7 @@ class Hive(HiveSession):
         if debug:
             sys.settrace(trace_debug)
 
-    def setDebugging(self, debugger: list):
+    def set_debugging(self, debugger: list):
         """Set function to debug.
 
         Args:
@@ -129,24 +127,24 @@ class Hive(HiveSession):
         Returns:
             object: Returns traceback object.
         """
-        global debug
+        global debug  # pylint: disable=global-statement
         debug = debugger
         if debug:
             return sys.settrace(trace_debug)
         return sys.settrace(None)
 
-    async def forceUpdate(self) -> bool:
+    async def force_update(self) -> bool:
         """Immediately poll the Hive API, bypassing the 2-minute interval.
 
         For power users only. If a poll is already in progress, skips and
         returns False. Otherwise polls and returns True on success.
         """
         if self.update_lock.locked():
-            _LOGGER.debug("forceUpdate called while poll in progress — skipping.")
+            _LOGGER.debug("force_update called while poll in progress — skipping.")
             return False
         async with self.update_lock:
             self._update_task = asyncio.current_task()
             try:
-                return await self._pollDevices()
+                return await self._poll_devices()
             finally:
                 self._update_task = None

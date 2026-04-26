@@ -1,7 +1,5 @@
 """Hive API Module."""
 
-# pylint: disable=C0103,W0613,W0622,W0102,W0201
-
 import json
 import logging
 
@@ -17,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class HiveApi:
     """Hive API Code."""
 
-    def __init__(self, hiveSession=None, websession=None, token=None):
+    def __init__(self, hive_session=None, token=None):
         """Hive API initialisation."""
         self.urls = {
             "properties": "https://sso.hivehome.com/",
@@ -38,27 +36,24 @@ class HiveApi:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        self.session = hiveSession
+        self.session = hive_session
         self.token = token
+        self.headers = {
+            "content-type": "application/json",
+            "Accept": "*/*",
+            "authorization": "",
+        }
 
-    def request(self, type, url, jsc=None):
+    def request(self, http_method, url, jsc=None):
         """Make API request."""
-        _LOGGER.debug("request - Making %s request to: %s", type, url)
+        _LOGGER.debug("request - Making %s request to: %s", http_method, url)
         if jsc:
             _LOGGER.debug("request - Request payload: %s", jsc)
 
         if self.session is not None:
-            self.headers = {
-                "content-type": "application/json",
-                "Accept": "*/*",
-                "authorization": self.session.tokens.token_data["token"],
-            }
+            self.headers["authorization"] = self.session.tokens.token_data["token"]
         else:
-            self.headers = {
-                "content-type": "application/json",
-                "Accept": "*/*",
-                "authorization": self.token,
-            }
+            self.headers["authorization"] = self.token
 
         _LOGGER.debug(
             "request - Request headers: %s",
@@ -66,22 +61,24 @@ class HiveApi:
         )
 
         try:
-            if type == "GET":
+            if http_method == "GET":
                 return requests.get(
                     url=url, headers=self.headers, data=jsc, timeout=self.timeout
                 )
-            if type == "POST":
+            if http_method == "POST":
                 return requests.post(
                     url=url, headers=self.headers, data=jsc, timeout=self.timeout
                 )
-            raise ValueError(f"Unsupported request type: {type}")
+            raise ValueError(f"Unsupported request type: {http_method}")
         except Exception as e:
             _LOGGER.error("Request failed: %s", e)
             raise
 
-    def refreshTokens(self, tokens={}):
+    def refresh_tokens(self, tokens=None):
         """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
-        _LOGGER.debug("refreshTokens - Attempting token refresh (deprecated method)")
+        _LOGGER.debug("refresh_tokens - Attempting token refresh (deprecated method)")
+        if tokens is None:
+            tokens = {}
         url = self.urls["refresh"]
         if self.session is not None:
             tokens = self.session.tokens.token_data
@@ -97,9 +94,9 @@ class HiveApi:
             data = json.loads(info.text)
             if "token" in data and self.session:
                 _LOGGER.debug(
-                    "refreshTokens - Token refresh successful, updating session"
+                    "refresh_tokens - Token refresh successful, updating session"
                 )
-                self.session.updateTokens(data)
+                self.session.update_tokens(data)
                 self.urls.update({"base": data["platform"]["endpoint"]})
             self.json_return.update({"original": info.status_code})
             self.json_return.update({"parsed": info.json()})
@@ -109,16 +106,16 @@ class HiveApi:
 
         return self.json_return
 
-    def getLoginInfo(self):
+    def get_login_info(self):
         """Get login properties to make the login request."""
         _LOGGER.debug(
-            "getLoginInfo - Fetching login info from: %s", self.urls["properties"]
+            "get_login_info - Fetching login info from: %s", self.urls["properties"]
         )
         url = self.urls["properties"]
         try:
             data = requests.get(url=url, verify=False, timeout=self.timeout)
             _LOGGER.debug(
-                "getLoginInfo - Login info response status: %s", data.status_code
+                "get_login_info - Login info response status: %s", data.status_code
             )
             html = PyQuery(data.content)
             json_data = json.loads(
@@ -130,12 +127,12 @@ class HiveApi:
                 + "}"
             )
 
-            loginData = {}
-            loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-            loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-            loginData.update({"REGION": json_data["HiveSSOPoolId"]})
-            _LOGGER.debug("getLoginInfo - Login info extracted successfully")
-            return loginData
+            login_data = {}
+            login_data.update({"UPID": json_data["HiveSSOPoolId"]})
+            login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
+            login_data.update({"REGION": json_data["HiveSSOPoolId"]})
+            _LOGGER.debug("get_login_info - Login info extracted successfully")
+            return login_data
         except (
             OSError,
             RuntimeError,
@@ -147,9 +144,9 @@ class HiveApi:
             self.error()
             return None
 
-    def getAll(self):
+    def get_all(self):
         """Build and query all endpoint."""
-        _LOGGER.debug("getAll - Fetching all devices/products/actions from Hive API")
+        _LOGGER.debug("get_all - Fetching all devices/products/actions from Hive API")
         json_return = {}
         url = self.urls["base"] + self.urls["all"]
         try:
@@ -158,7 +155,7 @@ class HiveApi:
                 json_return.update({"original": info.status_code})
                 json_return.update({"parsed": info.json()})
                 _LOGGER.debug(
-                    "getAll - All data fetch successful, status: %s", info.status_code
+                    "get_all - All data fetch successful, status: %s", info.status_code
                 )
             else:
                 _LOGGER.error("Failed to get response from all endpoint")
@@ -168,7 +165,7 @@ class HiveApi:
 
         return json_return
 
-    def getDevices(self):
+    def get_devices(self):
         """Call the get devices endpoint."""
         url = self.urls["base"] + self.urls["devices"]
         try:
@@ -180,7 +177,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getProducts(self):
+    def get_products(self):
         """Call the get products endpoint."""
         url = self.urls["base"] + self.urls["products"]
         try:
@@ -192,7 +189,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getActions(self):
+    def get_actions(self):
         """Call the get actions endpoint."""
         url = self.urls["base"] + self.urls["actions"]
         try:
@@ -204,7 +201,7 @@ class HiveApi:
 
         return self.json_return
 
-    def motionSensor(self, sensor, fromepoch, toepoch):
+    def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
         url = (
             self.urls["base"]
@@ -227,7 +224,7 @@ class HiveApi:
 
         return self.json_return
 
-    def getWeather(self, weather_url):
+    def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
@@ -240,10 +237,10 @@ class HiveApi:
 
         return self.json_return
 
-    def setState(self, n_type, n_id, **kwargs):
+    def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
         _LOGGER.debug(
-            "setState - Setting state for device %s (type: %s): %s",
+            "set_state - Setting state for device %s (type: %s): %s",
             n_id,
             n_type,
             kwargs,
@@ -264,7 +261,7 @@ class HiveApi:
                 self.json_return.update({"original": response.status_code})
                 self.json_return.update({"parsed": response.json()})
                 _LOGGER.debug(
-                    "setState - State set successfully for %s, status: %s",
+                    "set_state - State set successfully for %s, status: %s",
                     n_id,
                     response.status_code,
                 )
@@ -282,7 +279,7 @@ class HiveApi:
 
         return self.json_return
 
-    def setAction(self, n_id, data):
+    def set_action(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id

@@ -1,8 +1,7 @@
 """Hive Switch Module."""
 
-# pylint: disable=C0103,E1101
-
 import logging
+from typing import Any
 
 from .helper.const import HIVETOHA
 
@@ -16,9 +15,10 @@ class HiveSmartPlug:
         object: Returns Plug object
     """
 
-    plugType = "Switch"
+    session: Any
+    plug_type = "Switch"
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get smart plug state.
 
         Args:
@@ -38,7 +38,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def getPowerUsage(self, device: dict):
+    async def get_power_usage(self, device: dict):
         """Get smart plug current power usage.
 
         Args:
@@ -57,7 +57,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def setStatusOn(self, device: dict):
+    async def set_status_on(self, device: dict):
         """Set smart plug to turn on.
 
         Args:
@@ -72,19 +72,19 @@ class HiveSmartPlug:
             device.hive_id in self.session.data.products
             and device.device_data["online"]
         ):
-            _LOGGER.debug("setStatusOn - Turning plug ON for %s.", device.ha_name)
-            await self.session.hiveRefreshTokens()
+            _LOGGER.debug("set_status_on - Turning plug ON for %s.", device.ha_name)
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device.hive_id]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], data["id"], status="ON"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
 
         return final
 
-    async def setStatusOff(self, device: dict):
+    async def set_status_off(self, device: dict):
         """Set smart plug to turn off.
 
         Args:
@@ -99,15 +99,15 @@ class HiveSmartPlug:
             device.hive_id in self.session.data.products
             and device.device_data["online"]
         ):
-            _LOGGER.debug("setStatusOff - Turning plug OFF for %s.", device.ha_name)
-            await self.session.hiveRefreshTokens()
+            _LOGGER.debug("set_status_off - Turning plug OFF for %s.", device.ha_name)
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device.hive_id]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], data["id"], status="OFF"
             )
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
 
         return final
 
@@ -127,7 +127,7 @@ class Switch(HiveSmartPlug):
         """
         self.session = session
 
-    async def getSwitch(self, device: dict):
+    async def get_switch(self, device: dict):
         """Home assistant wrapper to get switch device.
 
         Args:
@@ -140,18 +140,18 @@ class Switch(HiveSmartPlug):
             cached = self.session.get_cached_device(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "getSwitch - Returning cached state for switch %s (slow/busy poll).",
+                    "get_switch - Returning cached state for switch %s (slow/busy poll).",
                     device.ha_name,
                 )
                 return cached
         device.device_data.update(
-            {"online": await self.session.attr.onlineOffline(device.device_id)}
+            {"online": await self.session.attr.online_offline(device.device_id)}
         )
         dev_data = {}
 
         if device.device_data["online"]:
-            self.session.helper.deviceRecovered(device.device_id)
-            _LOGGER.debug("getSwitch - Updating switch data for %s.", device.ha_name)
+            self.session.helper.device_recovered(device.device_id)
+            _LOGGER.debug("get_switch - Updating switch data for %s.", device.ha_name)
             data = self.session.data.devices[device.device_id]
             dev_data = {
                 "hiveID": device.hive_id,
@@ -162,7 +162,7 @@ class Switch(HiveSmartPlug):
                 "device_id": device.device_id,
                 "device_name": device.device_name,
                 "status": {
-                    "state": await self.getSwitchState(device),
+                    "state": await self.get_switch_state(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
@@ -175,28 +175,28 @@ class Switch(HiveSmartPlug):
                     {
                         "status": {
                             "state": dev_data["status"]["state"],
-                            "power_usage": await self.getPowerUsage(device),
+                            "power_usage": await self.get_power_usage(device),
                         },
-                        "attributes": await self.session.attr.stateAttributes(
+                        "attributes": await self.session.attr.state_attributes(
                             device.device_id, device.hive_type
                         ),
                     }
                 )
 
             _LOGGER.debug(
-                "getSwitch - Switch device data for %s: %s",
+                "get_switch - Switch device data for %s: %s",
                 device.ha_name,
                 dev_data["status"],
             )
 
             return self.session.set_cached_device(device, dev_data)
-        await self.session.helper.errorCheck(
+        await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )
         device.status = device.status or {"state": None}
         return device
 
-    async def getSwitchState(self, device: dict):
+    async def get_switch_state(self, device: dict):
         """Home Assistant wrapper to get updated switch state.
 
         Args:
@@ -206,10 +206,10 @@ class Switch(HiveSmartPlug):
             boolean: Return True or False for the state.
         """
         if device.hive_type == "Heating_Heat_On_Demand":
-            return await self.session.heating.getHeatOnDemand(device)
-        return await self.getState(device)
+            return await self.session.heating.get_heat_on_demand(device)
+        return await self.get_state(device)
 
-    async def turnOn(self, device: dict):
+    async def turn_on(self, device: dict):
         """Home Assisatnt wrapper for turning switch on.
 
         Args:
@@ -219,10 +219,10 @@ class Switch(HiveSmartPlug):
             function: Calls relevant function.
         """
         if device.hive_type == "Heating_Heat_On_Demand":
-            return await self.session.heating.setHeatOnDemand(device, "ENABLED")
-        return await self.setStatusOn(device)
+            return await self.session.heating.set_heat_on_demand(device, "ENABLED")
+        return await self.set_status_on(device)
 
-    async def turnOff(self, device: dict):
+    async def turn_off(self, device: dict):
         """Home Assisatnt wrapper for turning switch off.
 
         Args:
@@ -232,5 +232,5 @@ class Switch(HiveSmartPlug):
             function: Calls relevant function.
         """
         if device.hive_type == "Heating_Heat_On_Demand":
-            return await self.session.heating.setHeatOnDemand(device, "DISABLED")
-        return await self.setStatusOff(device)
+            return await self.session.heating.set_heat_on_demand(device, "DISABLED")
+        return await self.set_status_off(device)

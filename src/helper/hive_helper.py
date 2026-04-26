@@ -1,7 +1,5 @@
 """Helper class for pyhiveapi."""
 
-# pylint: disable=C0103,W0613,W0622,R0914,C0200
-
 import copy
 import datetime
 import logging
@@ -24,7 +22,7 @@ class HiveHelper:
         """
         self.session = session
 
-    async def getDeviceName(self, n_id: str):
+    async def get_device_name(self, n_id: str):
         """Resolve a id into a name.
 
         Args:
@@ -48,7 +46,7 @@ class HiveHelper:
 
         if not product_name and not device_name:
             _LOGGER.warning(
-                "getDeviceName - No product or device name found for ID: %s", n_id
+                "get_device_name - No product or device name found for ID: %s", n_id
             )
 
         if product_name:
@@ -62,20 +60,20 @@ class HiveHelper:
 
         return final_name
 
-    def deviceRecovered(self, n_id: str):
+    def device_recovered(self, n_id: str):
         """Register that a device has recovered from being offline.
 
         Args:
             n_id (str): ID of the device.
         """
-        # name = HiveHelper.getDeviceName(n_id)
+        # name = HiveHelper.get_device_name(n_id)
         if n_id in self.session.config.error_list:
             self.session.config.error_list.pop(n_id)
 
-    async def errorCheck(self, n_id, n_type, error_type, **kwargs):
+    async def error_check(self, n_id, _n_type, error_type, **_kwargs):
         """Error has occurred."""
         message = None
-        name = await self.getDeviceName(n_id)
+        name = await self.get_device_name(n_id)
         device_name = name if isinstance(name, str) else n_id
 
         if error_type is False:
@@ -89,7 +87,7 @@ class HiveHelper:
                 _LOGGER.error(message)
                 self.session.config.error_list.update({n_id: datetime.datetime.now()})
 
-    def getDeviceFromID(self, n_id: str):
+    def get_device_from_id(self, n_id: str):
         """Get product/device data from ID.
 
         Args:
@@ -117,14 +115,14 @@ class HiveHelper:
                         else getattr(cached, "ha_name", cached_id)
                     )
                     _LOGGER.debug(
-                        "getDeviceFromID - Found cached device for ID %s: %s",
+                        "get_device_from_id - Found cached device for ID %s: %s",
                         n_id,
                         ha_name,
                     )
                     return cached
         return False
 
-    def getDeviceData(self, product: dict):
+    def get_device_data(self, product: dict):
         """Get device from product data.
 
         Args:
@@ -135,41 +133,43 @@ class HiveHelper:
         """
         product_id = product.get("id", "Unknown")
         device = product
-        type = product["type"]
-        if type in ("heating", "hotwater"):
-            for aDevice in self.session.data.devices:
-                if self.session.data.devices[aDevice]["type"] in HIVE_TYPES["Thermo"]:
+        product_type = product["type"]
+        if product_type in ("heating", "hotwater"):
+            for a_device in self.session.data.devices:
+                if self.session.data.devices[a_device]["type"] in HIVE_TYPES["Thermo"]:
                     try:
                         if (
                             product["props"]["zone"]
-                            == self.session.data.devices[aDevice]["props"]["zone"]
+                            == self.session.data.devices[a_device]["props"]["zone"]
                         ):
-                            device = self.session.data.devices[aDevice]
+                            device = self.session.data.devices[a_device]
                     except KeyError as e:
                         _LOGGER.warning(
-                            "getDeviceData - KeyError accessing zone data for device %s: %s",
-                            aDevice,
+                            "get_device_data - KeyError accessing zone data for device %s: %s",
+                            a_device,
                             str(e),
                         )
-        elif type == "trvcontrol":
+        elif product_type == "trvcontrol":
             trv_present = len(product["props"]["trvs"]) > 0
             if trv_present:
                 device = self.session.data.devices[product["props"]["trvs"][0]]
             else:
                 _LOGGER.error(
-                    "getDeviceData - No TRVs found for product %s", product_id
+                    "get_device_data - No TRVs found for product %s", product_id
                 )
                 raise KeyError
-        elif type == "warmwhitelight" and product["props"]["model"] == "SIREN001":
+        elif (
+            product_type == "warmwhitelight" and product["props"]["model"] == "SIREN001"
+        ):
             device = self.session.data.devices[product["parent"]]
-        elif type == "sense":
+        elif product_type == "sense":
             device = self.session.data.devices[product["parent"]]
         else:
             device = self.session.data.devices[product["id"]]
 
         return device
 
-    def convertMinutesToTime(self, minutes_to_convert: str):
+    def convert_minutes_to_time(self, minutes_to_convert: str):
         """Convert minutes string to datetime.
 
         Args:
@@ -185,7 +185,9 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def getScheduleNNL(self, hive_api_schedule: list):
+    def get_schedule_nnl(
+        self, hive_api_schedule: list
+    ):  # pylint: disable=too-many-locals
         """Get the schedule now, next and later of a given nodes schedule.
 
         Args:
@@ -195,7 +197,8 @@ class HiveHelper:
             dict: Now, Next and later values.
         """
         _LOGGER.debug(
-            "getScheduleNNL - Parsing schedule NNL for %d days", len(hive_api_schedule)
+            "get_schedule_nnl - Parsing schedule NNL for %d days",
+            len(hive_api_schedule),
         )
         schedule_now_and_next = {}
         date_time_now = datetime.datetime.now()
@@ -212,28 +215,27 @@ class HiveHelper:
         )
 
         days_rolling_list = list(days_t[date_time_now_day_int:] + days_t)[:7]
-        _LOGGER.debug("getScheduleNNL - Days rolling list: %s", days_rolling_list)
+        _LOGGER.debug("get_schedule_nnl - Days rolling list: %s", days_rolling_list)
 
         full_schedule_list = []
 
-        for day_index in range(0, len(days_rolling_list)):
-            current_day_schedule = hive_api_schedule[days_rolling_list[day_index]]
+        for day_index, day_name in enumerate(days_rolling_list):
+            current_day_schedule = hive_api_schedule[day_name]
             current_day_schedule_sorted = sorted(
                 current_day_schedule,
                 key=operator.itemgetter("start"),
                 reverse=False,
             )
             _LOGGER.debug(
-                "getScheduleNNL - Processing day %s with %d schedule slots",
-                days_rolling_list[day_index],
+                "get_schedule_nnl - Processing day %s with %d schedule slots",
+                day_name,
                 len(current_day_schedule_sorted),
             )
 
-            for current_slot in range(0, len(current_day_schedule_sorted)):
-                current_slot_custom = current_day_schedule_sorted[current_slot]
+            for current_slot_custom in current_day_schedule_sorted:
 
                 slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
-                slot_time = self.convertMinutesToTime(current_slot_custom["start"])
+                slot_time = self.convert_minutes_to_time(current_slot_custom["start"])
                 slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
                 slot_time_date_dt = datetime.datetime.strptime(
                     slot_time_date_s, "%d-%m-%Y %H:%M"
@@ -268,20 +270,21 @@ class HiveHelper:
             schedule_now_and_next["later"] = schedule_later
 
             _LOGGER.debug(
-                "getScheduleNNL - Schedule NNL parsed successfully - now: %s, next: %s, later: %s",
+                "get_schedule_nnl - Schedule NNL parsed successfully"
+                " - now: %s, next: %s, later: %s",
                 schedule_now.get("Start_DateTime"),
                 schedule_next.get("Start_DateTime"),
                 schedule_later.get("Start_DateTime"),
             )
         else:
             _LOGGER.warning(
-                "getScheduleNNL - Insufficient schedule data (%d slots) for NNL calculation",
+                "get_schedule_nnl - Insufficient schedule data (%d slots) for NNL calculation",
                 len(fsl_sorted),
             )
 
         return schedule_now_and_next
 
-    def getHeatOnDemandDevice(self, device: dict):
+    def get_heat_on_demand_device(self, device: dict):
         """Use TRV device to get the linked thermostat device.
 
         Args:
@@ -294,7 +297,7 @@ class HiveHelper:
         thermostat = self.session.data.products.get(trv["state"]["zone"])
         return thermostat
 
-    def _sanitize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def sanitize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Return a copy of payload with sensitive values masked for logs."""
 
         def _mask(value: Any) -> Any:

@@ -1,8 +1,8 @@
 """Hive Heating Module."""
 
-# pylint: disable=C0103,E1101,C0415,C0301
-
 import logging
+from datetime import datetime
+from typing import Any
 
 from .helper.const import HIVETOHA
 
@@ -16,9 +16,10 @@ class HiveHeating:
         object: heating
     """
 
-    heatingType = "Heating"
+    session: Any
+    heating_type = "Heating"
 
-    async def getMinTemperature(self, device: dict):
+    async def get_min_temperature(self, device: dict):
         """Get heating minimum target temperature.
 
         Args:
@@ -31,7 +32,7 @@ class HiveHeating:
             return self.session.data.products[device.hive_id]["props"]["minHeat"]
         return 5
 
-    async def getMaxTemperature(self, device: dict):
+    async def get_max_temperature(self, device: dict):
         """Get heating maximum target temperature.
 
         Args:
@@ -44,7 +45,7 @@ class HiveHeating:
             return self.session.data.products[device.hive_id]["props"]["maxHeat"]
         return 32
 
-    async def getCurrentTemperature(self, device: dict):
+    async def get_current_temperature(self, device: dict):
         """Get heating current temperature.
 
         Args:
@@ -53,8 +54,6 @@ class HiveHeating:
         Returns:
             float: current temperature
         """
-        from datetime import datetime
-
         state = None
         final = None
         device_name = device.ha_name
@@ -67,7 +66,7 @@ class HiveHeating:
                 state = float(state)
             except (ValueError, TypeError):
                 _LOGGER.warning(
-                    "getCurrentTemperature - Non-numeric temperature value '%s' for %s.",
+                    "get_current_temperature - Non-numeric temperature value '%s' for %s.",
                     state,
                     device_name,
                 )
@@ -108,14 +107,14 @@ class HiveHeating:
             final = round(state, 1)
         except KeyError as e:
             _LOGGER.error(
-                "getCurrentTemperature - KeyError getting temperature for %s: %s",
+                "get_current_temperature - KeyError getting temperature for %s: %s",
                 device_name,
                 str(e),
             )
 
         return final
 
-    async def getTargetTemperature(self, device: dict):
+    async def get_target_temperature(self, device: dict):
         """Get heating target temperature.
 
         Args:
@@ -138,21 +137,22 @@ class HiveHeating:
                     state = float(state)
                 except (ValueError, TypeError):
                     _LOGGER.warning(
-                        "getTargetTemperature - Non-numeric target temperature value '%s' for %s.",
+                        "get_target_temperature - Non-numeric target temperature"
+                        " value '%s' for %s.",
                         state,
                         device_name,
                     )
                     return None
         except (KeyError, TypeError) as e:
             _LOGGER.error(
-                "getTargetTemperature - Error getting target temperature for %s: %s",
+                "get_target_temperature - Error getting target temperature for %s: %s",
                 device_name,
                 str(e),
             )
 
         return state
 
-    async def getMode(self, device: dict):
+    async def get_mode(self, device: dict):
         """Get heating current mode.
 
         Args:
@@ -169,13 +169,13 @@ class HiveHeating:
             state = data["state"]["mode"]
             if state == "BOOST":
                 state = data["props"]["previous"]["mode"]
-            final = HIVETOHA[self.heatingType].get(state, state)
+            final = HIVETOHA[self.heating_type].get(state, state)
         except KeyError as e:
             _LOGGER.error(e)
 
         return final
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get heating current state.
 
         Args:
@@ -188,20 +188,20 @@ class HiveHeating:
         final = None
 
         try:
-            current_temp = await self.getCurrentTemperature(device)
-            target_temp = await self.getTargetTemperature(device)
+            current_temp = await self.get_current_temperature(device)
+            target_temp = await self.get_target_temperature(device)
             if current_temp is not None and target_temp is not None:
                 if current_temp < target_temp:
                     state = "ON"
                 else:
                     state = "OFF"
-                final = HIVETOHA[self.heatingType].get(state, state)
+                final = HIVETOHA[self.heating_type].get(state, state)
         except (KeyError, TypeError) as e:
             _LOGGER.error(e)
 
         return final
 
-    async def getCurrentOperation(self, device: dict):
+    async def get_current_operation(self, device: dict):
         """Get heating current operation.
 
         Args:
@@ -220,7 +220,7 @@ class HiveHeating:
 
         return state
 
-    async def getBoostStatus(self, device: dict):
+    async def get_boost_status(self, device: dict):
         """Get heating boost current status.
 
         Args:
@@ -239,7 +239,7 @@ class HiveHeating:
 
         return state
 
-    async def getBoostTime(self, device: dict):
+    async def get_boost_time(self, device: dict):
         """Get heating boost time remaining.
 
         Args:
@@ -248,7 +248,7 @@ class HiveHeating:
         Returns:
             str: Boost time.
         """
-        if await self.getBoostStatus(device) == "ON":
+        if await self.get_boost_status(device) == "ON":
             state = None
 
             try:
@@ -260,7 +260,7 @@ class HiveHeating:
             return state
         return None
 
-    async def getHeatOnDemand(self, device):
+    async def get_heat_on_demand(self, device):
         """Get heat on demand status.
 
         Args:
@@ -280,7 +280,7 @@ class HiveHeating:
         return state
 
     @staticmethod
-    async def getOperationModes():
+    async def get_operation_modes():
         """Get heating list of possible modes.
 
         Returns:
@@ -288,7 +288,7 @@ class HiveHeating:
         """
         return ["SCHEDULE", "MANUAL", "OFF"]
 
-    async def setTargetTemperature(self, device: dict, new_temp: str):
+    async def set_target_temperature(self, device: dict, new_temp: str):
         """Set heating target temperature.
 
         Args:
@@ -300,12 +300,12 @@ class HiveHeating:
         """
         device_name = device.ha_name
         _LOGGER.info(
-            "setTargetTemperature - Setting target temperature to %s°C for %s",
+            "set_target_temperature - Setting target temperature to %s°C for %s",
             new_temp,
             device_name,
         )
 
-        await self.session.hiveRefreshTokens()
+        await self.session.hive_refresh_tokens()
         final = False
 
         if (
@@ -313,36 +313,37 @@ class HiveHeating:
             and device.device_data["online"]
         ):
             _LOGGER.debug(
-                "setTargetTemperature - Device %s is online, proceeding with temperature change",
+                "set_target_temperature - Device %s is online, proceeding with temperature change",
                 device_name,
             )
             data = self.session.data.products[device.hive_id]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device.hive_id, target=new_temp
             )
 
             if resp["original"] == 200:
                 _LOGGER.debug(
-                    "setTargetTemperature - Temperature set successfully for %s, refreshing device data",
+                    "set_target_temperature - Temperature set successfully"
+                    " for %s, refreshing device data",
                     device_name,
                 )
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
                 final = True
             else:
                 _LOGGER.error(
-                    "setTargetTemperature - Failed to set temperature for %s, response: %s",
+                    "set_target_temperature - Failed to set temperature for %s, response: %s",
                     device_name,
                     resp["original"],
                 )
         else:
             _LOGGER.warning(
-                "setTargetTemperature - Device %s not found or offline, cannot set temperature",
+                "set_target_temperature - Device %s not found or offline, cannot set temperature",
                 device_name,
             )
 
         return final
 
-    async def setMode(self, device: dict, new_mode: str):
+    async def set_mode(self, device: dict, new_mode: str):
         """Set heating mode.
 
         Args:
@@ -354,10 +355,10 @@ class HiveHeating:
         """
         device_name = device.ha_name
         _LOGGER.info(
-            "setMode - Setting heating mode to %s for %s", new_mode, device_name
+            "set_mode - Setting heating mode to %s for %s", new_mode, device_name
         )
 
-        await self.session.hiveRefreshTokens()
+        await self.session.hive_refresh_tokens()
         final = False
 
         if (
@@ -365,35 +366,36 @@ class HiveHeating:
             and device.device_data["online"]
         ):
             _LOGGER.debug(
-                "setMode - Device %s is online, proceeding with mode change",
+                "set_mode - Device %s is online, proceeding with mode change",
                 device_name,
             )
             data = self.session.data.products[device.hive_id]
-            resp = await self.session.api.setState(
+            resp = await self.session.api.set_state(
                 data["type"], device.hive_id, mode=new_mode
             )
 
             if resp["original"] == 200:
                 _LOGGER.debug(
-                    "setMode - Mode set successfully for %s, refreshing device data",
+                    "set_mode - Mode set successfully for %s, refreshing device data",
                     device_name,
                 )
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
                 final = True
             else:
                 _LOGGER.error(
-                    "setMode - Failed to set mode for %s, response: %s",
+                    "set_mode - Failed to set mode for %s, response: %s",
                     device_name,
                     resp["original"],
                 )
         else:
             _LOGGER.warning(
-                "setMode - Device %s not found or offline, cannot set mode", device_name
+                "set_mode - Device %s not found or offline, cannot set mode",
+                device_name,
             )
 
         return final
 
-    async def setBoostOn(self, device: dict, mins: str, temp: float):
+    async def set_boost_on(self, device: dict, mins: str, temp: float):
         """Turn heating boost on.
 
         Args:
@@ -404,9 +406,9 @@ class HiveHeating:
         Returns:
             boolean: True/False if successful
         """
-        if int(mins) > 0 and int(temp) >= await self.getMinTemperature(device):
-            if int(temp) <= await self.getMaxTemperature(device):
-                await self.session.hiveRefreshTokens()
+        if int(mins) > 0 and int(temp) >= await self.get_min_temperature(device):
+            if int(temp) <= await self.get_max_temperature(device):
+                await self.session.hive_refresh_tokens()
                 final = False
 
                 if (
@@ -414,13 +416,13 @@ class HiveHeating:
                     and device.device_data["online"]
                 ):
                     _LOGGER.debug(
-                        "setBoostOn - Setting heating boost ON for %s: %s mins at %s degrees.",
+                        "set_boost_on - Setting heating boost ON for %s: %s mins at %s degrees.",
                         device.ha_name,
                         mins,
                         temp,
                     )
                     data = self.session.data.products[device.hive_id]
-                    resp = await self.session.api.setState(
+                    resp = await self.session.api.set_state(
                         data["type"],
                         device.hive_id,
                         mode="BOOST",
@@ -429,13 +431,13 @@ class HiveHeating:
                     )
 
                     if resp["original"] == 200:
-                        await self.session.getDevices(device.hive_id)
+                        await self.session.get_devices(device.hive_id)
                         final = True
 
                 return final
         return None
 
-    async def setBoostOff(self, device: dict):
+    async def set_boost_off(self, device: dict):
         """Turn heating boost off.
 
         Args:
@@ -451,32 +453,32 @@ class HiveHeating:
             and device.device_data["online"]
         ):
             _LOGGER.debug(
-                "setBoostOff - Setting heating boost OFF for %s.", device.ha_name
+                "set_boost_off - Setting heating boost OFF for %s.", device.ha_name
             )
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.products[device.hive_id]
-            await self.session.getDevices(device.hive_id)
-            if await self.getBoostStatus(device) == "ON":
+            await self.session.get_devices(device.hive_id)
+            if await self.get_boost_status(device) == "ON":
                 prev_mode = data["props"]["previous"]["mode"]
                 if prev_mode in ("MANUAL", "OFF"):
                     pre_temp = data["props"]["previous"].get("target", 7)
-                    resp = await self.session.api.setState(
+                    resp = await self.session.api.set_state(
                         data["type"],
                         device.hive_id,
                         mode=prev_mode,
                         target=pre_temp,
                     )
                 else:
-                    resp = await self.session.api.setState(
+                    resp = await self.session.api.set_state(
                         data["type"], device.hive_id, mode=prev_mode
                     )
                 if resp["original"] == 200:
-                    await self.session.getDevices(device.hive_id)
+                    await self.session.get_devices(device.hive_id)
                     final = True
 
         return final
 
-    async def setHeatOnDemand(self, device: dict, state: str):
+    async def set_heat_on_demand(self, device: dict, state: str):
         """Enable or disable Heat on Demand for a Thermostat.
 
         Args:
@@ -493,18 +495,18 @@ class HiveHeating:
             and device.device_data["online"]
         ):
             _LOGGER.debug(
-                "setHeatOnDemand - Setting heat on demand to %s for %s.",
+                "set_heat_on_demand - Setting heat on demand to %s for %s.",
                 state,
                 device.ha_name,
             )
             data = self.session.data.products[device.hive_id]
-            await self.session.hiveRefreshTokens()
-            resp = await self.session.api.setState(
+            await self.session.hive_refresh_tokens()
+            resp = await self.session.api.set_state(
                 data["type"], device.hive_id, autoBoost=state
             )
 
             if resp["original"] == 200:
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
                 final = True
 
         return final
@@ -525,7 +527,7 @@ class Climate(HiveHeating):
         """
         self.session = session
 
-    async def getClimate(self, device: dict):
+    async def get_climate(self, device: dict):
         """Get heating data.
 
         Args:
@@ -538,18 +540,18 @@ class Climate(HiveHeating):
             cached = self.session.get_cached_device(device)
             if cached is not None:
                 _LOGGER.debug(
-                    "getClimate - Returning cached state for climate %s (slow/busy poll).",
+                    "get_climate - Returning cached state for climate %s (slow/busy poll).",
                     device.ha_name,
                 )
                 return cached
         device.device_data.update(
-            {"online": await self.session.attr.onlineOffline(device.device_id)}
+            {"online": await self.session.attr.online_offline(device.device_id)}
         )
 
         if device.device_data["online"]:
             dev_data = {}
-            self.session.helper.deviceRecovered(device.device_id)
-            _LOGGER.debug("getClimate - Updating climate data for %s.", device.ha_name)
+            self.session.helper.device_recovered(device.device_id)
+            _LOGGER.debug("get_climate - Updating climate data for %s.", device.ha_name)
             data = self.session.data.devices[device.device_id]
             dev_data = {
                 "hiveID": device.hive_id,
@@ -560,19 +562,19 @@ class Climate(HiveHeating):
                 "device_id": device.device_id,
                 "device_name": device.device_name,
                 "temperatureunit": device["temperatureunit"],
-                "min_temp": await self.getMinTemperature(device),
-                "max_temp": await self.getMaxTemperature(device),
+                "min_temp": await self.get_min_temperature(device),
+                "max_temp": await self.get_max_temperature(device),
                 "status": {
-                    "current_temperature": await self.getCurrentTemperature(device),
-                    "target_temperature": await self.getTargetTemperature(device),
-                    "action": await self.getCurrentOperation(device),
-                    "mode": await self.getMode(device),
-                    "boost": await self.getBoostStatus(device),
+                    "current_temperature": await self.get_current_temperature(device),
+                    "target_temperature": await self.get_target_temperature(device),
+                    "action": await self.get_current_operation(device),
+                    "mode": await self.get_mode(device),
+                    "boost": await self.get_boost_status(device),
                 },
                 "deviceData": data.get("props", None),
                 "parentDevice": data.get("parent", None),
                 "custom": getattr(device, "custom", None),
-                "attributes": await self.session.attr.stateAttributes(
+                "attributes": await self.session.attr.state_attributes(
                     device.device_id, device.hive_type
                 ),
             }
@@ -582,7 +584,7 @@ class Climate(HiveHeating):
                 dev_data["status"],
             )
             return self.session.set_cached_device(device, dev_data)
-        await self.session.helper.errorCheck(
+        await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )
         device.status = device.status or {
@@ -595,7 +597,7 @@ class Climate(HiveHeating):
         }
         return device
 
-    async def getScheduleNowNextLater(self, device: dict):
+    async def get_schedule_now_next_later(self, device: dict):
         """Hive get heating schedule now, next and later.
 
         Args:
@@ -604,20 +606,20 @@ class Climate(HiveHeating):
         Returns:
             dict: Schedule now, next and later
         """
-        online = await self.session.attr.onlineOffline(device.device_id)
-        current_mode = await self.getMode(device)
+        online = await self.session.attr.online_offline(device.device_id)
+        current_mode = await self.get_mode(device)
         state = None
 
         try:
             if online and current_mode == "SCHEDULE":
                 data = self.session.data.products[device.hive_id]
-                state = self.session.helper.getScheduleNNL(data["state"]["schedule"])
+                state = self.session.helper.get_schedule_nnl(data["state"]["schedule"])
         except KeyError as e:
             _LOGGER.error(e)
 
         return state
 
-    async def minmaxTemperature(self, device: dict):
+    async def minmax_temperature(self, device: dict):
         """Min/Max Temp.
 
         Args:

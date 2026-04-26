@@ -57,23 +57,27 @@ HIVE_TYPES = {
     "Switch": ["activeplug"],
 }
 sensor_commands = {
-    "SMOKE_CO": "self.session.hub.getSmokeStatus(device)",
-    "DOG_BARK": "self.session.hub.getDogBarkStatus(device)",
-    "GLASS_BREAK": "self.session.hub.getGlassBreakStatus(device)",
-    "Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
-    "Heating_Current_Temperature": "self.session.heating.getCurrentTemperature(device)",
-    "Heating_Target_Temperature": "self.session.heating.getTargetTemperature(device)",
-    "Heating_State": "self.session.heating.getState(device)",
-    "Heating_Mode": "self.session.heating.getMode(device)",
-    "Heating_Boost": "self.session.heating.getBoostStatus(device)",
-    "Hotwater_State": "self.session.hotwater.getState(device)",
-    "Hotwater_Mode": "self.session.hotwater.getMode(device)",
-    "Hotwater_Boost": "self.session.hotwater.getBoost(device)",
-    "Battery": "self.session.attr.getBattery(device.device_id)",
-    "Mode": "self.session.attr.getMode(device.hive_id)",
-    "Availability": "self.online(device)",
-    "Connectivity": "self.online(device)",
-    "Power": "self.session.switch.getPowerUsage(device)",
+    "SMOKE_CO": lambda s, d: s.session.hub.get_smoke_status(d),
+    "DOG_BARK": lambda s, d: s.session.hub.get_dog_bark_status(d),
+    "GLASS_BREAK": lambda s, d: s.session.hub.get_glass_break_status(d),
+    "Current_Temperature": lambda s, d: s.session.heating.get_current_temperature(d),
+    "Heating_Current_Temperature": lambda s, d: s.session.heating.get_current_temperature(
+        d
+    ),
+    "Heating_Target_Temperature": lambda s, d: s.session.heating.get_target_temperature(
+        d
+    ),
+    "Heating_State": lambda s, d: s.session.heating.get_state(d),
+    "Heating_Mode": lambda s, d: s.session.heating.get_mode(d),
+    "Heating_Boost": lambda s, d: s.session.heating.get_boost_status(d),
+    "Hotwater_State": lambda s, d: s.session.hotwater.get_state(d),
+    "Hotwater_Mode": lambda s, d: s.session.hotwater.get_mode(d),
+    "Hotwater_Boost": lambda s, d: s.session.hotwater.get_boost(d),
+    "Battery": lambda s, d: s.session.attr.get_battery(d.device_id),
+    "Mode": lambda s, d: s.session.attr.get_mode(d.hive_id),
+    "Availability": lambda s, d: s.online(d),
+    "Connectivity": lambda s, d: s.online(d),
+    "Power": lambda s, d: s.session.switch.get_power_usage(d),
 }
 
 PRODUCTS = {

@@ -1,7 +1,5 @@
 """Hive Hub Module."""
 
-# pylint: disable=C0103
-
 import logging
 
 from .helper.const import HIVETOHA
@@ -16,8 +14,8 @@ class HiveHub:
         object: Returns a hub object.
     """
 
-    hubType = "Hub"
-    logType = "Sensor"
+    hub_type = "Hub"
+    log_type = "Sensor"
 
     def __init__(self, session: object = None):
         """Initialise hub.
@@ -27,7 +25,7 @@ class HiveHub:
         """
         self.session = session
 
-    async def getSmokeStatus(self, device: dict):
+    async def get_smoke_status(self, device: dict):
         """Get the hub smoke status.
 
         Args:
@@ -42,13 +40,13 @@ class HiveHub:
         try:
             data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["SMOKE_CO"]["active"]
-            final = HIVETOHA[self.hubType]["Smoke"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Smoke"].get(state, state)
         except KeyError as e:
             _LOGGER.error(e)
 
         return final
 
-    async def getDogBarkStatus(self, device: dict):
+    async def get_dog_bark_status(self, device: dict):
         """Get dog bark status.
 
         Args:
@@ -63,13 +61,13 @@ class HiveHub:
         try:
             data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["DOG_BARK"]["active"]
-            final = HIVETOHA[self.hubType]["Dog"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Dog"].get(state, state)
         except KeyError as e:
             _LOGGER.error(e)
 
         return final
 
-    async def getGlassBreakStatus(self, device: dict):
+    async def get_glass_break_status(self, device: dict):
         """Get the glass detected status from the Hive hub.
 
         Args:
@@ -84,7 +82,7 @@ class HiveHub:
         try:
             data = self.session.data.products[device.hive_id]
             state = data["props"]["sensors"]["GLASS_BREAK"]["active"]
-            final = HIVETOHA[self.hubType]["Glass"].get(state, state)
+            final = HIVETOHA[self.hub_type]["Glass"].get(state, state)
         except KeyError as e:
             _LOGGER.error(e)
 

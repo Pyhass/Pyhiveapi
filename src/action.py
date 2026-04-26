@@ -1,7 +1,6 @@
 """Hive Action Module."""
 
-# pylint: disable=C0103,E1101,C0415
-
+import json
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ class HiveAction:
         object: Return hive action object.
     """
 
-    actionType = "Actions"
+    action_type = "Actions"
 
     def __init__(self, session: object = None):
         """Initialise Action.
@@ -24,7 +23,7 @@ class HiveAction:
         """
         self.session = session
 
-    async def getAction(self, device: dict):
+    async def get_action(self, device: dict):
         """Action device to update.
 
         Args:
@@ -43,14 +42,14 @@ class HiveAction:
                 return cached
         dev_data = {}
 
-        if device.hive_id in self.data["action"]:
+        if device.hive_id in self.session.data.actions:
             dev_data = {
                 "hiveID": device.hive_id,
                 "hiveName": device.hive_name,
                 "hiveType": device.hive_type,
                 "haName": device.ha_name,
                 "haType": device.ha_type,
-                "status": {"state": await self.getState(device)},
+                "status": {"state": await self.get_state(device)},
                 "power_usage": None,
                 "deviceData": {},
                 "custom": getattr(device, "custom", None),
@@ -62,7 +61,7 @@ class HiveAction:
             return "REMOVE"
         return device
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get action state.
 
         Args:
@@ -81,7 +80,7 @@ class HiveAction:
 
         return final
 
-    async def setStatusOn(self, device: dict):
+    async def set_status_on(self, device: dict):
         """Set action turn on.
 
         Args:
@@ -90,24 +89,22 @@ class HiveAction:
         Returns:
             boolean: True/False if successful.
         """
-        import json
-
         final = False
 
         if device.hive_id in self.session.data.actions:
             _LOGGER.debug("Enabling action %s.", device.ha_name)
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.actions[device.hive_id]
             data.update({"enabled": True})
             send = json.dumps(data)
-            resp = await self.session.api.setAction(device.hive_id, send)
+            resp = await self.session.api.set_action(device.hive_id, send)
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
 
         return final
 
-    async def setStatusOff(self, device: dict):
+    async def set_status_off(self, device: dict):
         """Set action to turn off.
 
         Args:
@@ -116,19 +113,17 @@ class HiveAction:
         Returns:
             boolean: True/False if successful.
         """
-        import json
-
         final = False
 
         if device.hive_id in self.session.data.actions:
             _LOGGER.debug("Disabling action %s.", device.ha_name)
-            await self.session.hiveRefreshTokens()
+            await self.session.hive_refresh_tokens()
             data = self.session.data.actions[device.hive_id]
             data.update({"enabled": False})
             send = json.dumps(data)
-            resp = await self.session.api.setAction(device.hive_id, send)
+            resp = await self.session.api.set_action(device.hive_id, send)
             if resp["original"] == 200:
                 final = True
-                await self.session.getDevices(device.hive_id)
+                await self.session.get_devices(device.hive_id)
 
         return final

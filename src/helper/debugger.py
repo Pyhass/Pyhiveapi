@@ -1,7 +1,7 @@
 """Debugger file."""
 
-# pylint: skip-file
 import logging
+import sys
 
 
 class DebugContext:
@@ -12,30 +12,31 @@ class DebugContext:
         self.name = name
         self.enabled = enabled
         self.logging = logging.getLogger(__name__)
-        self.debugOutFolder = ""
-        self.debugOutFile = ""
-        self.debugEnabled = False
-        self.debugList = []
+        self.debug_out_folder = ""
+        self.debug_out_file = ""
+        self.debug_enabled = False
+        self.debug_list = []
 
     def __enter__(self):
         """Set trace calls on entering debugger."""
         print("Entering Debug Decorated func")
-        # Set the trace function to the trace_calls function
-        # So all events are now traced
-        self.traceCalls
+        sys.settrace(self.trace_calls)
+        return self
 
-    def traceCalls(self, frame, event, arg):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Remove trace on exiting debugger."""
+        sys.settrace(None)
+        return False
+
+    def trace_calls(self, frame, event, _arg):
         """Trace calls be made."""
-        # We want to only trace our call to the decorated function
         if event != "call":
-            return
-        elif frame.f_code.co_name != self.name:
-            return
-        # return the trace function to use when you go into that
-        # function call
-        return self.traceLines
+            return None
+        if frame.f_code.co_name != self.name:
+            return None
+        return self.trace_lines
 
-    def traceLines(self, frame, event, arg):
+    def trace_lines(self, frame, event, _arg):
         """Print out lines for function."""
         # If you want to print local variables each line
         # keep the check for the event 'line'

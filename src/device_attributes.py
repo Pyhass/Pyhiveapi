@@ -1,6 +1,5 @@
 """Hive Device Attribute Module."""
 
-# pylint: skip-file
 import logging
 
 from .helper.const import HIVETOHA
@@ -20,7 +19,7 @@ class HiveAttributes:
         self.session = session
         self.type = "Attribute"
 
-    async def stateAttributes(self, n_id: str, _type: str):
+    async def state_attributes(self, n_id: str, _type: str):
         """Get HA State Attributes.
 
         Args:
@@ -33,16 +32,16 @@ class HiveAttributes:
         attr = {}
 
         if n_id in self.session.data.products or n_id in self.session.data.devices:
-            attr.update({"available": (await self.onlineOffline(n_id))})
+            attr.update({"available": (await self.online_offline(n_id))})
             if n_id in self.session.config.battery:
-                battery = await self.getBattery(n_id)
+                battery = await self.get_battery(n_id)
                 if battery is not None:
                     attr.update({"battery": str(battery) + "%"})
             if n_id in self.session.config.mode:
-                attr.update({"mode": (await self.getMode(n_id))})
+                attr.update({"mode": (await self.get_mode(n_id))})
         return attr
 
-    async def onlineOffline(self, n_id: str):
+    async def online_offline(self, n_id: str):
         """Check if device is online.
 
         Args:
@@ -61,7 +60,7 @@ class HiveAttributes:
 
         return state
 
-    async def getMode(self, n_id: str):
+    async def get_mode(self, n_id: str):
         """Get sensor mode.
 
         Args:
@@ -82,7 +81,7 @@ class HiveAttributes:
 
         return final
 
-    async def getBattery(self, n_id: str):
+    async def get_battery(self, n_id: str):
         """Get device battery level.
 
         Args:
@@ -98,7 +97,7 @@ class HiveAttributes:
             data = self.session.data.devices[n_id]
             state = data["props"]["battery"]
             final = state
-            await self.session.helper.errorCheck(n_id, self.type, state)
+            await self.session.helper.error_check(n_id, self.type, state)
         except KeyError as e:
             _LOGGER.error(e)
 

@@ -1,8 +1,7 @@
 """Hive Sensor Module."""
 
-# pylint: disable=C0103,E1101,W0123
-
 import logging
+from typing import Any
 
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
 
@@ -12,9 +11,10 @@ _LOGGER = logging.getLogger(__name__)
 class HiveSensor:
     """Hive Sensor Code."""
 
-    sensorType = "Sensor"
+    session: Any
+    sensor_type = "Sensor"
 
-    async def getState(self, device: dict):
+    async def get_state(self, device: dict):
         """Get sensor state.
 
         Args:
@@ -30,7 +30,7 @@ class HiveSensor:
             data = self.session.data.products[device.hive_id]
             if data["type"] == "contactsensor":
                 state = data["props"]["status"]
-                final = HIVETOHA[self.sensorType].get(state, state)
+                final = HIVETOHA[self.sensor_type].get(state, state)
             elif data["type"] == "motionsensor":
                 final = data["props"]["motion"]["status"]
         except KeyError as e:
@@ -53,7 +53,7 @@ class HiveSensor:
         try:
             data = self.session.data.devices[device.device_id]
             state = data["props"]["online"]
-            final = HIVETOHA[self.sensorType].get(state, state)
+            final = HIVETOHA[self.sensor_type].get(state, state)
         except KeyError as e:
             _LOGGER.error(e)
 
@@ -75,7 +75,7 @@ class Sensor(HiveSensor):
         """
         self.session = session
 
-    async def getSensor(self, device: dict):
+    async def get_sensor(self, device: dict):
         """Gets updated sensor data.
 
         Args:
@@ -93,7 +93,7 @@ class Sensor(HiveSensor):
                 )
                 return cached
         device.device_data.update(
-            {"online": await self.session.attr.onlineOffline(device.device_id)}
+            {"online": await self.session.attr.online_offline(device.device_id)}
         )
         data = {}
 
@@ -102,10 +102,10 @@ class Sensor(HiveSensor):
             "Connectivity",
         ):
             if device.hive_type not in ("Availability", "Connectivity"):
-                self.session.helper.deviceRecovered(device.device_id)
+                self.session.helper.device_recovered(device.device_id)
 
             _LOGGER.debug(
-                "getSensor - Updating sensor data for %s (%s).",
+                "get_sensor - Updating sensor data for %s (%s).",
                 device.ha_name,
                 device.hive_type,
             )
@@ -137,7 +137,7 @@ class Sensor(HiveSensor):
                 )
                 dev_data.update(
                     {
-                        "status": {"state": await eval(code)},
+                        "status": {"state": await code(self, device)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
                     }
@@ -146,23 +146,23 @@ class Sensor(HiveSensor):
                 data = self.session.data.devices.get(device.hive_id, {})
                 dev_data.update(
                     {
-                        "status": {"state": await self.getState(device)},
+                        "status": {"state": await self.get_state(device)},
                         "deviceData": data.get("props", None),
                         "parentDevice": data.get("parent", None),
-                        "attributes": await self.session.attr.stateAttributes(
+                        "attributes": await self.session.attr.state_attributes(
                             device.device_id, device.hive_type
                         ),
                     }
                 )
 
             _LOGGER.debug(
-                "getSensor - Sensor device data for %s: %s",
+                "get_sensor - Sensor device data for %s: %s",
                 device.ha_name,
                 dev_data["status"],
             )
 
             return self.session.set_cached_device(device, dev_data)
-        await self.session.helper.errorCheck(
+        await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )
         device.status = device.status or {"state": None}

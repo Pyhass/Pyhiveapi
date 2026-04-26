@@ -1,7 +1,5 @@
 """Hive API Module."""
 
-# pylint: disable=C0103,E1126,W0707,W1203
-
 import asyncio
 import json
 import logging
@@ -24,19 +22,19 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApiAsync:
     """Hive API Code."""
 
-    def __init__(self, hiveSession=None, websession: Optional[ClientSession] = None):
+    def __init__(self, hive_session=None, websession: Optional[ClientSession] = None):
         """Hive API initialisation."""
-        self.baseUrl = "https://beekeeper.hivehome.com/1.0"
+        self.base_url = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
             "properties": "https://sso.hivehome.com/",
-            "login": f"{self.baseUrl}/cognito/login",
-            "refresh": f"{self.baseUrl}/cognito/refresh-token",
-            "holiday_mode": f"{self.baseUrl}/holiday-mode",
-            "all": f"{self.baseUrl}/nodes/all?products=true&devices=true&actions=true",
-            "devices": f"{self.baseUrl}/devices",
-            "products": f"{self.baseUrl}/products",
-            "actions": f"{self.baseUrl}/actions",
-            "nodes": f"{self.baseUrl}/nodes/{{0}}/{{1}}",
+            "login": f"{self.base_url}/cognito/login",
+            "refresh": f"{self.base_url}/cognito/refresh-token",
+            "holiday_mode": f"{self.base_url}/holiday-mode",
+            "all": f"{self.base_url}/nodes/all?products=true&devices=true&actions=true",
+            "devices": f"{self.base_url}/devices",
+            "products": f"{self.base_url}/products",
+            "actions": f"{self.base_url}/actions",
+            "nodes": f"{self.base_url}/nodes/{{0}}/{{1}}",
             "long_lived": "https://api.prod.bgchprod.info/omnia/accessTokens",
             "weather": "https://weather.prod.bgchprod.info/weather",
         }
@@ -45,7 +43,7 @@ class HiveApiAsync:
             "original": "No response to Hive API request",
             "parsed": "No response to Hive API request",
         }
-        self.session = hiveSession
+        self.session = hive_session
         self.websession = ClientSession() if websession is None else websession
 
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
@@ -60,11 +58,11 @@ class HiveApiAsync:
         }
         try:
             headers["Authorization"] = self.session.tokens.token_data["token"]
-        except KeyError:
+        except KeyError as exc:
             if "sso" in url:
                 pass
             else:
-                raise NoApiToken
+                raise NoApiToken from exc
 
         auth_token = headers.get("Authorization", "")
         _LOGGER.debug(
@@ -92,21 +90,25 @@ class HiveApiAsync:
 
         if resp.status in (HTTP_UNAUTHORIZED, HTTP_FORBIDDEN):
             _LOGGER.error(
-                f"Hive token rejected calling {url} - "
-                f"HTTP {resp.status} — response: {resp_body[:200]}"
+                "Hive token rejected calling %s - HTTP %s — response: %s",
+                url,
+                resp.status,
+                resp_body[:200],
             )
             raise HiveAuthError(
                 f"Token expired or forbidden calling {url} — HTTP {resp.status}"
             )
         if url is not None and resp.status is not None:
             _LOGGER.error(
-                f"Something has gone wrong calling {url} - "
-                f"HTTP status is - {resp.status} — response: {resp_body[:200]}"
+                "Something has gone wrong calling %s - HTTP status is - %s — response: %s",
+                url,
+                resp.status,
+                resp_body[:200],
             )
 
         raise HiveApiError
 
-    def getLoginInfo(self):
+    def get_login_info(self):
         """Get login properties to make the login request."""
         url = "https://sso.hivehome.com/"
 
@@ -121,13 +123,13 @@ class HiveApiAsync:
             + "}"
         )
 
-        loginData = {}
-        loginData.update({"UPID": json_data["HiveSSOPoolId"]})
-        loginData.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-        loginData.update({"REGION": json_data["HiveSSOPoolId"]})
-        return loginData
+        login_data = {}
+        login_data.update({"UPID": json_data["HiveSSOPoolId"]})
+        login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
+        login_data.update({"REGION": json_data["HiveSSOPoolId"]})
+        return login_data
 
-    async def refreshTokens(self):
+    async def refresh_tokens(self):
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
         if self.session is not None:
@@ -145,15 +147,16 @@ class HiveApiAsync:
             if self.json_return["original"] == 200:
                 info = self.json_return["parsed"]
                 if "token" in info:
-                    await self.session.updateTokens(info)
-                    self.baseUrl = info["platform"]["endpoint"]
+                    await self.session.update_tokens(info)
+                    # pylint: disable-next=invalid-sequence-index
+                    self.base_url = info["platform"]["endpoint"]
                 return True
         except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
             await self.error()
 
         return self.json_return
 
-    async def getAll(self):
+    async def get_all(self):
         """Build and query all endpoint."""
         json_return = {}
         url = self.urls["all"]
@@ -169,7 +172,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getDevices(self):
+    async def get_devices(self):
         """Call the get devices endpoint."""
         json_return = {}
         url = self.urls["devices"]
@@ -182,7 +185,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getProducts(self):
+    async def get_products(self):
         """Call the get products endpoint."""
         json_return = {}
         url = self.urls["products"]
@@ -195,7 +198,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getActions(self):
+    async def get_actions(self):
         """Call the get actions endpoint."""
         json_return = {}
         url = self.urls["actions"]
@@ -208,7 +211,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def motionSensor(self, sensor, fromepoch, toepoch):
+    async def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
         json_return = {}
         url = (
@@ -232,7 +235,7 @@ class HiveApiAsync:
 
         return json_return
 
-    async def getWeather(self, weather_url):
+    async def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         json_return = {}
         t_url = self.urls["weather"] + weather_url
@@ -246,9 +249,9 @@ class HiveApiAsync:
 
         return json_return
 
-    async def setState(self, n_type, n_id, **kwargs):
+    async def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
-        _LOGGER.debug("setState - Setting state for %s/%s: %s", n_type, n_id, kwargs)
+        _LOGGER.debug("set_state - Setting state for %s/%s: %s", n_type, n_id, kwargs)
         json_return = {}
         jsc = (
             "{"
@@ -260,7 +263,7 @@ class HiveApiAsync:
 
         url = self.urls["nodes"].format(n_type, n_id)
         try:
-            await self.isFileBeingUsed()
+            await self.is_file_being_used()
             resp = await self.request("post", url, data=jsc)
             json_return["original"] = resp.status
             json_return["parsed"] = await resp.json(content_type=None)
@@ -271,13 +274,13 @@ class HiveApiAsync:
 
         return json_return
 
-    async def setAction(self, n_id, data):
+    async def set_action(self, n_id, data):
         """Set the state of a Action."""
         _LOGGER.debug("Setting action %s", n_id)
         jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
-            await self.isFileBeingUsed()
+            await self.is_file_being_used()
             await self.request("put", url, data=jsc)
         except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
             if e.__class__.__name__ == "FileInUse":
@@ -291,7 +294,7 @@ class HiveApiAsync:
         _LOGGER.error("HTTP error occurred during Hive API interaction.")
         raise web_exceptions.HTTPError
 
-    async def isFileBeingUsed(self):
+    async def is_file_being_used(self):
         """Check if running in file mode."""
         if self.session.config.file:
             raise FileInUse()

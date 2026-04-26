@@ -106,7 +106,7 @@ class HiveAuthAsync:
 
     async def async_init(self):
         """Initialise async variables."""
-        self.data = await self.loop.run_in_executor(None, self.api.getLoginInfo)
+        self.data = await self.loop.run_in_executor(None, self.api.get_login_info)
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
