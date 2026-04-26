@@ -941,6 +941,19 @@ class HiveSession:
 
         return self.device_list
 
+    @property
+    def deviceList(self):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for device_list."""
+        return self.device_list
+
+    async def startSession(self, config: dict = None):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for start_session."""
+        return await self.start_session(config)
+
+    async def updateData(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for update_data."""
+        return await self.update_data(device)
+
     @staticmethod
     def epoch_time(date_time: any, pattern: str, action: str):
         """date/time conversion to epoch.

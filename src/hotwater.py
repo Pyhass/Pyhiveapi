@@ -310,3 +310,21 @@ class WaterHeater(HiveHotwater):
             _LOGGER.error(e)
 
         return state
+
+    async def setMode(
+        self, device: dict, new_mode: str
+    ):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_mode."""
+        return await self.set_mode(device, new_mode)
+
+    async def setBoostOn(self, device: dict, mins: int):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_boost_on."""
+        return await self.set_boost_on(device, mins)
+
+    async def setBoostOff(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_boost_off."""
+        return await self.set_boost_off(device)
+
+    async def getWaterHeater(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_water_heater."""
+        return await self.get_water_heater(device)

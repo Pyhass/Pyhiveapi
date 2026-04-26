@@ -638,3 +638,29 @@ class Climate(HiveHeating):
             _LOGGER.error(e)
 
         return final
+
+    async def setMode(
+        self, device: dict, new_mode: str
+    ):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_mode."""
+        return await self.set_mode(device, new_mode)
+
+    async def setTargetTemperature(
+        self, device: dict, new_temp: str
+    ):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_target_temperature."""
+        return await self.set_target_temperature(device, new_temp)
+
+    async def setBoostOn(
+        self, device: dict, mins: str, temp: float
+    ):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_boost_on."""
+        return await self.set_boost_on(device, mins, temp)
+
+    async def setBoostOff(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_boost_off."""
+        return await self.set_boost_off(device)
+
+    async def getClimate(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_climate."""
+        return await self.get_climate(device)

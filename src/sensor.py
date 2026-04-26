@@ -167,3 +167,7 @@ class Sensor(HiveSensor):
         )
         device.status = device.status or {"state": None}
         return device
+
+    async def getSensor(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_sensor."""
+        return await self.get_sensor(device)

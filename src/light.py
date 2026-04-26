@@ -520,3 +520,17 @@ class Light(HiveLight):
             boolean: True/False if successful.
         """
         return await self.set_status_off(device)
+
+    async def turnOn(
+        self, device: dict, brightness: int, color_temp: int, color: list
+    ):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for turn_on."""
+        return await self.turn_on(device, brightness, color_temp, color)
+
+    async def turnOff(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for turn_off."""
+        return await self.turn_off(device)
+
+    async def getLight(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_light."""
+        return await self.get_light(device)

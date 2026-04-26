@@ -234,3 +234,15 @@ class Switch(HiveSmartPlug):
         if device.hive_type == "Heating_Heat_On_Demand":
             return await self.session.heating.set_heat_on_demand(device, "DISABLED")
         return await self.set_status_off(device)
+
+    async def turnOn(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for turn_on."""
+        return await self.turn_on(device)
+
+    async def turnOff(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for turn_off."""
+        return await self.turn_off(device)
+
+    async def getSwitch(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_switch."""
+        return await self.get_switch(device)
