@@ -125,10 +125,10 @@ class HiveSession:
         cache_key = self._entity_cache_key(device)
         return self.entity_cache.get(cache_key)
 
-    def set_cached_device(self, device, dev_data: dict):
-        """Store cached state for a specific entity."""
-        self.entity_cache[self._entity_cache_key(device)] = dev_data
-        return dev_data
+    def set_cached_device(self, device):
+        """Store device state in cache and return it."""
+        self.entity_cache[self._entity_cache_key(device)] = device
+        return device
 
     def should_use_cached_data(self):
         """Determine whether callers should use cached entity state.
@@ -203,7 +203,7 @@ class HiveSession:
             )
 
             if data.get("type", "") == "hub":
-                self.device_list["parent_device"].append(device_obj)
+                self.device_list["parent"].append(device_obj)
                 self.device_list[entity_type].append(device_obj)
             else:
                 self.device_list[entity_type].append(device_obj)
@@ -779,7 +779,7 @@ class HiveSession:
         """
         _LOGGER.info("create_devices - Starting device discovery process")
 
-        self.device_list["parent_device"] = []
+        self.device_list["parent"] = []
         self.device_list["binary_sensor"] = []
         self.device_list["climate"] = []
         self.device_list["light"] = []
@@ -930,7 +930,7 @@ class HiveSession:
             " %d light, %d sensor, %d switch, %d water_heater",
             device_count,
             product_count,
-            len(self.device_list.get("parent_device", [])),
+            len(self.device_list.get("parent", [])),
             len(self.device_list.get("binary_sensor", [])),
             len(self.device_list.get("climate", [])),
             len(self.device_list.get("light", [])),
@@ -953,6 +953,12 @@ class HiveSession:
     async def updateData(self, device: dict):  # pylint: disable=invalid-name
         """Backwards-compatible alias for update_data."""
         return await self.update_data(device)
+
+    async def updateInterval(
+        self, new_interval: int
+    ):  # pylint: disable=invalid-name,unused-argument
+        """Backwards-compatible alias for Home Assistant Scan Interval."""
+        return True
 
     @staticmethod
     def epoch_time(date_time: any, pattern: str, action: str):

@@ -92,9 +92,10 @@ class Sensor(HiveSensor):
                     device.ha_name,
                 )
                 return cached
-        device.device_data.update(
-            {"online": await self.session.attr.online_offline(device.device_id)}
-        )
+        online = await self.session.attr.online_offline(device.device_id)
+        if not isinstance(device.device_data, dict):
+            device.device_data = {}
+        device.device_data["online"] = online
         data = {}
 
         if device.device_data["online"] or device.hive_type in (
@@ -109,18 +110,6 @@ class Sensor(HiveSensor):
                 device.ha_name,
                 device.hive_type,
             )
-            dev_data = {}
-            dev_data = {
-                "hiveID": device.hive_id,
-                "hiveName": device.hive_name,
-                "hiveType": device.hive_type,
-                "haName": device.ha_name,
-                "haType": device.ha_type,
-                "device_id": device.device_id,
-                "device_name": device.device_name,
-                "deviceData": {},
-                "custom": getattr(device, "custom", None),
-            }
 
             if device.device_id in self.session.data.devices:
                 data = self.session.data.devices.get(device.device_id, {})
@@ -128,40 +117,36 @@ class Sensor(HiveSensor):
                 data = self.session.data.products.get(device.hive_id, {})
 
             if (
-                dev_data["hiveType"] in sensor_commands
-                or dev_data.get("custom", None) in sensor_commands
+                device.hive_type in sensor_commands
+                or getattr(device, "custom", None) in sensor_commands
             ):
                 code = sensor_commands.get(
-                    dev_data["hiveType"],
-                    sensor_commands.get(dev_data["custom"]),
+                    device.hive_type,
+                    sensor_commands.get(getattr(device, "custom", None)),
                 )
-                dev_data.update(
-                    {
-                        "status": {"state": await code(self, device)},
-                        "deviceData": data.get("props", None),
-                        "parentDevice": data.get("parent", None),
-                    }
-                )
+                device.status = {"state": await code(self, device)}
+                props = data.get("props") or {}
+                props["online"] = online
+                device.device_data = props
+                device.parent_device = data.get("parent", None)
             elif device.hive_type in HIVE_TYPES["Sensor"]:
                 data = self.session.data.devices.get(device.hive_id, {})
-                dev_data.update(
-                    {
-                        "status": {"state": await self.get_state(device)},
-                        "deviceData": data.get("props", None),
-                        "parentDevice": data.get("parent", None),
-                        "attributes": await self.session.attr.state_attributes(
-                            device.device_id, device.hive_type
-                        ),
-                    }
+                device.status = {"state": await self.get_state(device)}
+                props = data.get("props") or {}
+                props["online"] = online
+                device.device_data = props
+                device.parent_device = data.get("parent", None)
+                device.attributes = await self.session.attr.state_attributes(
+                    device.device_id, device.hive_type
                 )
 
             _LOGGER.debug(
                 "get_sensor - Sensor device data for %s: %s",
                 device.ha_name,
-                dev_data["status"],
+                device.status,
             )
 
-            return self.session.set_cached_device(device, dev_data)
+            return self.session.set_cached_device(device)
         await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )

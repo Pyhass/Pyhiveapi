@@ -3,6 +3,19 @@
 from dataclasses import dataclass
 from typing import Literal, Optional
 
+_SENTINEL = object()
+
+_DEVICE_KEY_MAP = {
+    "hiveID": "hive_id",
+    "hiveName": "hive_name",
+    "hiveType": "hive_type",
+    "haName": "ha_name",
+    "haType": "ha_type",
+    "deviceData": "device_data",
+    "parentDevice": "parent_device",
+    "temperatureunit": "temperature_unit",
+}
+
 
 @dataclass
 class Device:
@@ -22,6 +35,37 @@ class Device:
     temperature_unit: Optional[str] = None
     status: Optional[dict] = None
     data: Optional[dict] = None
+    attributes: Optional[dict] = None
+    min_temp: Optional[float] = None
+    max_temp: Optional[float] = None
+
+    def _resolve(self, key: str) -> str:
+        """Translate a legacy camelCase key to the current snake_case attribute name."""
+        return _DEVICE_KEY_MAP.get(key, key)
+
+    def __getitem__(self, key: str):
+        """Support dict-style read access, resolving legacy camelCase keys."""
+        try:
+            return getattr(self, self._resolve(key))
+        except AttributeError:
+            raise KeyError(key) from None
+
+    def __setitem__(self, key: str, value) -> None:
+        """Support dict-style write access, resolving legacy camelCase keys."""
+        setattr(self, self._resolve(key), value)
+
+    def __contains__(self, key: str) -> bool:
+        """Return True if the key resolves to a non-None attribute."""
+        val = getattr(self, self._resolve(key), _SENTINEL)
+        return val is not _SENTINEL and val is not None
+
+    def get(self, key: str, default=None):
+        """Return the value for key, or default if missing or None."""
+        try:
+            val = self[key]
+            return val if val is not None else default
+        except KeyError:
+            return default
 
 
 @dataclass

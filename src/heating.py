@@ -544,46 +544,37 @@ class Climate(HiveHeating):
                     device.ha_name,
                 )
                 return cached
-        device.device_data.update(
-            {"online": await self.session.attr.online_offline(device.device_id)}
-        )
+        online = await self.session.attr.online_offline(device.device_id)
+        if not isinstance(device.device_data, dict):
+            device.device_data = {}
+        device.device_data["online"] = online
 
         if device.device_data["online"]:
-            dev_data = {}
             self.session.helper.device_recovered(device.device_id)
             _LOGGER.debug("get_climate - Updating climate data for %s.", device.ha_name)
             data = self.session.data.devices[device.device_id]
-            dev_data = {
-                "hiveID": device.hive_id,
-                "hiveName": device.hive_name,
-                "hiveType": device.hive_type,
-                "haName": device.ha_name,
-                "haType": device.ha_type,
-                "device_id": device.device_id,
-                "device_name": device.device_name,
-                "temperatureunit": device["temperatureunit"],
-                "min_temp": await self.get_min_temperature(device),
-                "max_temp": await self.get_max_temperature(device),
-                "status": {
-                    "current_temperature": await self.get_current_temperature(device),
-                    "target_temperature": await self.get_target_temperature(device),
-                    "action": await self.get_current_operation(device),
-                    "mode": await self.get_mode(device),
-                    "boost": await self.get_boost_status(device),
-                },
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
-                "custom": getattr(device, "custom", None),
-                "attributes": await self.session.attr.state_attributes(
-                    device.device_id, device.hive_type
-                ),
+            device.min_temp = await self.get_min_temperature(device)
+            device.max_temp = await self.get_max_temperature(device)
+            device.status = {
+                "current_temperature": await self.get_current_temperature(device),
+                "target_temperature": await self.get_target_temperature(device),
+                "action": await self.get_current_operation(device),
+                "mode": await self.get_mode(device),
+                "boost": await self.get_boost_status(device),
             }
-            _LOGGER.debug(
-                "getHeating - Heating device data for %s: %s",
-                device.ha_name,
-                dev_data["status"],
+            props = data.get("props") or {}
+            props["online"] = online
+            device.device_data = props
+            device.parent_device = data.get("parent", None)
+            device.attributes = await self.session.attr.state_attributes(
+                device.device_id, device.hive_type
             )
-            return self.session.set_cached_device(device, dev_data)
+            _LOGGER.debug(
+                "get_climate - Heating device data for %s: %s",
+                device.ha_name,
+                device.status,
+            )
+            return self.session.set_cached_device(device)
         await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )

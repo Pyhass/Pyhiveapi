@@ -248,42 +248,33 @@ class WaterHeater(HiveHotwater):
                     device.ha_name,
                 )
                 return cached
-        device.device_data.update(
-            {"online": await self.session.attr.online_offline(device.device_id)}
-        )
+        online = await self.session.attr.online_offline(device.device_id)
+        if not isinstance(device.device_data, dict):
+            device.device_data = {}
+        device.device_data["online"] = online
 
         if device.device_data["online"]:
-
-            dev_data = {}
             self.session.helper.device_recovered(device.device_id)
             _LOGGER.debug(
                 "get_water_heater - Updating hot water data for %s.", device.ha_name
             )
             data = self.session.data.devices[device.device_id]
-            dev_data = {
-                "hiveID": device.hive_id,
-                "hiveName": device.hive_name,
-                "hiveType": device.hive_type,
-                "haName": device.ha_name,
-                "haType": device.ha_type,
-                "device_id": device.device_id,
-                "device_name": device.device_name,
-                "status": {"current_operation": await self.get_mode(device)},
-                "deviceData": data.get("props", None),
-                "parentDevice": data.get("parent", None),
-                "custom": getattr(device, "custom", None),
-                "attributes": await self.session.attr.state_attributes(
-                    device.device_id, device.hive_type
-                ),
-            }
+            device.status = {"current_operation": await self.get_mode(device)}
+            props = data.get("props") or {}
+            props["online"] = online
+            device.device_data = props
+            device.parent_device = data.get("parent", None)
+            device.attributes = await self.session.attr.state_attributes(
+                device.device_id, device.hive_type
+            )
 
             _LOGGER.debug(
                 "get_water_heater - Water heater device data for %s: %s",
                 device.ha_name,
-                dev_data["status"],
+                device.status,
             )
 
-            return self.session.set_cached_device(device, dev_data)
+            return self.session.set_cached_device(device)
         await self.session.helper.error_check(
             device.device_id, "ERROR", device.device_data["online"]
         )
