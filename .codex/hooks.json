@@ -1,11 +1,8 @@
 {
-  "enabledPlugins": {
-    "andrej-karpathy-skills@karpathy-skills": true
-  },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Glob|Grep",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",

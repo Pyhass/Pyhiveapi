@@ -1,7 +1,6 @@
 """Hive Session Module."""
 
 import asyncio
-import copy
 import json
 import logging
 import operator
@@ -699,11 +698,11 @@ class HiveSession:
                 len(tmp_devices),
                 len(tmp_actions),
             )
-            if len(tmp_products) > 0:
-                self.data.products = copy.deepcopy(tmp_products)
-            if len(tmp_devices) > 0:
-                self.data.devices = copy.deepcopy(tmp_devices)
-            self.data.actions = copy.deepcopy(tmp_actions)
+            if tmp_products:
+                self.data.products = tmp_products
+            if tmp_devices:
+                self.data.devices = tmp_devices
+            self.data.actions = tmp_actions
             self.config.last_update = datetime.now()
             get_nodes_successful = True
         except HiveReauthRequired:
@@ -774,7 +773,7 @@ class HiveSession:
 
         await self.get_devices("No_ID")
 
-        if self.data.devices == {} or self.data.products == {}:
+        if not self.data.devices or not self.data.products:
             _LOGGER.error(
                 "No devices or products returned from Hive API, reauthentication required."
             )
@@ -831,7 +830,7 @@ class HiveSession:
                 device_type,
             )
 
-            for config in DEVICES.get(self.data.devices[a_device]["type"], []):
+            for config in DEVICES.get(device_type, []):
                 kwargs = {}
                 if config.ha_name:
                     kwargs["ha_name"] = config.ha_name
@@ -848,7 +847,7 @@ class HiveSession:
                         str(e),
                     )
 
-            if self.data["devices"][a_device]["type"] in hive_type:
+            if device_type in hive_type:
                 self.config.battery.append(d["id"])
                 _LOGGER.debug(
                     "create_devices - Added device %s to battery monitoring list",
@@ -877,8 +876,7 @@ class HiveSession:
         # Process products
         hive_type = HIVE_TYPES["Heating"] + HIVE_TYPES["Switch"] + HIVE_TYPES["Light"]
         product_count = 0
-        for a_product in self.data.products:
-            p = self.data.products[a_product]
+        for a_product, p in self.data.products.items():
             if "error" in p:
                 _LOGGER.warning(
                     "Skipping product %s due to error: %s", a_product, p["error"]
@@ -895,10 +893,7 @@ class HiveSession:
             )
 
             # Only consider single items or heating groups
-            if (
-                p.get("isGroup", False)
-                and self.data.products[a_product]["type"] not in HIVE_TYPES["Heating"]
-            ):
+            if p.get("isGroup", False) and p["type"] not in HIVE_TYPES["Heating"]:
                 _LOGGER.debug(
                     "create_devices - Skipping group product currently not supported %s (type: %s)",
                     product_name,

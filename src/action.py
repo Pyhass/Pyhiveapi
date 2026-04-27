@@ -3,6 +3,8 @@
 import json
 import logging
 
+from .helper.const import HTTP_OK
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -44,10 +46,7 @@ class HiveAction:
             device.status = {"state": await self.get_state(device)}
             device.device_data = {}
             return self.session.set_cached_device(device)
-        exists = self.session.data.actions.get("hiveID", False)
-        if exists is False:
-            return "REMOVE"
-        return device
+        return "REMOVE"
 
     async def get_state(self, device: dict):
         """Get action state.
@@ -68,6 +67,34 @@ class HiveAction:
 
         return final
 
+    async def _set_action_state(self, device: dict, enabled: bool) -> bool:
+        """Set action enabled/disabled state.
+
+        Args:
+            device (dict): Device to set state of.
+            enabled (bool): True to enable, False to disable.
+
+        Returns:
+            bool: True if successful.
+        """
+        final = False
+
+        if device.hive_id in self.session.data.actions:
+            _LOGGER.debug(
+                "%s action %s.",
+                "Enabling" if enabled else "Disabling",
+                device.ha_name,
+            )
+            await self.session.hive_refresh_tokens()
+            data = self.session.data.actions[device.hive_id].copy()
+            data.update({"enabled": enabled})
+            resp = await self.session.api.set_action(device.hive_id, json.dumps(data))
+            if resp["original"] == HTTP_OK:
+                final = True
+                await self.session.get_devices(device.hive_id)
+
+        return final
+
     async def set_status_on(self, device: dict):
         """Set action turn on.
 
@@ -75,22 +102,9 @@ class HiveAction:
             device (dict): Device to set state of.
 
         Returns:
-            boolean: True/False if successful.
+            bool: True if successful.
         """
-        final = False
-
-        if device.hive_id in self.session.data.actions:
-            _LOGGER.debug("Enabling action %s.", device.ha_name)
-            await self.session.hive_refresh_tokens()
-            data = self.session.data.actions[device.hive_id]
-            data.update({"enabled": True})
-            send = json.dumps(data)
-            resp = await self.session.api.set_action(device.hive_id, send)
-            if resp["original"] == 200:
-                final = True
-                await self.session.get_devices(device.hive_id)
-
-        return final
+        return await self._set_action_state(device, True)
 
     async def set_status_off(self, device: dict):
         """Set action to turn off.
@@ -99,19 +113,19 @@ class HiveAction:
             device (dict): Device to set state of.
 
         Returns:
-            boolean: True/False if successful.
+            bool: True if successful.
         """
-        final = False
+        return await self._set_action_state(device, False)
 
-        if device.hive_id in self.session.data.actions:
-            _LOGGER.debug("Disabling action %s.", device.ha_name)
-            await self.session.hive_refresh_tokens()
-            data = self.session.data.actions[device.hive_id]
-            data.update({"enabled": False})
-            send = json.dumps(data)
-            resp = await self.session.api.set_action(device.hive_id, send)
-            if resp["original"] == 200:
-                final = True
-                await self.session.get_devices(device.hive_id)
+    # Backwards-compatible camelCase aliases
+    async def getAction(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for get_action."""
+        return await self.get_action(device)
 
-        return final
+    async def setStatusOn(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_status_on."""
+        return await self.set_status_on(device)
+
+    async def setStatusOff(self, device: dict):  # pylint: disable=invalid-name
+        """Backwards-compatible alias for set_status_off."""
+        return await self.set_status_off(device)

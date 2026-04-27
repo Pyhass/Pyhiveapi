@@ -1,3 +1,14 @@
 [build-system]
 requires = ["setuptools>=40.6.2", "wheel", "unasync"]
 build-backend = "setuptools.build_meta"
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff",
+    "mypy",
+    "graphifyy",
+    "pre-commit"
+]
