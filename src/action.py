@@ -40,22 +40,10 @@ class HiveAction:
                     device.ha_name,
                 )
                 return cached
-        dev_data = {}
-
         if device.hive_id in self.session.data.actions:
-            dev_data = {
-                "hiveID": device.hive_id,
-                "hiveName": device.hive_name,
-                "hiveType": device.hive_type,
-                "haName": device.ha_name,
-                "haType": device.ha_type,
-                "status": {"state": await self.get_state(device)},
-                "power_usage": None,
-                "deviceData": {},
-                "custom": getattr(device, "custom", None),
-            }
-
-            return self.session.set_cached_device(device, dev_data)
+            device.status = {"state": await self.get_state(device)}
+            device.device_data = {}
+            return self.session.set_cached_device(device)
         exists = self.session.data.actions.get("hiveID", False)
         if exists is False:
             return "REMOVE"

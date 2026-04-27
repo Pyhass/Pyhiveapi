@@ -36,7 +36,7 @@ The library exposes two packages from the same source:
 - **`apyhiveapi`** — async package (the actual source in `src/`)
 - **`pyhiveapi`** — sync package (auto-generated from `src/` during `setup.py build_py` using `unasync`)
 
-Never edit generated sync files — edit the async source in `src/` only.
+`unasync` rewrites `apyhiveapi` → `pyhiveapi` and `asyncio` → `threading`. Never edit generated sync files — edit the async source in `src/` only.
 
 ### Entry Point
 
@@ -57,17 +57,29 @@ await hive.startSession(config)
 
 ### Device Modules (all in `src/`)
 
-Each device type (`action.py`, `alarm.py`, `camera.py`, `heating.py`, `hotwater.py`, `hub.py`, `light.py`, `plug.py`, `sensor.py`) follows the same pattern: receives the session as `self.session`, reads from `self.session.data`, and calls `self.session.api.*` to set state.
+Each device type (`action.py`, `heating.py`, `hotwater.py`, `hub.py`, `light.py`, `plug.py`, `sensor.py`) follows the same pattern: receives the session as `self.session`, reads from `self.session.data`, and calls `self.session.api.*` to set state.
+
+Device methods check `self.session.should_use_cached_data()` and return `self.session.get_cached_device(device)` when polls are slow or in-progress, then call `self.session.set_cached_device(device)` after a successful update.
 
 ### Device Discovery (`createDevices`)
 
-`PRODUCTS` and `DEVICES` dicts in `src/helper/const.py` map Hive product/device types to `addList(...)` calls (stored as strings and `eval`'d during `createDevices`). This is how the session builds `deviceList` for Home Assistant entity creation.
+`PRODUCTS` and `DEVICES` dicts in `src/helper/const.py` map Hive product/device types to `addList(...)` calls (stored as strings and `eval`'d during `createDevices`). This is how the session builds `device_list` for Home Assistant entity creation.
+
+### Data Model
+
+`session.data` (a `Map`) holds:
+- `products` / `devices` — dicts keyed by device ID from the Hive API
+- `actions` — automation actions
+- `user` — account info
+- `minMax` — temperature range data
 
 ### Helpers
 
-- `src/helper/const.py` — `HIVE_TYPES`, `PRODUCTS`, `DEVICES`, `HIVETOHA` mappings, HTTP constants
+- `src/helper/const.py` — `HIVE_TYPES`, `PRODUCTS`, `DEVICES`, `HIVETOHA` mappings, HTTP constants, `EntityConfig` dataclass
+- `src/helper/hivedataclasses.py` — `Device` dataclass (used for all device entities) and `EntityConfig`. `Device` supports both attribute-style (`device.hive_id`) and dict-style (`device["hiveID"]`) access, with automatic translation of legacy camelCase keys to snake_case.
 - `src/helper/hive_exceptions.py` — all custom exceptions (`HiveReauthRequired`, `HiveAuthError`, etc.)
-- `src/helper/map.py` — `Map` class: dict wrapper allowing attribute-style access (`session.config.homeID`)
+- `src/helper/map.py` — `Map` class: dict wrapper allowing attribute-style access (`session.config.home_id`)
+- `src/device_attributes.py` (`HiveAttributes`) — computes HA state attributes (online/offline, battery, mode) for all device types
 - `src/data/*.json` — fixture files for offline/file-based testing
 
 ### File-Based Testing
@@ -76,4 +88,4 @@ Set `username="use@file.com"` to make the session load data from `src/data/*.jso
 
 ### Token Refresh Strategy
 
-Tokens refresh proactively at 90% of their lifetime (`_refreshThreshold = 0.90`). On `HiveRefreshTokenExpired` or `HiveFailedToRefreshTokens`, the session falls back to `_retryLogin` (3 attempts with backoff). A `HiveReauthRequired` exception propagates up when user interaction is needed (SMS 2FA).
+Tokens refresh proactively at 90% of their lifetime (`_refresh_threshold = 0.90`). On `HiveRefreshTokenExpired` or `HiveFailedToRefreshTokens`, the session falls back to `_retryLogin` (3 attempts with backoff). A `HiveReauthRequired` exception propagates up when user interaction is needed (SMS 2FA).

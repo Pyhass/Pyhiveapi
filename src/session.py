@@ -174,40 +174,53 @@ class HiveSession:
             Device: Created device entity, or None on error.
         """
         try:
-            device_data = self.helper.get_device_data(data)
-            device_name = (
-                device_data["state"]["name"]
-                if device_data["state"]["name"] != "Receiver"
-                else "Heating"
-            )
-
-            ha_name = kwargs.get("ha_name", "")
-            if ha_name.startswith(" "):
-                ha_name = device_name + ha_name
-            elif not ha_name:
-                ha_name = device_name
-
-            device_obj = Device(
-                hive_id=data.get("id", ""),
-                hive_name=device_name,
-                hive_type=kwargs.get("hive_type", data.get("type", "")),
-                ha_type=entity_type,
-                device_id=device_data["id"],
-                device_name=device_name,
-                device_data=device_data.get("props", data.get("props", {})),
-                parent_device=self.hub_id,
-                is_group=data.get("isGroup", False),
-                ha_name=ha_name,
-                category=kwargs.get("category"),
-                temperature_unit=kwargs.get("temperature_unit"),
-            )
-
-            if data.get("type", "") == "hub":
-                self.device_list["parent"].append(device_obj)
-                self.device_list[entity_type].append(device_obj)
+            hive_type = kwargs.get("hive_type", data.get("type", ""))
+            if hive_type == "action":
+                device_name = kwargs.get("ha_name", data.get("name", "Action"))
+                device_obj = Device(
+                    hive_id=data.get("id", ""),
+                    hive_name=device_name,
+                    hive_type="action",
+                    ha_type=entity_type,
+                    device_id=data.get("id", ""),
+                    device_name=device_name,
+                    device_data={},
+                    parent_device=self.hub_id,
+                    ha_name=device_name,
+                )
             else:
-                self.device_list[entity_type].append(device_obj)
+                device_data = self.helper.get_device_data(data)
+                device_name = (
+                    device_data["state"]["name"]
+                    if device_data["state"]["name"] != "Receiver"
+                    else "Heating"
+                )
 
+                ha_name = kwargs.get("ha_name", "")
+                if ha_name.startswith(" "):
+                    ha_name = device_name + ha_name
+                elif not ha_name:
+                    ha_name = device_name
+
+                device_obj = Device(
+                    hive_id=data.get("id", ""),
+                    hive_name=device_name,
+                    hive_type=hive_type,
+                    ha_type=entity_type,
+                    device_id=device_data["id"],
+                    device_name=device_name,
+                    device_data=device_data.get("props", data.get("props", {})),
+                    parent_device=self.hub_id,
+                    is_group=data.get("isGroup", False),
+                    ha_name=ha_name,
+                    category=kwargs.get("category"),
+                    temperature_unit=kwargs.get("temperature_unit"),
+                )
+
+                if data.get("type", "") == "hub":
+                    self.device_list["parent"].append(device_obj)
+
+            self.device_list[entity_type].append(device_obj)
             return device_obj
         except KeyError as error:
             _LOGGER.error(error)
