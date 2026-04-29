@@ -1,3 +1,4 @@
+exclude: ^graphify-out/
 repos:
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
