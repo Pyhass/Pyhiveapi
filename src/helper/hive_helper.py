@@ -4,11 +4,32 @@ import copy
 import datetime
 import logging
 import operator
+import time
 from typing import Any
 
 from .const import HIVE_TYPES
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def epoch_time(date_time: Any, pattern: str, action: str) -> Any:
+    """Convert between a datetime string and a Unix epoch integer.
+
+    Args:
+        date_time: Epoch integer or date/time string to convert.
+        pattern: ``strptime``/``strftime`` format string used for the conversion.
+        action: ``"to_epoch"`` converts a datetime string → int;
+                ``"from_epoch"`` converts an int → formatted datetime string.
+
+    Returns:
+        Converted value, or ``None`` if *action* is unrecognised.
+    """
+    if action == "to_epoch":
+        pattern = "%d.%m.%Y %H:%M:%S"
+        return int(time.mktime(time.strptime(str(date_time), pattern)))
+    if action == "from_epoch":
+        return datetime.datetime.fromtimestamp(int(date_time)).strftime(pattern)
+    return None
 
 
 class HiveHelper:

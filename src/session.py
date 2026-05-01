@@ -1,13 +1,15 @@
 """Hive Session Module."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-import operator
-import os
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
+from aiohttp import ClientSession
 from aiohttp.web import HTTPException
 from apyhiveapi import API, Auth
 
@@ -26,10 +28,10 @@ from .helper.hive_exceptions import (
     HiveUnknownConfiguration,
 )
 from .helper.hive_helper import HiveHelper
-from .helper.hivedataclasses import Device
+from .helper.hivedataclasses import Device, SessionConfig, SessionTokens
 from .helper.map import Map
 
-_SCAN_INTERVAL = timedelta(seconds=120)
+_DATA_DIR = Path(__file__).parent / "data"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,10 +53,10 @@ class HiveSession:
 
     def __init__(
         self,
-        username: str = None,
-        password: str = None,
-        websession: object = None,
-    ):
+        username: str | None = None,
+        password: str | None = None,
+        websession: ClientSession | None = None,
+    ) -> None:
         """Initialise the base variable values.
 
         Args:
@@ -71,26 +73,8 @@ class HiveSession:
         self.attr = HiveAttributes(self)
         self.update_lock = asyncio.Lock()
         self._refresh_lock = asyncio.Lock()
-        self.tokens = Map(
-            {
-                "token_data": {},
-                "token_created": datetime.min,
-                "token_expiry": timedelta(seconds=3600),
-            }
-        )
-        self.config = Map(
-            {
-                "battery": [],
-                "error_list": {},
-                "file": False,
-                "home_id": None,
-                "last_update": datetime.now(),
-                "mode": [],
-                "scan_interval": _SCAN_INTERVAL,
-                "user_id": None,
-                "username": username,
-            }
-        )
+        self.tokens = SessionTokens()
+        self.config = SessionConfig(username=username)
         self.data = Map(
             {
                 "products": {},
@@ -146,21 +130,52 @@ class HiveSession:
         """Fetch latest device state from the Hive API."""
         return await self.get_devices("No_ID")
 
-    def open_file(self, file: str):
-        """Open a file.
+    async def _retry_with_backoff(
+        self,
+        coro_factory,
+        *,
+        delays: tuple = (0, 5, 10),
+        reraise_as=None,
+        pass_through: tuple = (),
+    ):
+        """Retry an async operation with sequential delays.
 
         Args:
-            file (str): File location
+            coro_factory: Zero-argument callable returning a coroutine to attempt.
+            delays: Seconds to wait before each attempt; the first (0) is immediate.
+            reraise_as: Exception *type* to raise once all attempts are exhausted.
+                        Defaults to the type of the last caught exception.
+            pass_through: Exception types that bypass retrying and propagate
+                          immediately to the caller.
 
         Returns:
-            dict: Data from the chosen file.
-        """
-        path = os.path.dirname(os.path.realpath(__file__)) + "/data/" + file
-        path = path.replace("/pyhiveapi/", "/apyhiveapi/")
-        with open(path, encoding="utf-8") as j:
-            data = json.loads(j.read())
+            The result of the first successful ``coro_factory()`` call.
 
-        return data
+        Raises:
+            reraise_as (or type of last error): When all retry attempts fail.
+        """
+        last_err = None
+        for delay in delays:
+            if delay:
+                await asyncio.sleep(delay)
+            try:
+                return await coro_factory()
+            except pass_through:
+                raise
+            except Exception as err:  # pylint: disable=broad-except
+                last_err = err
+        raise (reraise_as or type(last_err)) from last_err
+
+    def open_file(self, file: str) -> dict:
+        """Open a JSON fixture file from the package data directory.
+
+        Args:
+            file (str): Filename relative to the ``data/`` directory (e.g. ``"data.json"``).
+
+        Returns:
+            dict: Parsed JSON content of the file.
+        """
+        return json.loads((_DATA_DIR / file).read_text(encoding="utf-8"))
 
     def add_list(self, entity_type: str, data: dict, **kwargs) -> Device:
         """Add entity to the device list.
@@ -225,14 +240,13 @@ class HiveSession:
             _LOGGER.error(error)
             return None
 
-    async def use_file(self, username: str = None):
-        """Update to check if file is being used.
+    def _configure_file_mode(self, username: str | None = None) -> None:
+        """Set file mode when the magic testing username is detected.
 
         Args:
-            username (str, optional): Looks for use@file.com. Defaults to None.
+            username: If ``"use@file.com"``, switches the session to file-based mode.
         """
-        using_file = username == "use@file.com"
-        if using_file:
+        if username == "use@file.com":
             self.config.file = True
 
     async def update_tokens(self, tokens: dict, update_expiry_time: bool = True):
@@ -438,44 +452,36 @@ class HiveSession:
         which may succeed via device login or may require user interaction (SMS 2FA).
 
         Raises:
-            HiveReauthRequired: User interaction required (SMS 2FA challenge).
-            HiveInvalidDeviceAuthentication: Device credentials are invalid.
+            HiveReauthRequired: User interaction required (SMS 2FA challenge),
+                                 credentials invalid, or all retries exhausted.
             HiveApiError: API error or no internet connection.
         """
-        last_err = None
-        for delay_s in (0, 5, 10):
-            try:
-                if delay_s:
-                    _LOGGER.debug(
-                        "_retry_login - Retrying login in %s seconds.", delay_s
-                    )
-                    await asyncio.sleep(delay_s)
-                result = await self.login()
 
-                # Check if login returned SMS_MFA challenge (requires user interaction)
-                if (
-                    result
-                    and result.get("ChallengeName") == self.auth.SMS_MFA_CHALLENGE
-                ):
-                    _LOGGER.error(
-                        "_retry_login - Login requires SMS 2FA. User must reauthenticate."
-                    )
-                    raise HiveReauthRequired
-
-                last_err = None
-                break
-            except (HiveInvalidUsername, HiveInvalidPassword) as exc:
+        async def _attempt():
+            result = await self.login()
+            if result and result.get("ChallengeName") == self.auth.SMS_MFA_CHALLENGE:
                 _LOGGER.error(
-                    "_retry_login - Login failed with invalid credentials,"
-                    " reauthentication required."
+                    "_retry_login - Login requires SMS 2FA. User must reauthenticate."
                 )
-                raise HiveReauthRequired from exc
-            except HiveApiError as err:
-                _LOGGER.error("_retry_login - Login attempt failed: %s", err)
-                last_err = err
-        if last_err is not None:
-            _LOGGER.error("_retry_login - All login retries exhausted.")
-            raise HiveReauthRequired from last_err
+                raise HiveReauthRequired
+            return result
+
+        try:
+            await self._retry_with_backoff(
+                _attempt,
+                reraise_as=HiveReauthRequired,
+                pass_through=(
+                    HiveReauthRequired,
+                    HiveInvalidUsername,
+                    HiveInvalidPassword,
+                ),
+            )
+        except (HiveInvalidUsername, HiveInvalidPassword) as exc:
+            _LOGGER.error(
+                "_retry_login - Login failed with invalid credentials,"
+                " reauthentication required."
+            )
+            raise HiveReauthRequired from exc
 
         await self.hive_refresh_tokens(force_refresh=True)
 
@@ -636,27 +642,10 @@ class HiveSession:
                         "falling back to full device re-login."
                     )
                     await self._retry_login()
-                    last_auth_err = None
-                    for api_retry_delay in (0, 5, 10):
-                        try:
-                            if api_retry_delay:
-                                _LOGGER.debug(
-                                    "get_devices - Retrying API call in %ss after device re-login.",
-                                    api_retry_delay,
-                                )
-                                await asyncio.sleep(api_retry_delay)
-                            api_resp_d = await self.api.get_all()
-                            last_auth_err = None
-                            break
-                        except HiveAuthError as retry_err:
-                            _LOGGER.warning(
-                                "API call still rejected after device re-login"
-                                " (attempt delay=%ss).",
-                                api_retry_delay,
-                            )
-                            last_auth_err = retry_err
-                    if last_auth_err is not None:
-                        raise HiveReauthRequired from last_auth_err
+                    api_resp_d = await self._retry_with_backoff(
+                        self.api.get_all,
+                        reraise_as=HiveReauthRequired,
+                    )
                 api_call_duration = time.monotonic() - api_call_start
                 if api_call_duration > self._slow_poll_threshold:
                     _LOGGER.debug(
@@ -666,7 +655,7 @@ class HiveSession:
                     self._last_poll_slow = True
                 else:
                     self._last_poll_slow = False
-                if operator.contains(str(api_resp_d["original"]), "20") is False:
+                if not str(api_resp_d["original"]).startswith("2"):
                     raise HTTPException
                 if api_resp_d["parsed"] is None:
                     raise HiveApiError
@@ -750,7 +739,7 @@ class HiveSession:
         _LOGGER.debug(
             "start_session - Config: %s", self.helper.sanitize_payload(config)
         )
-        await self.use_file(config.get("username", self.config.username))
+        self._configure_file_mode(config.get("username", self.config.username))
 
         if config != {}:
             if "tokens" in config and not self.config.file:
@@ -830,16 +819,16 @@ class HiveSession:
                 device_type,
             )
 
-            for config in DEVICES.get(device_type, []):
+            for entity_config in DEVICES.get(device_type, []):
                 kwargs = {}
-                if config.ha_name:
-                    kwargs["ha_name"] = config.ha_name
-                if config.hive_type:
-                    kwargs["hive_type"] = config.hive_type
-                if config.category:
-                    kwargs["category"] = config.category
+                if entity_config.ha_name:
+                    kwargs["ha_name"] = entity_config.ha_name
+                if entity_config.hive_type:
+                    kwargs["hive_type"] = entity_config.hive_type
+                if entity_config.category:
+                    kwargs["category"] = entity_config.category
                 try:
-                    self.add_list(config.entity_type, d, **kwargs)
+                    self.add_list(entity_config.entity_type, d, **kwargs)
                 except Exception as e:
                     _LOGGER.error(
                         "Failed to create device entity for %s: %s",
@@ -901,22 +890,22 @@ class HiveSession:
                 )
                 continue
 
-            for config in PRODUCTS.get(product_type, []):
+            for entity_config in PRODUCTS.get(product_type, []):
                 kwargs = {}
-                if config.ha_name:
-                    kwargs["ha_name"] = config.ha_name
-                if config.hive_type:
-                    kwargs["hive_type"] = config.hive_type
-                if config.category:
-                    kwargs["category"] = config.category
-                if config.entity_type == "climate":
+                if entity_config.ha_name:
+                    kwargs["ha_name"] = entity_config.ha_name
+                if entity_config.hive_type:
+                    kwargs["hive_type"] = entity_config.hive_type
+                if entity_config.category:
+                    kwargs["category"] = entity_config.category
+                if entity_config.entity_type == "climate":
                     kwargs["temperature_unit"] = self.data["user"].get(
                         "temperatureUnit"
                     )
-                elif config.temperature_unit is not None:
-                    kwargs["temperature_unit"] = config.temperature_unit
+                elif entity_config.temperature_unit is not None:
+                    kwargs["temperature_unit"] = entity_config.temperature_unit
                 try:
-                    self.add_list(config.entity_type, p, **kwargs)
+                    self.add_list(entity_config.entity_type, p, **kwargs)
                 except (NameError, AttributeError) as e:
                     _LOGGER.warning(
                         "create_devices - Device %s cannot be setup - %s",
@@ -967,24 +956,3 @@ class HiveSession:
     ):  # pylint: disable=invalid-name,unused-argument
         """Backwards-compatible alias for Home Assistant Scan Interval."""
         return True
-
-    @staticmethod
-    def epoch_time(date_time: any, pattern: str, action: str):
-        """date/time conversion to epoch.
-
-        Args:
-            date_time (any): epoch time or date and time to use.
-            pattern (str): Pattern for converting to epoch.
-            action (str): Convert from/to.
-
-        Returns:
-            any: Converted time.
-        """
-        if action == "to_epoch":
-            pattern = "%d.%m.%Y %H:%M:%S"
-            epochtime = int(time.mktime(time.strptime(str(date_time), pattern)))
-            return epochtime
-        if action == "from_epoch":
-            date = datetime.fromtimestamp(int(date_time)).strftime(pattern)
-            return date
-        return None

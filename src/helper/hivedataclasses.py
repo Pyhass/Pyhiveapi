@@ -1,7 +1,10 @@
-"""Device data classes."""
+"""Device and session data classes."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from typing import Literal, Optional
+
+_SCAN_INTERVAL = timedelta(seconds=120)
 
 _SENTINEL = object()
 
@@ -84,3 +87,27 @@ class EntityConfig:
     hive_type: str = ""
     category: Optional[str] = None
     temperature_unit: Optional[str] = None
+
+
+@dataclass
+class SessionTokens:
+    """Typed container for session authentication tokens."""
+
+    token_data: dict = field(default_factory=dict)
+    token_created: datetime = field(default_factory=lambda: datetime.min)
+    token_expiry: timedelta = field(default_factory=lambda: timedelta(seconds=3600))
+
+
+@dataclass
+class SessionConfig:
+    """Typed container for session configuration state."""
+
+    battery: list = field(default_factory=list)
+    error_list: dict = field(default_factory=dict)
+    file: bool = False
+    home_id: Optional[str] = None
+    last_update: datetime = field(default_factory=datetime.now)
+    mode: list = field(default_factory=list)
+    scan_interval: timedelta = field(default_factory=lambda: _SCAN_INTERVAL)
+    user_id: Optional[str] = None
+    username: Optional[str] = None
