@@ -57,3 +57,11 @@ repos:
           "-rn",
           "-sn",
         ]
+  - repo: local
+    hooks:
+      - id: check-data-pii
+        name: Block PII in data files
+        entry: python scripts/check_data_pii.py
+        language: system
+        files: ^src/data/.*\.json$
+        pass_filenames: true
