@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyhive-integration"
 version = "1.0.10"
 description = "A Python library to interface with the Hive API"
+readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "KJonline24", email = "53_galleys_snark@icloud.com" }]
 keywords = ["Hive", "API", "Library", "smart-home", "home-automation", "IoT", "async", "integration"]
