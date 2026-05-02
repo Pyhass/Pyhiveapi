@@ -61,8 +61,8 @@ sensor_commands = {
     "DOG_BARK": lambda s, d: s.session.hub.get_dog_bark_status(d),
     "GLASS_BREAK": lambda s, d: s.session.hub.get_glass_break_status(d),
     "Current_Temperature": lambda s, d: s.session.heating.get_current_temperature(d),
-    "Heating_Current_Temperature": lambda s, d: s.session.heating.get_current_temperature(
-        d
+    "Heating_Current_Temperature": lambda s, d: (
+        s.session.heating.get_current_temperature(d)
     ),
     "Heating_Target_Temperature": lambda s, d: s.session.heating.get_target_temperature(
         d

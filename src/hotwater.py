@@ -302,9 +302,7 @@ class WaterHeater(HiveHotwater):
 
         return state
 
-    async def setMode(
-        self, device: dict, new_mode: str
-    ):  # pylint: disable=invalid-name
+    async def setMode(self, device: dict, new_mode: str):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_mode."""
         return await self.set_mode(device, new_mode)
 

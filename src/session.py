@@ -605,9 +605,7 @@ class HiveSession:
 
         return updated
 
-    async def get_devices(
-        self, _n_id: str
-    ):  # pylint: disable=too-many-locals,too-many-statements
+    async def get_devices(self, _n_id: str):  # pylint: disable=too-many-locals,too-many-statements
         """Get latest data for Hive nodes.
 
         Args:
@@ -951,8 +949,6 @@ class HiveSession:
         """Backwards-compatible alias for update_data."""
         return await self.update_data(device)
 
-    async def updateInterval(
-        self, new_interval: int
-    ):  # pylint: disable=invalid-name,unused-argument
+    async def updateInterval(self, new_interval: int):  # pylint: disable=invalid-name,unused-argument
         """Backwards-compatible alias for Home Assistant Scan Interval."""
         return True

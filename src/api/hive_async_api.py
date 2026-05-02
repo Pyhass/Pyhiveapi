@@ -137,7 +137,7 @@ class HiveApiAsync:
         jsc = (
             "{"
             + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in tokens.items())
+                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in tokens.items())
             )
             + "}"
         )
@@ -256,7 +256,7 @@ class HiveApiAsync:
         jsc = (
             "{"
             + ",".join(
-                ('"' + str(i) + '": ' '"' + str(t) + '" ' for i, t in kwargs.items())
+                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in kwargs.items())
             )
             + "}"
         )

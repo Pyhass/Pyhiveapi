@@ -206,9 +206,7 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def get_schedule_nnl(
-        self, hive_api_schedule: list
-    ):  # pylint: disable=too-many-locals
+    def get_schedule_nnl(self, hive_api_schedule: list):  # pylint: disable=too-many-locals
         """Get the schedule now, next and later of a given nodes schedule.
 
         Args:
@@ -254,7 +252,6 @@ class HiveHelper:
             )
 
             for current_slot_custom in current_day_schedule_sorted:
-
                 slot_date = datetime.datetime.now() + datetime.timedelta(days=day_index)
                 slot_time = self.convert_minutes_to_time(current_slot_custom["start"])
                 slot_time_date_s = slot_date.strftime("%d-%m-%Y") + " " + slot_time
