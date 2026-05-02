@@ -30,18 +30,18 @@ jobs:
             echo "PR #$existing already open; skipping version bump."
           fi
 
-      - name: Bump patch version in setup.py
+      - name: Bump patch version in pyproject.toml
         if: steps.check.outputs.existing == ''
         run: |
           python - <<'PY'
           import re, pathlib
-          p = pathlib.Path("setup.py")
+          p = pathlib.Path("pyproject.toml")
           s = p.read_text()
-          m = re.search(r'version="(\d+)\.(\d+)\.(\d+)"', s)
+          m = re.search(r'^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', s, re.MULTILINE)
           if not m:
-              raise SystemExit("version not found")
+              raise SystemExit("version not found in pyproject.toml")
           maj, mnr, pat = map(int, m.groups())
-          new = f'version="{maj}.{mnr}.{pat+1}"'
+          new = f'version = "{maj}.{mnr}.{pat+1}"'
           p.write_text(s[:m.start()] + new + s[m.end():])
           print("Bumped to", new)
           PY
@@ -51,7 +51,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add setup.py
+          git add pyproject.toml
           if ! git diff --cached --quiet; then
             git commit -m "chore: bump version [skip ci]"
             git push
