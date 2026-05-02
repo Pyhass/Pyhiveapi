@@ -45,10 +45,11 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["apyhiveapi", "apyhiveapi.api", "apyhiveapi.helper"]
+packages = ["apyhiveapi", "apyhiveapi.api", "apyhiveapi.helper", "pyhive_integration", "pyhive_integration.api", "pyhive_integration.helper"]
 
 [tool.setuptools.package-dir]
 apyhiveapi = "src"
+pyhive_integration = "src"
 
 [tool.setuptools.package-data]
 apyhiveapi = ["data/*.json"]
