@@ -49,6 +49,11 @@ repos:
       - id: no-commit-to-branch
         args:
           - --branch=master
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
   - repo: https://github.com/pycqa/pylint
     rev: v3.3.1
     hooks:
