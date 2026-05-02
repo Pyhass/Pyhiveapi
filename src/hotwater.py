@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from .helper.const import HIVETOHA
+from .helper.const import HIVETOHA, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class HiveHotwater:
             resp = await self.session.api.set_state(
                 data["type"], device.hive_id, mode=new_mode
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -177,7 +177,7 @@ class HiveHotwater:
             resp = await self.session.api.set_state(
                 data["type"], device.hive_id, mode="BOOST", boost=mins
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -208,7 +208,7 @@ class HiveHotwater:
             resp = await self.session.api.set_state(
                 data["type"], device.hive_id, mode=prev_mode
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 await self.session.get_devices(device.hive_id)
                 final = True
 

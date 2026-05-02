@@ -605,7 +605,7 @@ class HiveSession:
 
         return updated
 
-    async def get_devices(self, _n_id: str):  # pylint: disable=too-many-locals,too-many-statements
+    async def get_devices(self, _n_id: str):  # pylint: disable=too-many-locals,too-many-statements  # noqa: PLR0912, PLR0915
         """Get latest data for Hive nodes.
 
         Args:
@@ -768,7 +768,7 @@ class HiveSession:
 
         return await self.create_devices()
 
-    async def create_devices(
+    async def create_devices(  # noqa: PLR0912, PLR0915
         self,
     ):  # pylint: disable=too-many-locals,too-many-statements
         """Create list of devices.
@@ -827,7 +827,7 @@ class HiveSession:
                     kwargs["category"] = entity_config.category
                 try:
                     self.add_list(entity_config.entity_type, d, **kwargs)
-                except Exception as e:
+                except (KeyError, TypeError, AttributeError) as e:
                     _LOGGER.error(
                         "Failed to create device entity for %s: %s",
                         device_name,
@@ -853,7 +853,7 @@ class HiveSession:
                 self.add_list(
                     "switch", action, ha_name=action["name"], hive_type="action"
                 )
-            except Exception as e:
+            except (KeyError, TypeError, AttributeError) as e:
                 _LOGGER.error(
                     "Failed to create action entity for %s: %s",
                     action_id,

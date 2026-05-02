@@ -5,7 +5,6 @@ import logging
 import sys
 import traceback
 from os.path import expanduser
-from typing import Optional
 
 from aiohttp import ClientSession
 
@@ -93,7 +92,7 @@ class Hive(HiveSession):
 
     def __init__(
         self,
-        websession: Optional[ClientSession] = None,
+        websession: ClientSession | None = None,
         username: str = None,
         password: str = None,
     ):
@@ -127,7 +126,7 @@ class Hive(HiveSession):
         Returns:
             object: Returns traceback object.
         """
-        global debug  # pylint: disable=global-statement
+        global debug  # pylint: disable=global-statement  # noqa: PLW0603
         debug = debugger
         if debug:
             return sys.settrace(trace_debug)

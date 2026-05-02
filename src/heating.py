@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from .helper.const import HIVETOHA
+from .helper.const import HIVETOHA, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,11 +76,13 @@ class HiveHeating:
                 if self.session.data.minMax[device.hive_id]["TodayDate"] == str(
                     datetime.date(datetime.now())
                 ):
-                    if state < self.session.data.minMax[device.hive_id]["TodayMin"]:
-                        self.session.data.minMax[device.hive_id]["TodayMin"] = state
+                    self.session.data.minMax[device.hive_id]["TodayMin"] = min(
+                        self.session.data.minMax[device.hive_id]["TodayMin"], state
+                    )
 
-                    if state > self.session.data.minMax[device.hive_id]["TodayMax"]:
-                        self.session.data.minMax[device.hive_id]["TodayMax"] = state
+                    self.session.data.minMax[device.hive_id]["TodayMax"] = max(
+                        self.session.data.minMax[device.hive_id]["TodayMax"], state
+                    )
                 else:
                     data = {
                         "TodayMin": state,
@@ -89,11 +91,13 @@ class HiveHeating:
                     }
                     self.session.data.minMax[device.hive_id].update(data)
 
-                if state < self.session.data.minMax[device.hive_id]["RestartMin"]:
-                    self.session.data.minMax[device.hive_id]["RestartMin"] = state
+                self.session.data.minMax[device.hive_id]["RestartMin"] = min(
+                    self.session.data.minMax[device.hive_id]["RestartMin"], state
+                )
 
-                if state > self.session.data.minMax[device.hive_id]["RestartMax"]:
-                    self.session.data.minMax[device.hive_id]["RestartMax"] = state
+                self.session.data.minMax[device.hive_id]["RestartMax"] = max(
+                    self.session.data.minMax[device.hive_id]["RestartMax"], state
+                )
             else:
                 data = {
                     "TodayMin": state,
@@ -321,7 +325,7 @@ class HiveHeating:
                 data["type"], device.hive_id, target=new_temp
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 _LOGGER.debug(
                     "set_target_temperature - Temperature set successfully"
                     " for %s, refreshing device data",
@@ -374,7 +378,7 @@ class HiveHeating:
                 data["type"], device.hive_id, mode=new_mode
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 _LOGGER.debug(
                     "set_mode - Mode set successfully for %s, refreshing device data",
                     device_name,
@@ -430,7 +434,7 @@ class HiveHeating:
                         target=temp,
                     )
 
-                    if resp["original"] == 200:
+                    if resp["original"] == HTTP_OK:
                         await self.session.get_devices(device.hive_id)
                         final = True
 
@@ -472,7 +476,7 @@ class HiveHeating:
                     resp = await self.session.api.set_state(
                         data["type"], device.hive_id, mode=prev_mode
                     )
-                if resp["original"] == 200:
+                if resp["original"] == HTTP_OK:
                     await self.session.get_devices(device.hive_id)
                     final = True
 
@@ -505,7 +509,7 @@ class HiveHeating:
                 data["type"], device.hive_id, autoBoost=state
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 await self.session.get_devices(device.hive_id)
                 final = True
 

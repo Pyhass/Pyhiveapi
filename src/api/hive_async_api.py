@@ -4,14 +4,13 @@ import asyncio
 import json
 import logging
 import time
-from typing import Optional
 
 import requests
 import urllib3
 from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
 from pyquery import PyQuery
 
-from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
+from ..helper.const import HTTP_FORBIDDEN, HTTP_OK, HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,7 +21,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HiveApiAsync:
     """Hive API Code."""
 
-    def __init__(self, hive_session=None, websession: Optional[ClientSession] = None):
+    def __init__(self, hive_session=None, websession: ClientSession | None = None):
         """Hive API initialisation."""
         self.base_url = "https://beekeeper.hivehome.com/1.0"
         self.urls = {
@@ -68,7 +67,7 @@ class HiveApiAsync:
         _LOGGER.debug(
             "Using token (len=%d, tail=…%s)",
             len(auth_token),
-            auth_token[-4:] if len(auth_token) >= 4 else auth_token,
+            auth_token[-4:] if len(auth_token) >= 4 else auth_token,  # noqa: PLR2004
         )
 
         timeout = ClientTimeout(total=self.timeout)
@@ -144,7 +143,7 @@ class HiveApiAsync:
         try:
             await self.request("post", url, data=jsc)
 
-            if self.json_return["original"] == 200:
+            if self.json_return["original"] == HTTP_OK:
                 info = self.json_return["parsed"]
                 if "token" in info:
                     await self.session.update_tokens(info)

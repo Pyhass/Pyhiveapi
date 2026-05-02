@@ -270,7 +270,7 @@ class HiveHelper:
             reverse=False,
         )
 
-        if len(fsl_sorted) >= 3:
+        if len(fsl_sorted) >= 3:  # noqa: PLR2004
             schedule_now = fsl_sorted[-1]
             schedule_next = fsl_sorted[0]
             schedule_later = fsl_sorted[1]
@@ -320,7 +320,7 @@ class HiveHelper:
 
         def _mask(value: Any) -> Any:
             if isinstance(value, str):
-                if len(value) <= 8:
+                if len(value) <= 8:  # noqa: PLR2004
                     return "***"
                 return f"{value[:4]}...{value[-4:]}"
             if isinstance(value, dict):

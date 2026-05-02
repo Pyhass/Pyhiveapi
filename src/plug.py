@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from .helper.const import HIVETOHA
+from .helper.const import HIVETOHA, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class HiveSmartPlug:
             resp = await self.session.api.set_state(
                 data["type"], data["id"], status="ON"
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -105,7 +105,7 @@ class HiveSmartPlug:
             resp = await self.session.api.set_state(
                 data["type"], data["id"], status="OFF"
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 

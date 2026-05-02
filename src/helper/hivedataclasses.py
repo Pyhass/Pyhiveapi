@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Literal, Optional
+from typing import Literal
 
 _SCAN_INTERVAL = timedelta(seconds=120)
 
@@ -31,16 +31,16 @@ class Device:
     device_id: str
     device_name: str
     device_data: dict
-    parent_device: Optional[str] = None
+    parent_device: str | None = None
     is_group: bool = False
     ha_name: str = ""
-    category: Optional[str] = None
-    temperature_unit: Optional[str] = None
-    status: Optional[dict] = None
-    data: Optional[dict] = None
-    attributes: Optional[dict] = None
-    min_temp: Optional[float] = None
-    max_temp: Optional[float] = None
+    category: str | None = None
+    temperature_unit: str | None = None
+    status: dict | None = None
+    data: dict | None = None
+    attributes: dict | None = None
+    min_temp: float | None = None
+    max_temp: float | None = None
 
     def _resolve(self, key: str) -> str:
         """Translate a legacy camelCase key to the current snake_case attribute name."""
@@ -85,8 +85,8 @@ class EntityConfig:
     ]
     ha_name: str = ""
     hive_type: str = ""
-    category: Optional[str] = None
-    temperature_unit: Optional[str] = None
+    category: str | None = None
+    temperature_unit: str | None = None
 
 
 @dataclass
@@ -105,9 +105,9 @@ class SessionConfig:
     battery: list = field(default_factory=list)
     error_list: dict = field(default_factory=dict)
     file: bool = False
-    home_id: Optional[str] = None
+    home_id: str | None = None
     last_update: datetime = field(default_factory=datetime.now)
     mode: list = field(default_factory=list)
     scan_interval: timedelta = field(default_factory=lambda: _SCAN_INTERVAL)
-    user_id: Optional[str] = None
-    username: Optional[str] = None
+    user_id: str | None = None
+    username: str | None = None

@@ -2,9 +2,9 @@
 
 import colorsys
 import logging
-from typing import Any, Optional
+from typing import Any
 
-from .helper.const import HIVETOHA
+from .helper.const import HIVETOHA, HTTP_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -204,7 +204,7 @@ class HiveLight:
                 data["type"], device.hive_id, status="OFF"
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 _LOGGER.debug(
                     "set_status_off - Light turned off successfully for %s, refreshing device data",
                     device_name,
@@ -252,7 +252,7 @@ class HiveLight:
                 data["type"], device.hive_id, status="ON"
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 _LOGGER.debug(
                     "set_status_on - Light turned on successfully for %s, refreshing device data",
                     device_name,
@@ -301,7 +301,7 @@ class HiveLight:
                 data["type"], device.hive_id, status="ON", brightness=n_brightness
             )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -345,7 +345,7 @@ class HiveLight:
                     colourTemperature=color_temp,
                 )
 
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -381,7 +381,7 @@ class HiveLight:
                 saturation=str(new_color[1]),
                 value=str(new_color[2]),
             )
-            if resp["original"] == 200:
+            if resp["original"] == HTTP_OK:
                 final = True
                 await self.session.get_devices(device.hive_id)
 
@@ -465,9 +465,9 @@ class Light(HiveLight):
     async def turn_on(
         self,
         device: dict,
-        brightness: Optional[int],
-        color_temp: Optional[int],
-        color: Optional[list],
+        brightness: int | None,
+        color_temp: int | None,
+        color: list | None,
     ):
         """Set light to turn on.
 
