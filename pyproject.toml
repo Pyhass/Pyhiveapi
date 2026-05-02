@@ -43,9 +43,8 @@ dev = [
     "graphifyy",
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["apyhiveapi*"]
+[tool.setuptools]
+packages = ["apyhiveapi", "apyhiveapi.api", "apyhiveapi.helper"]
 
 [tool.setuptools.package-dir]
 apyhiveapi = "src"
