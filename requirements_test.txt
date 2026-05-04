@@ -1,5 +1,0 @@
-tox
-pylint
-pytest
-pytest-asyncio
-pbr

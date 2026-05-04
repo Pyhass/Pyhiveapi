@@ -71,7 +71,7 @@ class HiveAuth:
     SMS_MFA_CHALLENGE = "SMS_MFA"
     DEVICE_VERIFIER_CHALLENGE = "DEVICE_SRP_AUTH"
 
-    def __init__(  # pylint: disable=too-many-positional-arguments
+    def __init__(  # pylint: disable=too-many-positional-arguments  # noqa: PLR0913
         self,
         username: str,
         password: str,
@@ -114,7 +114,7 @@ class HiveAuth:
         self.use_file = bool(self.username == "use@file.com")
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         self.api = HiveApi()
-        self.data = self.api.getLoginInfo()
+        self.data = self.api.get_login_info()
         self.__pool_id = self.data.get("UPID")
         self.__client_id = self.data.get("CLIID")
         self.__region = self.data.get("REGION").split("_")[0]
@@ -334,7 +334,7 @@ class HiveAuth:
 
         return response
 
-    def login(self):
+    def login(self):  # noqa: PLR0912
         """Login into a Hive account."""
         if self.use_file:
             return self.file_response
@@ -586,7 +586,7 @@ def calculate_u(big_a, big_b):
 
 def long_to_hex(long_num):
     """Convert long number to hex."""
-    return "%x" % long_num  # pylint: disable=consider-using-f-string
+    return f"{long_num:x}"
 
 
 def pad_hex(long_int):
@@ -601,9 +601,9 @@ def pad_hex(long_int):
     else:
         hash_str = long_int
     if len(hash_str) % 2 == 1:
-        hash_str = "0%s" % hash_str  # pylint: disable=consider-using-f-string
+        hash_str = f"0{hash_str}"
     elif hash_str[0] in "89ABCDEFabcdef":
-        hash_str = "00%s" % hash_str  # pylint: disable=consider-using-f-string
+        hash_str = f"00{hash_str}"
     return hash_str
 
 
