@@ -349,7 +349,7 @@ jobs:
       - name: Run ruff
         run: |
           . venv/bin/activate
-          pre-commit run ruff --all-files --show-diff-on-failure
+          pre-commit run ruff-check --all-files --show-diff-on-failure
       - name: Run ruff-format
         run: |
           . venv/bin/activate
