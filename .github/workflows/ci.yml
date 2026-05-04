@@ -265,50 +265,7 @@ jobs:
           . venv/bin/activate
           pre-commit run --hook-stage manual check-json --all-files
 
-  lint-pyupgrade:
-    name: Check pyupgrade
-    runs-on: ubuntu-latest
-    needs: prepare-base
-    steps:
-      - name: Check out code from GitHub
-        uses: actions/checkout@v5
-      - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v5
-        id: python
-        with:
-          python-version: ${{ env.DEFAULT_PYTHON }}
-      - name: Restore base Python virtual environment
-        id: cache-venv
-        uses: actions/cache@v4
-        with:
-          path: venv
-          key: >-
-            ${{ env.CACHE_VERSION}}-${{ runner.os }}-base-venv-${{
-            steps.python.outputs.python-version }}-${{
-            hashFiles('pyproject.toml') }}
-      - name: Fail job if Python cache restore failed
-        if: steps.cache-venv.outputs.cache-hit != 'true'
-        run: |
-          echo "Failed to restore Python virtual environment from cache"
-          exit 1
-      - name: Restore pre-commit environment from cache
-        id: cache-precommit
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PRE_COMMIT_HOME }}
-          key: |
-            ${{ env.CACHE_VERSION}}-${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Fail job if cache restore failed
-        if: steps.cache-venv.outputs.cache-hit != 'true'
-        run: |
-          echo "Failed to restore Python virtual environment from cache"
-          exit 1
-      - name: Run pyupgrade
-        run: |
-          . venv/bin/activate
-          pre-commit run --hook-stage manual pyupgrade --all-files --show-diff-on-failure
-
-  lint-ruff:
+  lint-ruff-check:
     name: Check ruff
     runs-on: ubuntu-latest
     needs: prepare-base
@@ -346,10 +303,10 @@ jobs:
         run: |
           echo "Failed to restore Python virtual environment from cache"
           exit 1
-      - name: Run ruff
+      - name: Run ruff-check
         run: |
           . venv/bin/activate
-          pre-commit run ruff --all-files --show-diff-on-failure
+          pre-commit run ruff-check --all-files --show-diff-on-failure
       - name: Run ruff-format
         run: |
           . venv/bin/activate
