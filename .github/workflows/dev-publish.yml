@@ -1,5 +1,4 @@
 # Manual workflow to build and publish dev Python packages from non-master branches.
-# Publishes to TestPyPI for development/testing purposes.
 
 name: Dev Publish
 

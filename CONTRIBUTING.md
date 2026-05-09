@@ -10,6 +10,12 @@
 ```bash
 git clone https://github.com/Pyhive/Pyhiveapi.git
 cd Pyhiveapi
+make setup
+```
+
+Or manually:
+
+```bash
 pip install -e ".[dev]"
 pre-commit install
 ```

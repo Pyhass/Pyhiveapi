@@ -8,10 +8,11 @@ import logging
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from aiohttp import ClientSession
 from aiohttp.web import HTTPException
-from apyhiveapi import API, Auth
+from apyhiveapi import API, Auth  # type: ignore[import-not-found]
 
 from .device_attributes import HiveAttributes
 from .helper.const import DEVICES, HIVE_TYPES, PRODUCTS
@@ -75,7 +76,7 @@ class HiveSession:
         self._refresh_lock = asyncio.Lock()
         self.tokens = SessionTokens()
         self.config = SessionConfig(username=username)
-        self.data = Map(
+        self.data: Any = Map(
             {
                 "products": {},
                 "devices": {},
@@ -84,13 +85,24 @@ class HiveSession:
                 "minMax": {},
             }
         )
-        self.entity_cache = {}
-        self.device_list = {}
+        self.entity_cache: dict[str, Device] = {}
+        self.device_list: dict[str, list[Device]] = {}
         self.hub_id = None
         self._last_poll_slow = False
         self._slow_poll_threshold = 3
         self._refresh_threshold = 0.90
-        self._update_task = None
+        self._update_task: asyncio.Task | None = None
+
+    async def close(self) -> None:
+        """Close the underlying aiohttp ClientSession."""
+        if not self.api.websession.closed:
+            await self.api.websession.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_) -> None:
+        await self.close()
 
     @staticmethod
     def _entity_cache_key(device) -> str:
@@ -164,7 +176,10 @@ class HiveSession:
                 raise
             except Exception as err:  # pylint: disable=broad-except
                 last_err = err
-        raise (reraise_as or type(last_err)) from last_err
+        exc_type = reraise_as or (
+            type(last_err) if last_err is not None else RuntimeError
+        )
+        raise exc_type() from last_err  # pylint: disable=broad-exception-raised
 
     def open_file(self, file: str) -> dict:
         """Open a JSON fixture file from the package data directory.
@@ -177,7 +192,7 @@ class HiveSession:
         """
         return json.loads((_DATA_DIR / file).read_text(encoding="utf-8"))
 
-    def add_list(self, entity_type: str, data: dict, **kwargs) -> Device:
+    def add_list(self, entity_type: str, data: dict, **kwargs) -> Device | None:
         """Add entity to the device list.
 
         Args:
@@ -259,12 +274,12 @@ class HiveSession:
         Returns:
             dict: Parsed dictionary of tokens
         """
-        data = {}
+        data: dict = {}
         _LOGGER.debug(
             "update_tokens - Input tokens: %s", self.helper.sanitize_payload(tokens)
         )
         if "AuthenticationResult" in tokens:
-            data = tokens.get("AuthenticationResult")
+            data = tokens.get("AuthenticationResult") or {}
             self.tokens.token_data.update({"token": data["IdToken"]})
             if "RefreshToken" in data:
                 self.tokens.token_data.update({"refreshToken": data["RefreshToken"]})
@@ -564,7 +579,7 @@ class HiveSession:
 
         return result
 
-    async def update_data(self, _device: dict):
+    async def update_data(self, _device: Device):
         """Get latest data for Hive nodes - rate limiting.
 
         Args:
@@ -718,7 +733,7 @@ class HiveSession:
 
         return get_nodes_successful
 
-    async def start_session(self, config: dict = None):
+    async def start_session(self, config: dict | None = None):
         """Setup the Hive platform.
 
         Args:
@@ -941,11 +956,11 @@ class HiveSession:
         """Backwards-compatible alias for device_list."""
         return self.device_list
 
-    async def startSession(self, config: dict = None):  # pylint: disable=invalid-name
+    async def startSession(self, config: dict | None = None):  # pylint: disable=invalid-name
         """Backwards-compatible alias for start_session."""
         return await self.start_session(config)
 
-    async def updateData(self, device: dict):  # pylint: disable=invalid-name
+    async def updateData(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for update_data."""
         return await self.update_data(device)
 

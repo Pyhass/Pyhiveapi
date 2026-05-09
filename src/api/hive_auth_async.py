@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import socket
+from typing import Any
 
 import boto3
 import botocore
@@ -67,11 +68,11 @@ class HiveAuthAsync:
         self,
         username: str,
         password: str,
-        device_group_key: str = None,
-        device_key: str = None,
-        device_password: str = None,
-        pool_region: str = None,
-        client_secret: str = None,
+        device_group_key: str | None = None,
+        device_key: str | None = None,
+        device_password: str | None = None,
+        pool_region: str | None = None,
+        client_secret: str | None = None,
     ):
         """Initialise async auth."""
         if pool_region is not None:
@@ -80,42 +81,42 @@ class HiveAuthAsync:
                 "(region should be passed to the boto3 client instead)"
             )
 
-        self.loop = asyncio.get_event_loop()
+        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
         self.username = username
         self.password = password
-        self.device_group_key = device_group_key
-        self.device_key = device_key
-        self.device_password = device_password
-        self.access_token = None
+        self.device_group_key: str | None = device_group_key
+        self.device_key: str | None = device_key
+        self.device_password: str | None = device_password
+        self.access_token: str | None = None
         self.api = HiveApi()
         self.user_id = "user_id"
         self.client_secret = client_secret
-        self.big_n = hex_to_long(N_HEX)
-        self.g_value = hex_to_long(G_HEX)
-        self.k = hex_to_long(hex_hash(pad_hex(N_HEX) + pad_hex(G_HEX)))
-        self.small_a_value = self.generate_random_small_a()
-        self.large_a_value = self.calculate_a()
+        self.big_n: int = hex_to_long(N_HEX)
+        self.g_value: int = hex_to_long(G_HEX)
+        self.k: int = hex_to_long(hex_hash(pad_hex(N_HEX) + pad_hex(G_HEX)))
+        self.small_a_value: int = self.generate_random_small_a()
+        self.large_a_value: int = self.calculate_a()
         self.use_file = bool(self.username == "use@file.com")
         self.file_response = {"AuthenticationResult": {"AccessToken": "file"}}
         # The below variables are initialized in the async_init function
-        self.data = None
-        self.__pool_id = None
-        self.__client_id = None
-        self.__region = None
-        self.client = None
+        self.data: dict | None = None
+        self._pool_id: str | None = None
+        self._client_id: str | None = None
+        self._region: str | None = None
+        self.client: Any = None
 
     async def async_init(self):
         """Initialise async variables."""
         self.data = await self.loop.run_in_executor(None, self.api.get_login_info)
-        self.__pool_id = self.data.get("UPID")
-        self.__client_id = self.data.get("CLIID")
-        self.__region = self.data.get("REGION").split("_")[0]
+        self._pool_id = self.data.get("UPID")
+        self._client_id = self.data.get("CLIID")
+        self._region = self.data.get("REGION").split("_")[0]
         self.client = await self.loop.run_in_executor(
             None,
             functools.partial(
                 boto3.client,
                 "cognito-idp",
-                self.__region,
+                self._region,
                 aws_access_key_id="ACCESS_KEY",
                 aws_secret_access_key="SECRET_KEY",
                 aws_session_token="SESSION_TOKEN",
@@ -167,7 +168,7 @@ class HiveAuthAsync:
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
-        pool_id = self.__pool_id.split("_")[1]
+        pool_id = self._pool_id.split("_")[1]
         username_password = f"{pool_id}{username}:{password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
 
@@ -193,7 +194,7 @@ class HiveAuthAsync:
             auth_params.update(
                 {
                     "SECRET_HASH": self.get_secret_hash(
-                        self.username, self.__client_id, self.client_secret
+                        self.username, self._client_id, self.client_secret
                     )
                 }
             )
@@ -301,7 +302,7 @@ class HiveAuthAsync:
             response.update(
                 {
                     "SECRET_HASH": self.get_secret_hash(
-                        username, self.__client_id, self.client_secret
+                        username, self._client_id, self.client_secret
                     )
                 }
             )
@@ -333,7 +334,7 @@ class HiveAuthAsync:
         )
         secret_block_bytes = base64.standard_b64decode(secret_block_b64)
         msg = (
-            bytearray(self.__pool_id.split("_")[1], "utf-8")
+            bytearray(self._pool_id.split("_")[1], "utf-8")
             + bytearray(self.user_id, "utf-8")
             + bytearray(secret_block_bytes)
             + bytearray(timestamp, "utf-8")
@@ -350,7 +351,7 @@ class HiveAuthAsync:
             response.update(
                 {
                     "SECRET_HASH": self.get_secret_hash(
-                        self.username, self.__client_id, self.client_secret
+                        self.username, self._client_id, self.client_secret
                     )
                 }
             )
@@ -380,7 +381,7 @@ class HiveAuthAsync:
                     self.client.initiate_auth,
                     AuthFlow="USER_SRP_AUTH",
                     AuthParameters=auth_params,
-                    ClientId=self.__client_id,
+                    ClientId=self._client_id,
                 ),
             )
         except botocore.exceptions.ClientError as err:
@@ -402,7 +403,7 @@ class HiveAuthAsync:
                     None,
                     functools.partial(
                         self.client.respond_to_auth_challenge,
-                        ClientId=self.__client_id,
+                        ClientId=self._client_id,
                         ChallengeName=self.PASSWORD_VERIFIER_CHALLENGE,
                         ChallengeResponses=challenge_response,
                     ),
@@ -463,7 +464,7 @@ class HiveAuthAsync:
                 None,
                 functools.partial(
                     self.client.respond_to_auth_challenge,
-                    ClientId=self.__client_id,
+                    ClientId=self._client_id,
                     ChallengeName=self.DEVICE_VERIFIER_CHALLENGE,
                     ChallengeResponses=auth_params,
                 ),
@@ -476,7 +477,7 @@ class HiveAuthAsync:
                 None,
                 functools.partial(
                     self.client.respond_to_auth_challenge,
-                    ClientId=self.__client_id,
+                    ClientId=self._client_id,
                     ChallengeName=self.DEVICE_PASSWORD_CHALLENGE,
                     ChallengeResponses=device_challenge_response,
                 ),
@@ -505,7 +506,7 @@ class HiveAuthAsync:
                 None,
                 functools.partial(
                     self.client.respond_to_auth_challenge,
-                    ClientId=self.__client_id,
+                    ClientId=self._client_id,
                     ChallengeName=self.SMS_MFA_CHALLENGE,
                     Session=session,
                     ChallengeResponses={
@@ -537,7 +538,7 @@ class HiveAuthAsync:
         _LOGGER.debug("sms_2fa - 2FA authentication completed successfully.")
         return result
 
-    async def device_registration(self, device_name: str = None):
+    async def device_registration(self, device_name: str | None = None):
         """Register device with Hive."""
         _LOGGER.debug("device_registration - Registering device with Hive.")
         await self.confirm_device(device_name)
@@ -545,7 +546,7 @@ class HiveAuthAsync:
 
     async def confirm_device(
         self,
-        device_name: str = None,
+        device_name: str | None = None,
     ):
         """Confirm Hive Device."""
         if self.client is None:
@@ -624,7 +625,7 @@ class HiveAuthAsync:
                 None,
                 functools.partial(
                     self.client.initiate_auth,
-                    ClientId=self.__client_id,
+                    ClientId=self._client_id,
                     AuthFlow="REFRESH_TOKEN_AUTH",
                     AuthParameters=auth_params,
                 ),

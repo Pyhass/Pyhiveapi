@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from .helper.const import HIVETOHA, HTTP_OK
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ class HiveSmartPlug:
     session: Any
     plug_type = "Switch"
 
-    async def get_state(self, device: dict):
+    async def get_state(self, device: Device):
         """Get smart plug state.
 
         Args:
@@ -38,7 +39,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def get_power_usage(self, device: dict):
+    async def get_power_usage(self, device: Device):
         """Get smart plug current power usage.
 
         Args:
@@ -57,7 +58,7 @@ class HiveSmartPlug:
 
         return state
 
-    async def set_status_on(self, device: dict):
+    async def set_status_on(self, device: Device):
         """Set smart plug to turn on.
 
         Args:
@@ -84,7 +85,7 @@ class HiveSmartPlug:
 
         return final
 
-    async def set_status_off(self, device: dict):
+    async def set_status_off(self, device: Device):
         """Set smart plug to turn off.
 
         Args:
@@ -119,7 +120,7 @@ class Switch(HiveSmartPlug):
         SmartPlug (Class): Initialises the Smartplug Class.
     """
 
-    def __init__(self, session: object):
+    def __init__(self, session: Any):
         """Initialise switch.
 
         Args:
@@ -127,7 +128,7 @@ class Switch(HiveSmartPlug):
         """
         self.session = session
 
-    async def get_switch(self, device: dict):
+    async def get_switch(self, device: Device):
         """Home assistant wrapper to get switch device.
 
         Args:
@@ -179,7 +180,7 @@ class Switch(HiveSmartPlug):
         device.status = device.status or {"state": None}
         return device
 
-    async def get_switch_state(self, device: dict):
+    async def get_switch_state(self, device: Device):
         """Home Assistant wrapper to get updated switch state.
 
         Args:
@@ -192,7 +193,7 @@ class Switch(HiveSmartPlug):
             return await self.session.heating.get_heat_on_demand(device)
         return await self.get_state(device)
 
-    async def turn_on(self, device: dict):
+    async def turn_on(self, device: Device):
         """Home Assisatnt wrapper for turning switch on.
 
         Args:
@@ -205,7 +206,7 @@ class Switch(HiveSmartPlug):
             return await self.session.heating.set_heat_on_demand(device, "ENABLED")
         return await self.set_status_on(device)
 
-    async def turn_off(self, device: dict):
+    async def turn_off(self, device: Device):
         """Home Assisatnt wrapper for turning switch off.
 
         Args:
@@ -218,14 +219,14 @@ class Switch(HiveSmartPlug):
             return await self.session.heating.set_heat_on_demand(device, "DISABLED")
         return await self.set_status_off(device)
 
-    async def turnOn(self, device: dict):  # pylint: disable=invalid-name
+    async def turnOn(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for turn_on."""
         return await self.turn_on(device)
 
-    async def turnOff(self, device: dict):  # pylint: disable=invalid-name
+    async def turnOff(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for turn_off."""
         return await self.turn_off(device)
 
-    async def getSwitch(self, device: dict):  # pylint: disable=invalid-name
+    async def getSwitch(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for get_switch."""
         return await self.get_switch(device)

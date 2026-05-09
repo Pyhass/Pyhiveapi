@@ -4,7 +4,6 @@ import asyncio
 import logging
 import sys
 import traceback
-from os.path import expanduser
 
 from aiohttp import ClientSession
 
@@ -19,8 +18,7 @@ from .session import HiveSession
 
 _LOGGER = logging.getLogger(__name__)
 
-debug = []
-home = expanduser("~")
+debug: list[str] = []
 
 
 def exception_handler(_exctype, _value, tb):
@@ -41,7 +39,7 @@ def exception_handler(_exctype, _value, tb):
         tb_entry.line,
         tb_entry.locals,
     )
-    traceback.print_exc(tb)
+    traceback.print_exc()
 
 
 sys.excepthook = exception_handler
@@ -93,8 +91,8 @@ class Hive(HiveSession):
     def __init__(
         self,
         websession: ClientSession | None = None,
-        username: str = None,
-        password: str = None,
+        username: str | None = None,
+        password: str | None = None,
     ):
         """Generate a Hive session.
 

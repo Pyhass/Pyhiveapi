@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from .helper.const import HIVETOHA, HTTP_OK
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ class HiveHotwater:
     session: Any
     hotwater_type = "Hotwater"
 
-    async def get_mode(self, device: dict):
+    async def get_mode(self, device: Device):
         """Get hotwater current mode.
 
         Args:
@@ -50,7 +51,7 @@ class HiveHotwater:
         """
         return ["SCHEDULE", "ON", "OFF"]
 
-    async def get_boost(self, device: dict):
+    async def get_boost(self, device: Device):
         """Get hot water current boost status.
 
         Args:
@@ -71,7 +72,7 @@ class HiveHotwater:
 
         return final
 
-    async def get_boost_time(self, device: dict):
+    async def get_boost_time(self, device: Device):
         """Get hotwater boost time remaining.
 
         Args:
@@ -90,7 +91,7 @@ class HiveHotwater:
 
         return state
 
-    async def get_state(self, device: dict):
+    async def get_state(self, device: Device):
         """Get hot water current state.
 
         Args:
@@ -121,7 +122,7 @@ class HiveHotwater:
 
         return final
 
-    async def set_mode(self, device: dict, new_mode: str):
+    async def set_mode(self, device: Device, new_mode: str):
         """Set hot water mode.
 
         Args:
@@ -150,7 +151,7 @@ class HiveHotwater:
 
         return final
 
-    async def set_boost_on(self, device: dict, mins: int):
+    async def set_boost_on(self, device: Device, mins: int):
         """Turn hot water boost on.
 
         Args:
@@ -183,7 +184,7 @@ class HiveHotwater:
 
         return final
 
-    async def set_boost_off(self, device: dict):
+    async def set_boost_off(self, device: Device):
         """Turn hot water boost off.
 
         Args:
@@ -222,7 +223,7 @@ class WaterHeater(HiveHotwater):
         Hotwater (object): Hotwater class.
     """
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise water heater.
 
         Args:
@@ -230,7 +231,7 @@ class WaterHeater(HiveHotwater):
         """
         self.session = session
 
-    async def get_water_heater(self, device: dict):
+    async def get_water_heater(self, device: Device):
         """Update water heater device.
 
         Args:
@@ -281,7 +282,7 @@ class WaterHeater(HiveHotwater):
         device.status = device.status or {"current_operation": None}
         return device
 
-    async def get_schedule_now_next_later(self, device: dict):
+    async def get_schedule_now_next_later(self, device: Device):
         """Hive get hotwater schedule now, next and later.
 
         Args:
@@ -302,18 +303,18 @@ class WaterHeater(HiveHotwater):
 
         return state
 
-    async def setMode(self, device: dict, new_mode: str):  # pylint: disable=invalid-name
+    async def setMode(self, device: Device, new_mode: str):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_mode."""
         return await self.set_mode(device, new_mode)
 
-    async def setBoostOn(self, device: dict, mins: int):  # pylint: disable=invalid-name
+    async def setBoostOn(self, device: Device, mins: int):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_boost_on."""
         return await self.set_boost_on(device, mins)
 
-    async def setBoostOff(self, device: dict):  # pylint: disable=invalid-name
+    async def setBoostOff(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_boost_off."""
         return await self.set_boost_off(device)
 
-    async def getWaterHeater(self, device: dict):  # pylint: disable=invalid-name
+    async def getWaterHeater(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for get_water_heater."""
         return await self.get_water_heater(device)
