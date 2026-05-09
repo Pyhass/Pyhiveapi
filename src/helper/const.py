@@ -27,6 +27,8 @@ HTTP_INTERNAL_SERVER_ERROR = 500
 HTTP_BAD_GATEWAY = 502
 HTTP_SERVICE_UNAVAILABLE = 503
 
+EXPECTED_DEVICE_DATA_LENGTH = 3
+
 
 HIVETOHA: dict[str, Any] = {
     "Attribute": {True: "Online", False: "Offline"},

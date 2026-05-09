@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..helper.const import DEVICES, HIVE_TYPES, PRODUCTS
+from ..helper.const import DEVICES, EXPECTED_DEVICE_DATA_LENGTH, HIVE_TYPES, PRODUCTS
 from ..helper.hive_exceptions import HiveReauthRequired, HiveUnknownConfiguration
 from ..helper.hivedataclasses import Device
 
@@ -152,7 +152,7 @@ class DiscoveryMixin:
                 self.auth.device_key = config["device_data"][1]
                 self.auth.device_password = config["device_data"][2]
                 device_data = config["device_data"]
-                if len(device_data) > 3:
+                if len(device_data) > EXPECTED_DEVICE_DATA_LENGTH:
                     token_created = device_data[3]
                     if token_created:
                         self.tokens.token_created = token_created  # type: ignore[attr-defined]
