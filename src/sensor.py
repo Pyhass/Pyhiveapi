@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from .helper.const import HIVE_TYPES, HIVETOHA, sensor_commands
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class HiveSensor:
     session: Any
     sensor_type = "Sensor"
 
-    async def get_state(self, device: dict):
+    async def get_state(self, device: Device):
         """Get sensor state.
 
         Args:
@@ -38,7 +39,7 @@ class HiveSensor:
 
         return final
 
-    async def online(self, device: dict):
+    async def online(self, device: Device):
         """Get the online status of the Hive hub.
 
         Args:
@@ -67,7 +68,7 @@ class Sensor(HiveSensor):
         HiveSensor (object): Hive sensor code.
     """
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise sensor.
 
         Args:
@@ -75,7 +76,7 @@ class Sensor(HiveSensor):
         """
         self.session = session
 
-    async def get_sensor(self, device: dict):
+    async def get_sensor(self, device: Device):
         """Gets updated sensor data.
 
         Args:
@@ -122,9 +123,9 @@ class Sensor(HiveSensor):
             ):
                 code = sensor_commands.get(
                     device.hive_type,
-                    sensor_commands.get(getattr(device, "custom", None)),
+                    sensor_commands.get(getattr(device, "custom", "")),
                 )
-                device.status = {"state": await code(self, device)}
+                device.status = {"state": await code(self, device)}  # type: ignore[misc]
                 props = data.get("props") or {}
                 props["online"] = online
                 device.device_data = props
@@ -153,6 +154,6 @@ class Sensor(HiveSensor):
         device.status = device.status or {"state": None}
         return device
 
-    async def getSensor(self, device: dict):  # pylint: disable=invalid-name
+    async def getSensor(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for get_sensor."""
         return await self.get_sensor(device)

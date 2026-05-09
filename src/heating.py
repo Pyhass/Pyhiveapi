@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from .helper.const import HIVETOHA, HTTP_OK
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class HiveHeating:
     session: Any
     heating_type = "Heating"
 
-    async def get_min_temperature(self, device: dict):
+    async def get_min_temperature(self, device: Device):
         """Get heating minimum target temperature.
 
         Args:
@@ -32,7 +33,7 @@ class HiveHeating:
             return self.session.data.products[device.hive_id]["props"]["minHeat"]
         return 5
 
-    async def get_max_temperature(self, device: dict):
+    async def get_max_temperature(self, device: Device):
         """Get heating maximum target temperature.
 
         Args:
@@ -45,7 +46,7 @@ class HiveHeating:
             return self.session.data.products[device.hive_id]["props"]["maxHeat"]
         return 32
 
-    async def get_current_temperature(self, device: dict):
+    async def get_current_temperature(self, device: Device):
         """Get heating current temperature.
 
         Args:
@@ -118,7 +119,7 @@ class HiveHeating:
 
         return final
 
-    async def get_target_temperature(self, device: dict):
+    async def get_target_temperature(self, device: Device):
         """Get heating target temperature.
 
         Args:
@@ -156,7 +157,7 @@ class HiveHeating:
 
         return state
 
-    async def get_mode(self, device: dict):
+    async def get_mode(self, device: Device):
         """Get heating current mode.
 
         Args:
@@ -179,7 +180,7 @@ class HiveHeating:
 
         return final
 
-    async def get_state(self, device: dict):
+    async def get_state(self, device: Device):
         """Get heating current state.
 
         Args:
@@ -205,7 +206,7 @@ class HiveHeating:
 
         return final
 
-    async def get_current_operation(self, device: dict):
+    async def get_current_operation(self, device: Device):
         """Get heating current operation.
 
         Args:
@@ -224,7 +225,7 @@ class HiveHeating:
 
         return state
 
-    async def get_boost_status(self, device: dict):
+    async def get_boost_status(self, device: Device):
         """Get heating boost current status.
 
         Args:
@@ -243,7 +244,7 @@ class HiveHeating:
 
         return state
 
-    async def get_boost_time(self, device: dict):
+    async def get_boost_time(self, device: Device):
         """Get heating boost time remaining.
 
         Args:
@@ -264,7 +265,7 @@ class HiveHeating:
             return state
         return None
 
-    async def get_heat_on_demand(self, device):
+    async def get_heat_on_demand(self, device: Device):
         """Get heat on demand status.
 
         Args:
@@ -292,7 +293,7 @@ class HiveHeating:
         """
         return ["SCHEDULE", "MANUAL", "OFF"]
 
-    async def set_target_temperature(self, device: dict, new_temp: str):
+    async def set_target_temperature(self, device: Device, new_temp: str):
         """Set heating target temperature.
 
         Args:
@@ -347,7 +348,7 @@ class HiveHeating:
 
         return final
 
-    async def set_mode(self, device: dict, new_mode: str):
+    async def set_mode(self, device: Device, new_mode: str):
         """Set heating mode.
 
         Args:
@@ -399,7 +400,7 @@ class HiveHeating:
 
         return final
 
-    async def set_boost_on(self, device: dict, mins: str, temp: float):
+    async def set_boost_on(self, device: Device, mins: str, temp: float):
         """Turn heating boost on.
 
         Args:
@@ -441,7 +442,7 @@ class HiveHeating:
                 return final
         return None
 
-    async def set_boost_off(self, device: dict):
+    async def set_boost_off(self, device: Device):
         """Turn heating boost off.
 
         Args:
@@ -482,7 +483,7 @@ class HiveHeating:
 
         return final
 
-    async def set_heat_on_demand(self, device: dict, state: str):
+    async def set_heat_on_demand(self, device: Device, state: str):
         """Enable or disable Heat on Demand for a Thermostat.
 
         Args:
@@ -523,7 +524,7 @@ class Climate(HiveHeating):
         Heating (object): Heating class
     """
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise heating.
 
         Args:
@@ -531,7 +532,7 @@ class Climate(HiveHeating):
         """
         self.session = session
 
-    async def get_climate(self, device: dict):
+    async def get_climate(self, device: Device):
         """Get heating data.
 
         Args:
@@ -592,7 +593,7 @@ class Climate(HiveHeating):
         }
         return device
 
-    async def get_schedule_now_next_later(self, device: dict):
+    async def get_schedule_now_next_later(self, device: Device):
         """Hive get heating schedule now, next and later.
 
         Args:
@@ -614,7 +615,7 @@ class Climate(HiveHeating):
 
         return state
 
-    async def minmax_temperature(self, device: dict):
+    async def minmax_temperature(self, device: Device):
         """Min/Max Temp.
 
         Args:
@@ -634,22 +635,22 @@ class Climate(HiveHeating):
 
         return final
 
-    async def setMode(self, device: dict, new_mode: str):  # pylint: disable=invalid-name
+    async def setMode(self, device: Device, new_mode: str):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_mode."""
         return await self.set_mode(device, new_mode)
 
-    async def setTargetTemperature(self, device: dict, new_temp: str):  # pylint: disable=invalid-name
+    async def setTargetTemperature(self, device: Device, new_temp: str):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_target_temperature."""
         return await self.set_target_temperature(device, new_temp)
 
-    async def setBoostOn(self, device: dict, mins: str, temp: float):  # pylint: disable=invalid-name
+    async def setBoostOn(self, device: Device, mins: str, temp: float):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_boost_on."""
         return await self.set_boost_on(device, mins, temp)
 
-    async def setBoostOff(self, device: dict):  # pylint: disable=invalid-name
+    async def setBoostOff(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for set_boost_off."""
         return await self.set_boost_off(device)
 
-    async def getClimate(self, device: dict):  # pylint: disable=invalid-name
+    async def getClimate(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for get_climate."""
         return await self.get_climate(device)

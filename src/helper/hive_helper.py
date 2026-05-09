@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 from .const import HIVE_TYPES
+from .hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def epoch_time(date_time: Any, pattern: str, action: str) -> Any:
 class HiveHelper:
     """Hive helper class."""
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Hive Helper.
 
         Args:
@@ -52,8 +53,8 @@ class HiveHelper:
         Returns:
             str: Name of device.
         """
-        product_name = False
-        device_name = False
+        product_name: str | None = None
+        device_name: str | None = None
 
         try:
             product_name = self.session.data.products[n_id]["state"]["name"]
@@ -190,7 +191,7 @@ class HiveHelper:
 
         return device
 
-    def convert_minutes_to_time(self, minutes_to_convert: str):
+    def convert_minutes_to_time(self, minutes_to_convert: int):
         """Convert minutes string to datetime.
 
         Args:
@@ -206,7 +207,7 @@ class HiveHelper:
         converted_time_string = converted_time.strftime("%H:%M")
         return converted_time_string
 
-    def get_schedule_nnl(self, hive_api_schedule: list):  # pylint: disable=too-many-locals
+    def get_schedule_nnl(self, hive_api_schedule: dict):  # pylint: disable=too-many-locals
         """Get the schedule now, next and later of a given nodes schedule.
 
         Args:
@@ -302,7 +303,7 @@ class HiveHelper:
 
         return schedule_now_and_next
 
-    def get_heat_on_demand_device(self, device: dict):
+    def get_heat_on_demand_device(self, device: Device):
         """Use TRV device to get the linked thermostat device.
 
         Args:

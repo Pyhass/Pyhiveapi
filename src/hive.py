@@ -19,7 +19,7 @@ from .session import HiveSession
 
 _LOGGER = logging.getLogger(__name__)
 
-debug = []
+debug: list[str] = []
 home = expanduser("~")
 
 
@@ -93,8 +93,8 @@ class Hive(HiveSession):
     def __init__(
         self,
         websession: ClientSession | None = None,
-        username: str = None,
-        password: str = None,
+        username: str | None = None,
+        password: str | None = None,
     ):
         """Generate a Hive session.
 

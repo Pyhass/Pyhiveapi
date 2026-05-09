@@ -1,6 +1,7 @@
 """Hive Device Attribute Module."""
 
 import logging
+from typing import Any
 
 from .helper.const import HIVETOHA
 
@@ -10,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 class HiveAttributes:
     """Device Attributes Code."""
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise attributes.
 
         Args:

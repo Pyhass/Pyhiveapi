@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from .helper.const import HIVETOHA, HTTP_OK
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class HiveLight:
     session: Any
     light_type = "Light"
 
-    async def get_state(self, device: dict):
+    async def get_state(self, device: Device):
         """Get light current state.
 
         Args:
@@ -43,7 +44,7 @@ class HiveLight:
 
         return final
 
-    async def get_brightness(self, device: dict):
+    async def get_brightness(self, device: Device):
         """Get light current brightness.
 
         Args:
@@ -67,7 +68,7 @@ class HiveLight:
 
         return final
 
-    async def get_min_color_temp(self, device: dict):
+    async def get_min_color_temp(self, device: Device):
         """Get light minimum color temperature.
 
         Args:
@@ -88,7 +89,7 @@ class HiveLight:
 
         return final
 
-    async def get_max_color_temp(self, device: dict):
+    async def get_max_color_temp(self, device: Device):
         """Get light maximum color temperature.
 
         Args:
@@ -109,7 +110,7 @@ class HiveLight:
 
         return final
 
-    async def get_color_temp(self, device: dict):
+    async def get_color_temp(self, device: Device):
         """Get light current color temperature.
 
         Args:
@@ -130,7 +131,7 @@ class HiveLight:
 
         return final
 
-    async def get_color(self, device: dict):
+    async def get_color(self, device: Device):
         """Get light current colour.
 
         Args:
@@ -157,7 +158,7 @@ class HiveLight:
 
         return final
 
-    async def get_color_mode(self, device: dict):
+    async def get_color_mode(self, device: Device):
         """Get Colour Mode.
 
         Args:
@@ -176,7 +177,7 @@ class HiveLight:
 
         return state
 
-    async def set_status_off(self, device: dict):
+    async def set_status_off(self, device: Device):
         """Set light to turn off.
 
         Args:
@@ -224,7 +225,7 @@ class HiveLight:
 
         return final
 
-    async def set_status_on(self, device: dict):
+    async def set_status_on(self, device: Device):
         """Set light to turn on.
 
         Args:
@@ -272,7 +273,7 @@ class HiveLight:
 
         return final
 
-    async def set_brightness(self, device: dict, n_brightness: int):
+    async def set_brightness(self, device: Device, n_brightness: int):
         """Set brightness of the light.
 
         Args:
@@ -307,7 +308,7 @@ class HiveLight:
 
         return final
 
-    async def set_color_temp(self, device: dict, color_temp: int):
+    async def set_color_temp(self, device: Device, color_temp: int):
         """Set light to turn on.
 
         Args:
@@ -351,7 +352,7 @@ class HiveLight:
 
         return final
 
-    async def set_color(self, device: dict, new_color: list):
+    async def set_color(self, device: Device, new_color: list):
         """Set light to turn on.
 
         Args:
@@ -395,7 +396,7 @@ class Light(HiveLight):
         HiveLight (object): HiveLight Code.
     """
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise light.
 
         Args:
@@ -403,7 +404,7 @@ class Light(HiveLight):
         """
         self.session = session
 
-    async def get_light(self, device: dict):
+    async def get_light(self, device: Device):
         """Get light data.
 
         Args:
@@ -464,7 +465,7 @@ class Light(HiveLight):
 
     async def turn_on(
         self,
-        device: dict,
+        device: Device,
         brightness: int | None,
         color_temp: int | None,
         color: list | None,
@@ -489,7 +490,7 @@ class Light(HiveLight):
 
         return await self.set_status_on(device)
 
-    async def turn_off(self, device: dict):
+    async def turn_off(self, device: Device):
         """Set light to turn off.
 
         Args:
@@ -500,14 +501,16 @@ class Light(HiveLight):
         """
         return await self.set_status_off(device)
 
-    async def turnOn(self, device: dict, brightness: int, color_temp: int, color: list):  # pylint: disable=invalid-name
+    async def turnOn(
+        self, device: Device, brightness: int, color_temp: int, color: list
+    ):  # pylint: disable=invalid-name
         """Backwards-compatible alias for turn_on."""
         return await self.turn_on(device, brightness, color_temp, color)
 
-    async def turnOff(self, device: dict):  # pylint: disable=invalid-name
+    async def turnOff(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for turn_off."""
         return await self.turn_off(device)
 
-    async def getLight(self, device: dict):  # pylint: disable=invalid-name
+    async def getLight(self, device: Device):  # pylint: disable=invalid-name
         """Backwards-compatible alias for get_light."""
         return await self.get_light(device)

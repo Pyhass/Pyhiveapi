@@ -1,8 +1,10 @@
 """Hive Hub Module."""
 
 import logging
+from typing import Any
 
 from .helper.const import HIVETOHA
+from .helper.hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ class HiveHub:
     hub_type = "Hub"
     log_type = "Sensor"
 
-    def __init__(self, session: object = None):
+    def __init__(self, session: Any = None):
         """Initialise hub.
 
         Args:
@@ -25,7 +27,7 @@ class HiveHub:
         """
         self.session = session
 
-    async def get_smoke_status(self, device: dict):
+    async def get_smoke_status(self, device: Device):
         """Get the hub smoke status.
 
         Args:
@@ -46,7 +48,7 @@ class HiveHub:
 
         return final
 
-    async def get_dog_bark_status(self, device: dict):
+    async def get_dog_bark_status(self, device: Device):
         """Get dog bark status.
 
         Args:
@@ -67,7 +69,7 @@ class HiveHub:
 
         return final
 
-    async def get_glass_break_status(self, device: dict):
+    async def get_glass_break_status(self, device: Device):
         """Get the glass detected status from the Hive hub.
 
         Args:

@@ -1,5 +1,7 @@
 """Constants for Pyhiveapi."""
 
+from typing import Any
+
 from .hivedataclasses import EntityConfig
 
 SYNC_PACKAGE_NAME = "pyhiveapi"
@@ -26,7 +28,7 @@ HTTP_BAD_GATEWAY = 502
 HTTP_SERVICE_UNAVAILABLE = 503
 
 
-HIVETOHA = {
+HIVETOHA: dict[str, Any] = {
     "Attribute": {True: "Online", False: "Offline"},
     "Boost": {None: "OFF", False: "OFF"},
     "Heating": {False: "OFF", "ENABLED": True, "DISABLED": False},
