@@ -10,4 +10,16 @@ else:
     from .api.hive_auth_async import HiveAuthAsync as Auth  # type: ignore[assignment]
 
 from .helper.const import SMS_REQUIRED
+from .helper.hive_exceptions import (
+    HiveApiError,
+    HiveAuthError,
+    HiveFailedToRefreshTokens,
+    HiveInvalid2FACode,
+    HiveInvalidDeviceAuthentication,
+    HiveInvalidPassword,
+    HiveInvalidUsername,
+    HiveReauthRequired,
+    HiveRefreshTokenExpired,
+    HiveUnknownConfiguration,
+)
 from .hive import Hive
