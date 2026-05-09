@@ -5,11 +5,11 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "type: dependencies"
+      - "dependencies"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     labels:
-      - "type: dependencies"
+      - "dependencies"
