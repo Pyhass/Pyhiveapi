@@ -151,12 +151,11 @@ class DiscoveryMixin:
                 self.auth.device_group_key = config["device_data"][0]
                 self.auth.device_key = config["device_data"][1]
                 self.auth.device_password = config["device_data"][2]
-                try:
-                    token_created = config["device_data"][3]
+                device_data = config["device_data"]
+                if len(device_data) > 3:
+                    token_created = device_data[3]
                     if token_created:
                         self.tokens.token_created = token_created  # type: ignore[attr-defined]
-                except IndexError:
-                    pass
 
             if not self.config.file and "tokens" not in config:
                 raise HiveUnknownConfiguration
