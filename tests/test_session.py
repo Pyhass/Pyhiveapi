@@ -9,14 +9,6 @@ from apyhiveapi import Hive
 from apyhiveapi.helper.hive_helper import HiveHelper
 
 
-@pytest.fixture
-async def file_session():
-    """Hive session loaded from the bundled data.json fixture."""
-    async with Hive(username="use@file.com", password="") as hive:
-        await hive.start_session({})
-        yield hive
-
-
 class TestFileSession:
     """Integration tests using the bundled data.json file fixture."""
 

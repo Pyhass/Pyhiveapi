@@ -45,6 +45,7 @@ dev = [
     "pylint",
     "ruff",
     "mypy",
+    "bandit",
     "pre-commit",
     "graphifyy",
 ]

@@ -1,6 +1,6 @@
 # pyhive-integration
 
-![CodeQL](https://github.com/Pyhive/Pyhiveapi/workflows/CodeQL/badge.svg) ![Python Linting](https://github.com/Pyhive/Pyhiveapi/workflows/Python%20package/badge.svg) ![PyPI](https://img.shields.io/pypi/v/pyhive-integration) ![Python](https://img.shields.io/pypi/pyversions/pyhive-integration) ![License](https://img.shields.io/github/license/Pyhive/Pyhiveapi)
+![CI](https://github.com/Pyhive/Pyhiveapi/actions/workflows/ci.yml/badge.svg) ![PyPI](https://img.shields.io/pypi/v/pyhive-integration) ![Python](https://img.shields.io/pypi/pyversions/pyhive-integration) ![License](https://img.shields.io/github/license/Pyhive/Pyhiveapi)
 
 A Python library for interfacing with the [Hive](https://www.hivehome.com/) smart home platform. Provides both async (`apyhiveapi`) and sync (`pyhiveapi`) APIs, and is designed primarily for use with [Home Assistant](https://www.home-assistant.io/) — though it works standalone too.
 
