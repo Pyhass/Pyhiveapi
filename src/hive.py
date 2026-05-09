@@ -7,13 +7,13 @@ import traceback
 
 from aiohttp import ClientSession
 
-from .action import HiveAction
-from .heating import Climate
-from .hotwater import WaterHeater
-from .hub import HiveHub
-from .light import Light
-from .plug import Switch
-from .sensor import Sensor
+from .devices.action import HiveAction
+from .devices.heating import Climate
+from .devices.hotwater import WaterHeater
+from .devices.hub import HiveHub
+from .devices.light import Light
+from .devices.plug import Switch
+from .devices.sensor import Sensor
 from .session import HiveSession
 
 _LOGGER = logging.getLogger(__name__)
