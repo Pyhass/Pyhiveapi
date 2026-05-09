@@ -214,8 +214,20 @@ class DeviceRegistrationMixin:
         return result
 
     async def get_device_data(self):
-        """Get key device information for device authentication."""
-        return self.device_group_key, self.device_key, self.device_password
+        """Get key device information for device authentication.
+
+        Returns:
+            tuple: (device_group_key, device_key, device_password, token_created)
+                token_created is a datetime marking when the current tokens were issued.
+                Pass all four values as ``device_data`` in ``start_session`` config so the
+                session can compute token expiry from the real issue time rather than epoch.
+        """
+        return (
+            self.device_group_key,
+            self.device_key,
+            self.device_password,
+            self.token_created,
+        )
 
     async def is_device_registered(self, access_token=None, device_key=None):
         """Check if the current device is registered with Cognito.

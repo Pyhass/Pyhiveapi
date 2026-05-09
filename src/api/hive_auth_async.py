@@ -75,6 +75,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         self.device_key: str | None = device_key
         self.device_password: str | None = device_password
         self.access_token: str | None = None
+        self.token_created: datetime.datetime | None = None
         self.api = HiveApi()
         self.user_id = "user_id"
         self.client_secret = client_secret
@@ -319,6 +320,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
 
             if "AuthenticationResult" in result:
                 self.access_token = result["AuthenticationResult"]["AccessToken"]
+                self.token_created = datetime.datetime.now()
                 if "NewDeviceMetadata" in result["AuthenticationResult"]:
                     self.device_group_key = result["AuthenticationResult"][
                         "NewDeviceMetadata"
@@ -410,6 +412,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
                 ),
             )
             self.access_token = result["AuthenticationResult"]["AccessToken"]
+            self.token_created = datetime.datetime.now()
             if "NewDeviceMetadata" in result["AuthenticationResult"]:
                 self.device_group_key = result["AuthenticationResult"][
                     "NewDeviceMetadata"
