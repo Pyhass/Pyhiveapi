@@ -12,9 +12,9 @@ from apyhiveapi.helper.hive_helper import HiveHelper
 @pytest.fixture
 async def file_session():
     """Hive session loaded from the bundled data.json fixture."""
-    hive = Hive(username="use@file.com", password="")
-    await hive.start_session({})
-    return hive
+    async with Hive(username="use@file.com", password="") as hive:
+        await hive.start_session({})
+        yield hive
 
 
 class TestFileSession:
@@ -138,43 +138,52 @@ class TestTokenRefreshRetry:
 
     async def test_succeeds_on_first_attempt(self):
         """A coroutine that succeeds immediately is called exactly once."""
-        hive = Hive(username="test@example.com", password="pass")
-        calls = 0
+        async with Hive(
+            username="test@example.com",
+            password="pass",  # pragma: allowlist secret
+        ) as hive:
+            calls = 0
 
-        async def coro():
-            nonlocal calls
-            calls += 1
-            return "ok"
+            async def coro():
+                nonlocal calls
+                calls += 1
+                return "ok"
 
-        result = await hive._retry_with_backoff(coro)  # pylint: disable=protected-access
+            result = await hive._retry_with_backoff(coro)  # pylint: disable=protected-access
         assert result == "ok"
         assert calls == 1
 
     async def test_retries_on_failure_then_succeeds(self):
         """A coroutine that fails once is retried and its success is returned."""
-        hive = Hive(username="test@example.com", password="pass")
-        attempts = []
+        async with Hive(
+            username="test@example.com",
+            password="pass",  # pragma: allowlist secret
+        ) as hive:
+            attempts = []
 
-        async def coro():
-            attempts.append(1)
-            if len(attempts) < EXPECTED_ATTEMPTS:
-                raise Exception("transient")  # pylint: disable=broad-exception-raised
-            return "recovered"
+            async def coro():
+                attempts.append(1)
+                if len(attempts) < EXPECTED_ATTEMPTS:
+                    raise Exception("transient")  # pylint: disable=broad-exception-raised
+                return "recovered"
 
-        with patch("asyncio.sleep", new=AsyncMock()):
-            result = await hive._retry_with_backoff(coro, delays=(0, 0, 0))  # pylint: disable=protected-access
+            with patch("asyncio.sleep", new=AsyncMock()):
+                result = await hive._retry_with_backoff(coro, delays=(0, 0, 0))  # pylint: disable=protected-access
 
         assert result == "recovered"
         assert len(attempts) == EXPECTED_ATTEMPTS
 
     async def test_raises_after_all_retries_exhausted(self):
         """A coroutine that always fails raises after all retries are exhausted."""
-        hive = Hive(username="test@example.com", password="pass")
+        async with Hive(
+            username="test@example.com",
+            password="pass",  # pragma: allowlist secret
+        ) as hive:
 
-        async def always_fails():
-            raise Exception("permanent failure")  # pylint: disable=broad-exception-raised
+            async def always_fails():
+                raise Exception("permanent failure")  # pylint: disable=broad-exception-raised
 
-        with patch("asyncio.sleep", new=AsyncMock()):
-            with pytest.raises(Exception) as exc_info:
-                await hive._retry_with_backoff(always_fails, delays=(0, 0))  # pylint: disable=protected-access
+            with patch("asyncio.sleep", new=AsyncMock()):
+                with pytest.raises(Exception) as exc_info:
+                    await hive._retry_with_backoff(always_fails, delays=(0, 0))  # pylint: disable=protected-access
         assert "permanent failure" in str(exc_info.value.__cause__)

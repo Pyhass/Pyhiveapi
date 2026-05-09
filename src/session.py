@@ -93,6 +93,17 @@ class HiveSession:
         self._refresh_threshold = 0.90
         self._update_task: asyncio.Task | None = None
 
+    async def close(self) -> None:
+        """Close the underlying aiohttp ClientSession."""
+        if not self.api.websession.closed:
+            await self.api.websession.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_) -> None:
+        await self.close()
+
     @staticmethod
     def _entity_cache_key(device) -> str:
         """Build a stable cache key for an entity instance."""

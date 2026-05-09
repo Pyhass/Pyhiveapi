@@ -15,10 +15,14 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Home Automation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "boto3>=1.16.10",
@@ -37,6 +41,7 @@ Source = "https://github.com/Pyhive/Pyhiveapi"
 dev = [
     "pytest",
     "pytest-asyncio",
+    "pytest-cov",
     "pylint",
     "ruff",
     "mypy",

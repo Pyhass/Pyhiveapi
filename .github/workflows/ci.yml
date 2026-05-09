@@ -55,21 +55,6 @@ jobs:
       - name: Run all pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
 
-  pylint:
-    name: Pylint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.DEFAULT_PYTHON }}
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
-      - name: Run pylint
-        run: |
-          python -m pylint --fail-under=10 \
-            $(find src -name '*.py')
-
   tests:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -86,4 +71,4 @@ jobs:
           sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev python3-dev build-essential
           pip install -e ".[dev]"
       - name: Run tests
-        run: pytest tests/ --tb=short
+        run: pytest tests/ --tb=short --cov=src --cov-report=term-missing
