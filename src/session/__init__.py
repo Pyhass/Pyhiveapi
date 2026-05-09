@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Any
 
 from aiohttp import ClientSession
@@ -17,8 +16,6 @@ from ..helper.map import Map
 from .auth import SessionAuthMixin
 from .discovery import DiscoveryMixin
 from .polling import PollingMixin
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class HiveSession(SessionCompatMixin, SessionAuthMixin, PollingMixin, DiscoveryMixin):
