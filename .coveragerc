@@ -1,0 +1,9 @@
+# .coveragerc
+[run]
+branch = True
+
+[report]
+show_missing = True
+
+[lcov]
+output = coverage.lcov

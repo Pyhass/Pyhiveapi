@@ -48,3 +48,7 @@ superpowers/
 
 # caches
 *cache*
+
+
+# coverage
+coverage.lcov
