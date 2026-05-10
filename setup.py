@@ -21,6 +21,22 @@ setup(
                     "/pyhiveapi/api/",
                     additional_replacements={"apyhiveapi": "pyhiveapi"},
                 ),
+                unasync.Rule(
+                    "/apyhiveapi/devices/",
+                    "/pyhiveapi/devices/",
+                    additional_replacements={
+                        "apyhiveapi": "pyhiveapi",
+                        "asyncio": "threading",
+                    },
+                ),
+                unasync.Rule(
+                    "/apyhiveapi/session/",
+                    "/pyhiveapi/session/",
+                    additional_replacements={
+                        "apyhiveapi": "pyhiveapi",
+                        "asyncio": "threading",
+                    },
+                ),
             ]
         )
     },

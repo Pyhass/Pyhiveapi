@@ -1,17 +1,15 @@
 """Auth file for logging in."""
 
+from __future__ import annotations
+
 import asyncio
 import base64
-import binascii
-import concurrent.futures
 import datetime
 import functools
 import hashlib
 import hmac
 import logging
-import os
 import re
-import socket
 from typing import Any
 
 import boto3
@@ -26,36 +24,25 @@ from ..helper.hive_exceptions import (
     HiveInvalidUsername,
     HiveRefreshTokenExpired,
 )
+from .device_registration import DeviceRegistrationMixin
 from .hive_api import HiveApi
+from .srp_crypto import (
+    G_HEX,
+    N_HEX,
+    calculate_u,
+    compute_hkdf,
+    get_random,
+    hash_sha256,
+    hex_hash,
+    hex_to_long,
+    long_to_hex,
+    pad_hex,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-# https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L22
-N_HEX = (
-    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
-    + "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
-    + "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
-    + "E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
-    + "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3D"
-    + "C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F"
-    + "83655D23DCA3AD961C62F356208552BB9ED529077096966D"
-    + "670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
-    + "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9"
-    + "DE2BCBF6955817183995497CEA956AE515D2261898FA0510"
-    + "15728E5A8AAAC42DAD33170D04507A33A85521ABDF1CBA64"
-    + "ECFB850458DBEF0A8AEA71575D060C7DB3970F85A6E1E4C7"
-    + "ABF5AE8CDB0933D71E8C94E04A25619DCEE3D2261AD2EE6B"
-    + "F12FFA06D98A0864D87602733EC86A64521F2B18177B200C"
-    + "BBE117577A615D6C770988C0BAD946E208E24FA074E5AB31"
-    + "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
-)
-# https://github.com/aws/amazon-cognito-identity-js/blob/master/src/AuthenticationHelper.js#L49
-G_HEX = "2"
-INFO_BITS = bytearray("Caldera Derived Key", "utf-8")
-POOL = concurrent.futures.ThreadPoolExecutor()
 
-
-class HiveAuthAsync:
+class HiveAuthAsync(DeviceRegistrationMixin):
     """Async api to interface with hive auth."""
 
     NEW_PASSWORD_REQUIRED_CHALLENGE = "NEW_PASSWORD_REQUIRED"
@@ -88,6 +75,7 @@ class HiveAuthAsync:
         self.device_key: str | None = device_key
         self.device_password: str | None = device_password
         self.access_token: str | None = None
+        self.token_created: datetime.datetime | None = None
         self.api = HiveApi()
         self.user_id = "user_id"
         self.client_secret = client_secret
@@ -212,102 +200,6 @@ class HiveAuthAsync:
         hmac_obj = hmac.new(bytearray(client_secret, "utf-8"), message, hashlib.sha256)
         return base64.standard_b64encode(hmac_obj.digest()).decode("utf-8")
 
-    async def generate_hash_device(self, device_group_key, device_key):
-        """Generate device hash key."""
-        # source: https://github.com/amazon-archives/amazon-cognito-identity-js/blob/6b87f1a30a998072b4d98facb49dcaf8780d15b0/src/AuthenticationHelper.js#L137 # pylint: disable=line-too-long
-
-        # random device password, which will be used for DEVICE_SRP_AUTH flow
-        device_password = base64.standard_b64encode(os.urandom(40)).decode("utf-8")
-
-        combined_string = f"{device_group_key}{device_key}:{device_password}"
-        combined_string_hash = hash_sha256(combined_string.encode("utf-8"))
-        salt = pad_hex(get_random(16))
-
-        x_value = hex_to_long(hex_hash(salt + combined_string_hash))
-        g_value = hex_to_long(G_HEX)
-        big_n = hex_to_long(N_HEX)
-        verifier_device_not_padded = pow(g_value, x_value, big_n)
-        verifier = pad_hex(verifier_device_not_padded)
-
-        device_secret_verifier_config = {
-            "PasswordVerifier": base64.standard_b64encode(
-                bytearray.fromhex(verifier)
-            ).decode("utf-8"),
-            "Salt": base64.standard_b64encode(bytearray.fromhex(salt)).decode("utf-8"),
-        }
-        self.device_password = device_password
-        return device_secret_verifier_config
-
-    async def get_device_authentication_key(  # pylint: disable=too-many-positional-arguments
-        self, device_group_key, device_key, device_password, server_b_value, salt
-    ):
-        """Get device authentication key."""
-        u_value = calculate_u(self.large_a_value, server_b_value)
-        if u_value == 0:
-            raise ValueError("U cannot be zero.")
-        username_password = f"{device_group_key}{device_key}:{device_password}"
-        username_password_hash = hash_sha256(username_password.encode("utf-8"))
-
-        x_value = hex_to_long(hex_hash(pad_hex(salt) + username_password_hash))
-        g_mod_pow_xn = pow(self.g_value, x_value, self.big_n)
-        int_value2 = (server_b_value - self.k * g_mod_pow_xn) % self.big_n
-        exp = self.small_a_value + u_value * x_value
-        s_value = pow(int_value2, exp, self.big_n)
-        hkdf = compute_hkdf(
-            bytearray.fromhex(pad_hex(s_value)),
-            bytearray.fromhex(pad_hex(long_to_hex(u_value))),
-        )
-        return hkdf
-
-    async def process_device_challenge(self, challenge_parameters):
-        """Process device challenge."""
-        username = challenge_parameters["USERNAME"]
-        salt_hex = (
-            challenge_parameters["SALT"]
-            if isinstance(challenge_parameters["SALT"], str)
-            else pad_hex(challenge_parameters["SALT"])
-        )
-        srp_b_hex = challenge_parameters["SRP_B"]
-        secret_block_b64 = challenge_parameters["SECRET_BLOCK"]
-        # re strips leading zero from a day number (required by AWS Cognito)
-        timestamp = re.sub(
-            r" 0(\d) ",
-            r" \1 ",
-            datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
-        )
-        hkdf = await self.get_device_authentication_key(
-            self.device_group_key,
-            self.device_key,
-            self.device_password,
-            hex_to_long(srp_b_hex),
-            salt_hex,
-        )
-        secret_block_bytes = base64.standard_b64decode(secret_block_b64)
-        msg = (
-            bytearray(self.device_group_key, "utf-8")
-            + bytearray(self.device_key, "utf-8")
-            + bytearray(secret_block_bytes)
-            + bytearray(timestamp, "utf-8")
-        )
-        hmac_obj = hmac.new(hkdf, msg, digestmod=hashlib.sha256)
-        signature_string = base64.standard_b64encode(hmac_obj.digest())
-        response = {
-            "TIMESTAMP": timestamp,
-            "USERNAME": username,
-            "PASSWORD_CLAIM_SECRET_BLOCK": secret_block_b64,
-            "PASSWORD_CLAIM_SIGNATURE": signature_string.decode("utf-8"),
-            "DEVICE_KEY": self.device_key,
-        }
-        if self.client_secret is not None:
-            response.update(
-                {
-                    "SECRET_HASH": self.get_secret_hash(
-                        username, self._client_id, self.client_secret
-                    )
-                }
-            )
-        return response
-
     async def process_challenge(self, challenge_parameters):
         """Process auth challenge."""
         self.user_id = challenge_parameters["USER_ID_FOR_SRP"]
@@ -426,18 +318,17 @@ class HiveAuthAsync:
 
             _LOGGER.debug("login - SRP auth challenge completed successfully.")
 
-            if (
-                "AuthenticationResult" in result
-                and "NewDeviceMetadata" in result["AuthenticationResult"]
-            ):
+            if "AuthenticationResult" in result:
                 self.access_token = result["AuthenticationResult"]["AccessToken"]
-                self.device_group_key = result["AuthenticationResult"][
-                    "NewDeviceMetadata"
-                ]["DeviceGroupKey"]
-                self.device_key = result["AuthenticationResult"]["NewDeviceMetadata"][
-                    "DeviceKey"
-                ]
-                _LOGGER.debug("login - Device keys stored successfully.")
+                self.token_created = datetime.datetime.now()
+                if "NewDeviceMetadata" in result["AuthenticationResult"]:
+                    self.device_group_key = result["AuthenticationResult"][
+                        "NewDeviceMetadata"
+                    ]["DeviceGroupKey"]
+                    self.device_key = result["AuthenticationResult"][
+                        "NewDeviceMetadata"
+                    ]["DeviceKey"]
+                    _LOGGER.debug("login - Device keys stored successfully.")
 
             return result
 
@@ -482,6 +373,15 @@ class HiveAuthAsync:
                     ChallengeResponses=device_challenge_response,
                 ),
             )
+        except botocore.exceptions.ClientError as err:
+            error_code = (err.response or {}).get("Error", {}).get("Code", "")
+            if error_code in ("ResourceNotFoundException", "NotAuthorizedException"):
+                _LOGGER.error(
+                    "Device login failed: device not registered or not remembered (%s).",
+                    error_code,
+                )
+                raise HiveInvalidDeviceAuthentication from err
+            raise
         except botocore.exceptions.EndpointConnectionError as err:
             if err.__class__.__name__ == "EndpointConnectionError":
                 _LOGGER.error("Device login failed: cannot reach endpoint.")
@@ -491,11 +391,7 @@ class HiveAuthAsync:
         _LOGGER.debug("device_login - Device authentication completed successfully.")
         return result
 
-    async def sms_2fa(
-        self,
-        entered_code,
-        challenge_parameters,
-    ):
+    async def sms_2fa(self, entered_code, challenge_parameters):
         """Send sms code for auth."""
         session = challenge_parameters.get("Session")
         code = str(entered_code)
@@ -515,8 +411,9 @@ class HiveAuthAsync:
                     },
                 ),
             )
+            self.access_token = result["AuthenticationResult"]["AccessToken"]
+            self.token_created = datetime.datetime.now()
             if "NewDeviceMetadata" in result["AuthenticationResult"]:
-                self.access_token = result["AuthenticationResult"]["AccessToken"]
                 self.device_group_key = result["AuthenticationResult"][
                     "NewDeviceMetadata"
                 ]["DeviceGroupKey"]
@@ -537,75 +434,6 @@ class HiveAuthAsync:
 
         _LOGGER.debug("sms_2fa - 2FA authentication completed successfully.")
         return result
-
-    async def device_registration(self, device_name: str | None = None):
-        """Register device with Hive."""
-        _LOGGER.debug("device_registration - Registering device with Hive.")
-        await self.confirm_device(device_name)
-        await self.update_device_status()
-
-    async def confirm_device(
-        self,
-        device_name: str | None = None,
-    ):
-        """Confirm Hive Device."""
-        if self.client is None:
-            await self.async_init()
-
-        if device_name is None:
-            device_name = socket.gethostname()
-
-        result = None
-        try:
-            device_secret_verifier_config = await self.generate_hash_device(
-                self.device_group_key, self.device_key
-            )
-            result = await self.loop.run_in_executor(
-                None,
-                functools.partial(
-                    self.client.confirm_device,
-                    AccessToken=self.access_token,
-                    DeviceKey=self.device_key,
-                    DeviceName=device_name,
-                    DeviceSecretVerifierConfig=device_secret_verifier_config,
-                ),
-            )
-        except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ in (
-                "NotAuthorizedException",
-                "CodeMismatchException",
-            ):
-                raise HiveInvalid2FACode from err
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError from err
-
-        return result
-
-    async def update_device_status(self):
-        """Update Device Hive."""
-        if self.client is None:
-            await self.async_init()
-        result = None
-        try:
-            result = await self.loop.run_in_executor(
-                None,
-                functools.partial(
-                    self.client.update_device_status,
-                    AccessToken=self.access_token,
-                    DeviceKey=self.device_key,
-                    DeviceRememberedStatus="remembered",
-                ),
-            )
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError from err
-
-        return result
-
-    async def get_device_data(self):
-        """Get key device information for device authentication."""
-        return self.device_group_key, self.device_key, self.device_password
 
     async def refresh_token(self, token):
         """Refresh Hive Tokens."""
@@ -656,177 +484,3 @@ class HiveAuthAsync:
 
         _LOGGER.debug("refresh_token - Cognito token refresh completed successfully.")
         return result
-
-    async def is_device_registered(self, access_token=None, device_key=None):
-        """Check if the current device is registered with Cognito.
-
-        Args:
-            access_token (str, optional): Access token. Defaults to self.access_token.
-            device_key (str, optional): Device key. Defaults to self.device_key.
-
-        Returns:
-            bool: True if device is registered and remembered, False otherwise.
-
-        Raises:
-            HiveApiError: If unable to reach Cognito endpoint.
-        """
-        if self.client is None:
-            await self.async_init()
-
-        token = access_token or self.access_token
-        key = device_key or self.device_key
-
-        if not token or not key:
-            _LOGGER.debug(
-                "is_device_registered - Missing access token or device key, "
-                "device not registered"
-            )
-            return False
-
-        _LOGGER.debug(
-            "is_device_registered - Checking device registration status for device: %s",
-            key,
-        )
-
-        try:
-            result = await self.loop.run_in_executor(
-                None,
-                functools.partial(
-                    self.client.get_device,
-                    AccessToken=token,
-                    DeviceKey=key,
-                ),
-            )
-
-            if result and "Device" in result:
-                device_status = result["Device"].get("DeviceAttributes", [])
-                # Check if device is in "remembered" status
-                for attr in device_status:
-                    if (
-                        attr.get("Name") == "dev:device_remembered_status"
-                        and attr.get("Value") == "remembered"
-                    ):
-                        _LOGGER.debug(
-                            "is_device_registered - Device %s is registered and remembered",
-                            key,
-                        )
-                        return True
-
-                _LOGGER.debug(
-                    "is_device_registered - Device %s is registered but not remembered",
-                    key,
-                )
-
-        except botocore.exceptions.ClientError as err:
-            error = (err.response or {}).get("Error", {})
-            error_code = error.get("Code")
-            error_message = error.get("Message", "")
-
-            if error_code == "ResourceNotFoundException":
-                _LOGGER.debug(
-                    "is_device_registered - Device %s not found in Cognito", key
-                )
-            elif error_code == "NotAuthorizedException":
-                _LOGGER.warning(
-                    "is_device_registered - Not authorized to check device status: %s",
-                    error_message,
-                )
-            else:
-                _LOGGER.error(
-                    "is_device_registered - Error checking device status: %s - %s",
-                    error_code,
-                    error_message,
-                )
-
-        except botocore.exceptions.EndpointConnectionError as err:
-            _LOGGER.error(
-                "is_device_registered - Cannot reach Cognito endpoint: %s", str(err)
-            )
-            raise HiveApiError from err
-
-        # Default: device not registered or status unknown
-        return False
-
-    async def forget_device(self, access_token, device_key):
-        """Forget device registered with Hive."""
-        if self.client is None:
-            await self.async_init()
-        result = None
-
-        try:
-            result = await self.loop.run_in_executor(
-                None,
-                functools.partial(
-                    self.client.forget_device,
-                    AccessToken=access_token,
-                    DeviceKey=device_key,
-                ),
-            )
-        except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "NotAuthorizedException":
-                raise HiveInvalid2FACode from err
-        except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "ResourceNotFoundException":
-                raise HiveApiError from err
-
-        return result
-
-
-def hex_to_long(hex_string):
-    """Convert hex to long number."""
-    return int(hex_string, 16)
-
-
-def get_random(nbytes):
-    """Generate a random hex number."""
-    random_hex = binascii.hexlify(os.urandom(nbytes))
-    return hex_to_long(random_hex)
-
-
-def hash_sha256(buf):
-    """Authentication helper."""
-    a_value = hashlib.sha256(buf).hexdigest()
-    return (64 - len(a_value)) * "0" + a_value
-
-
-def hex_hash(hex_string):
-    """Convert hex value to hash."""
-    return hash_sha256(bytearray.fromhex(hex_string))
-
-
-def calculate_u(big_a, big_b):
-    """
-    Calculate the client's value U which is the hash of A and B.
-
-    :param {Long integer} big_a Large A value.
-    :param {Long integer} big_b Server B value.
-    :return {Long integer} Computed U value.
-    """
-    u_hex_hash = hex_hash(pad_hex(big_a) + pad_hex(big_b))
-    return hex_to_long(u_hex_hash)
-
-
-def long_to_hex(long_num):
-    """Convert long number to hex."""
-    return f"{long_num:x}"
-
-
-def pad_hex(long_int):
-    """Convert integer to hex format."""
-    if not isinstance(long_int, str):
-        hash_str = long_to_hex(long_int)
-    else:
-        hash_str = long_int
-    if len(hash_str) % 2 == 1:
-        hash_str = f"0{hash_str}"
-    elif hash_str[0] in "89ABCDEFabcdef":
-        hash_str = f"00{hash_str}"
-    return hash_str
-
-
-def compute_hkdf(ikm, salt):
-    """Process the hkdf algorithm."""
-    prk = hmac.new(salt, ikm, hashlib.sha256).digest()
-    info_bits_update = INFO_BITS + bytearray(chr(1), "utf-8")
-    hmac_hash = hmac.new(prk, info_bits_update, hashlib.sha256).digest()
-    return hmac_hash[:16]
