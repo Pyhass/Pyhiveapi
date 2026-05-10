@@ -7,6 +7,9 @@ setup:
 test:
 	pytest tests/
 
+coverage:
+	coverage run -m pytest && coverage lcov
+
 lint:
 	pre-commit run --all-files
 
