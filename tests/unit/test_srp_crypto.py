@@ -102,3 +102,36 @@ def test_compute_hkdf_deterministic():
     ikm = b"test"
     salt = b"salt"
     assert compute_hkdf(ikm, salt) == compute_hkdf(ikm, salt)
+
+
+def test_compute_hkdf_different_inputs_produce_different_outputs():
+    """Different ikm inputs produce different HKDF outputs."""
+    salt = b"same_salt"
+    result1 = compute_hkdf(b"input_one", salt)
+    result2 = compute_hkdf(b"input_two", salt)
+    assert result1 != result2
+
+
+def test_long_to_hex_and_back_is_identity():
+    """hex_to_long(long_to_hex(n)) == n for positive integers."""
+    for value in [1, 255, 256, 65535, 2**32]:
+        assert hex_to_long(long_to_hex(value)) == value
+
+
+def test_pad_hex_high_nibble_string_input():
+    """pad_hex with string "ff" (high nibble) gets "00" prefix."""
+    assert pad_hex("ff") == "00ff"
+
+
+def test_hash_sha256_deterministic():
+    """hash_sha256 returns the same output for the same input."""
+    assert hash_sha256(b"test") == hash_sha256(b"test")
+
+
+def test_calculate_u_with_large_srp_values():
+    """calculate_u handles large SRP-scale integers."""
+    large_a = 2**256
+    large_b = 2**256 + 1
+    result = calculate_u(large_a, large_b)
+    assert isinstance(result, int)
+    assert result > 0
