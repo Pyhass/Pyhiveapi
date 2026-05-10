@@ -1,9 +1,11 @@
 # .coveragerc
 [run]
 branch = True
+source = apyhiveapi
 
 [report]
 show_missing = True
+skip_covered = False
 
 [lcov]
-output = coverage.lcov
+output = lcov.info
