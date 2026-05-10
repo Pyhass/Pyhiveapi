@@ -50,11 +50,12 @@ def fake_session():
 
 def make_device(hive_id="prod-1", device_id="dev-1", hive_type="heating", **kwargs):
     """Build a Device with sensible defaults for tests."""
+    ha_type = kwargs.pop("ha_type", "climate")
     return Device(
         hive_id=hive_id,
         hive_name="Test",
         hive_type=hive_type,
-        ha_type="climate",
+        ha_type=ha_type,
         device_id=device_id,
         device_name="Test",
         device_data={"online": True},
