@@ -4,19 +4,12 @@
 import sys
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from apyhiveapi import Hive
 from apyhiveapi.devices.hub import HiveHub
 from apyhiveapi.helper.hivedataclasses import Device
 from apyhiveapi.helper.map import Map
 
 
-def test_hub_smoke():
-    """Placeholder smoke test."""
-    assert True
-
-
-@pytest.mark.asyncio
 async def test_force_update_polls_when_idle():
     """force_update() calls _poll_devices and returns its result when no poll is running."""
     async with Hive(
@@ -30,7 +23,6 @@ async def test_force_update_polls_when_idle():
     hive._poll_devices.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_force_update_skips_when_locked():
     """force_update() returns False without polling when the update lock is already held."""
     async with Hive(

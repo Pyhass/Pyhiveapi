@@ -52,7 +52,6 @@ def _make_stub():
 class TestUpdateTokens:
     """Tests for SessionAuthMixin.update_tokens()."""
 
-    @pytest.mark.asyncio
     async def test_authentication_result_sets_all_tokens(self):
         """AuthenticationResult payload writes all three token fields."""
         s = _make_stub()
@@ -61,7 +60,6 @@ class TestUpdateTokens:
         assert s.tokens.token_data["accessToken"] == "acc-tok"
         assert s.tokens.token_data["refreshToken"] == "ref-tok"
 
-    @pytest.mark.asyncio
     async def test_update_expiry_time_false_skips_token_created(self):
         """update_expiry_time=False leaves token_created unchanged."""
         s = _make_stub()
@@ -69,7 +67,6 @@ class TestUpdateTokens:
         await s.update_tokens(AUTH_RESULT, update_expiry_time=False)
         assert s.tokens.token_created == before
 
-    @pytest.mark.asyncio
     async def test_flat_token_dict_sets_all_keys(self):
         """Flat token dict (no AuthenticationResult wrapper) sets all three keys."""
         s = _make_stub()
@@ -79,7 +76,6 @@ class TestUpdateTokens:
         assert s.tokens.token_data["refreshToken"] == "r"
         assert s.tokens.token_data["accessToken"] == "a"
 
-    @pytest.mark.asyncio
     async def test_expires_in_updates_token_expiry(self):
         """ExpiresIn field updates token_expiry timedelta."""
         s = _make_stub()
@@ -90,7 +86,6 @@ class TestUpdateTokens:
 class TestLogin:
     """Tests for SessionAuthMixin.login()."""
 
-    @pytest.mark.asyncio
     async def test_auth_result_calls_update_tokens_and_returns(self):
         """Successful login with AuthenticationResult updates tokens."""
         s = _make_stub()
@@ -98,7 +93,6 @@ class TestLogin:
         result = await s.login()
         assert "AuthenticationResult" in result
 
-    @pytest.mark.asyncio
     async def test_sms_mfa_challenge_returned_directly(self):
         """SMS_MFA challenge is returned to caller without raising."""
         s = _make_stub()
@@ -106,7 +100,6 @@ class TestLogin:
         result = await s.login()
         assert result["ChallengeName"] == "SMS_MFA"
 
-    @pytest.mark.asyncio
     async def test_unknown_challenge_raises(self):
         """Unrecognised challenge name raises HiveUnknownConfiguration."""
         s = _make_stub()
@@ -114,7 +107,6 @@ class TestLogin:
         with pytest.raises(HiveUnknownConfiguration):
             await s.login()
 
-    @pytest.mark.asyncio
     async def test_no_auth_raises(self):
         """Missing auth object raises HiveUnknownConfiguration."""
         s = _make_stub()
@@ -122,7 +114,6 @@ class TestLogin:
         with pytest.raises(HiveUnknownConfiguration):
             await s.login()
 
-    @pytest.mark.asyncio
     async def test_device_srp_challenge_routes_to_device_login(self):
         """DEVICE_SRP_AUTH challenge calls device_login."""
         s = _make_stub()
@@ -135,7 +126,6 @@ class TestLogin:
 class TestHandleDeviceLoginChallenge:
     """Tests for SessionAuthMixin._handle_device_login_challenge()."""
 
-    @pytest.mark.asyncio
     async def test_success_calls_update_tokens(self):
         """Successful device login returns result with AuthenticationResult."""
         s = _make_stub()
@@ -143,7 +133,6 @@ class TestHandleDeviceLoginChallenge:
         result = await s._handle_device_login_challenge({})
         assert "AuthenticationResult" in result
 
-    @pytest.mark.asyncio
     async def test_sms_mfa_response_raises_reauth(self):
         """SMS_MFA response from device_login raises HiveReauthRequired."""
         s = _make_stub()
@@ -155,7 +144,6 @@ class TestHandleDeviceLoginChallenge:
 class TestSms2fa:
     """Tests for SessionAuthMixin.sms2fa()."""
 
-    @pytest.mark.asyncio
     async def test_success_calls_update_tokens(self):
         """Successful 2FA returns result with AuthenticationResult."""
         s = _make_stub()
@@ -163,7 +151,6 @@ class TestSms2fa:
         result = await s.sms2fa("123456", {"session": "data"})
         assert "AuthenticationResult" in result
 
-    @pytest.mark.asyncio
     async def test_invalid_code_reraises(self):
         """Invalid 2FA code re-raises HiveInvalid2FACode."""
         s = _make_stub()
@@ -175,7 +162,6 @@ class TestSms2fa:
 class TestHiveRefreshTokens:
     """Tests for SessionAuthMixin.hive_refresh_tokens()."""
 
-    @pytest.mark.asyncio
     async def test_not_expired_returns_none_without_calling_refresh(self):
         """Token not yet at threshold — refresh_token is not called."""
         s = _make_stub()
@@ -185,7 +171,6 @@ class TestHiveRefreshTokens:
         assert result is None
         s.auth.refresh_token.assert_not_called()
 
-    @pytest.mark.asyncio
     async def test_expired_calls_refresh_and_update_tokens(self):
         """Expired token triggers refresh_token and updates stored tokens."""
         s = _make_stub()
@@ -196,7 +181,6 @@ class TestHiveRefreshTokens:
         s.auth.refresh_token.assert_called_once()
         assert s.tokens.token_data["token"] == "id-tok"
 
-    @pytest.mark.asyncio
     async def test_refresh_token_expired_falls_back_to_retry_login(self):
         """HiveRefreshTokenExpired triggers _retry_login fallback."""
         s = _make_stub()
@@ -207,7 +191,6 @@ class TestHiveRefreshTokens:
         await s.hive_refresh_tokens()
         s._retry_login.assert_called_once()
 
-    @pytest.mark.asyncio
     async def test_force_refresh_expired_raises_reauth(self):
         """force_refresh=True with failed refresh raises HiveReauthRequired."""
         s = _make_stub()
