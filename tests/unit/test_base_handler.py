@@ -4,6 +4,7 @@
 
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from apyhiveapi.helper.device_handler_base import BaseDeviceHandler
 from apyhiveapi.helper.hivedataclasses import Device
 from apyhiveapi.helper.map import Map
@@ -153,6 +154,7 @@ class TestExecuteStateChange:
         d = _make_device()
         result = await h._execute_state_change(d, mode="MANUAL")
         assert result is True
+        session.hive_refresh_tokens.assert_called_once()
         session.get_devices.assert_called_once_with("prod-1")
 
     async def test_non_200_returns_false(self):
@@ -164,3 +166,12 @@ class TestExecuteStateChange:
         result = await h._execute_state_change(d, mode="MANUAL")
         assert result is False
         session.get_devices.assert_not_called()
+
+    async def test_malformed_set_state_response_raises_key_error(self):
+        """KeyError propagates when set_state response is missing 'original' key."""
+        session = _make_session({"prod-1": {"type": "heating"}})
+        session.api.set_state = AsyncMock(return_value={"parsed": {}})
+        h = _make_handler(session)
+        d = _make_device()
+        with pytest.raises(KeyError):
+            await h._execute_state_change(d, mode="MANUAL")
