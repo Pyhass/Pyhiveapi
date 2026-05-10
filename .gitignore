@@ -44,3 +44,7 @@ ENV/
 
 # Claude superpowers
 superpowers/
+
+
+# caches
+*cache*
