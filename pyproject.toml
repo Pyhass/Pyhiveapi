@@ -9,7 +9,7 @@ description = "A Python library to interface with the Hive API"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "KJonline24", email = "53_galleys_snark@icloud.com" }]
-keywords = ["Hive", "API", "Library", "smart-home", "home-automation", "IoT", "async", "integration"]
+keywords = ["hive", "home", "api", "library", "smart-home", "home-automation", "IoT", "async", "integration"]
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -59,6 +59,7 @@ pyhive = "src"
 
 [tool.setuptools.package-data]
 apyhiveapi = ["data/*.json"]
+pyhive = ["data/*.json"]
 
 [tool.ruff]
 line-length = 88
@@ -85,6 +86,9 @@ omit = ["tests/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+
+[tool.coverage.lcov]
+output = "lcov.info"
 
 [tool.mypy]
 python_version = "3.10"

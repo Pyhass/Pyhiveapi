@@ -208,6 +208,16 @@ class TestStateAttributes:
         assert "battery" not in result
 
     @pytest.mark.asyncio
+    async def test_device_in_battery_list_but_battery_none_omits_battery(self):
+        """Battery attribute absent when device is listed but get_battery returns None."""
+        attrs = _make_attrs(
+            devices={"d1": {"props": {"online": True}}},
+            battery=["d1"],
+        )
+        result = await attrs.state_attributes("d1", "trv")
+        assert "battery" not in result
+
+    @pytest.mark.asyncio
     async def test_device_in_mode_list_includes_mode(self):
         """Mode attribute present when device id is in config.mode."""
         attrs = _make_attrs(

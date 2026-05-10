@@ -186,3 +186,50 @@ class TestGetSwitch:
         sw.session.get_cached_device.return_value = cached
         result = await sw.get_switch(_make_device())
         assert result is cached
+
+    async def test_cached_miss_falls_through_to_live_fetch(self):
+        """When cache is checked but empty, get_switch performs the live update."""
+        products = {
+            "plug-1": {
+                "type": "activeplug",
+                "state": {"status": "ON"},
+                "props": {"powerConsumption": 5.0},
+            }
+        }
+        devices = {"dev-1": {"props": {"online": True}}}
+        sw = _make_switch(products=products, devices=devices)
+        sw.session.should_use_cached_data.return_value = True
+        sw.session.get_cached_device.return_value = None
+        result = await sw.get_switch(_make_device())
+        assert result.status["state"] is True
+        assert "power_usage" in result.status
+        sw.session.attr.online_offline.assert_awaited_once()
+
+    async def test_non_dict_device_data_is_replaced(self):
+        """If device.device_data is not a dict it is replaced with one before assigning online."""
+        products = {
+            "plug-1": {
+                "type": "activeplug",
+                "state": {"status": "OFF"},
+                "props": {"powerConsumption": 0.0},
+            }
+        }
+        devices = {"dev-1": {"props": {"online": True}}}
+        sw = _make_switch(products=products, devices=devices)
+        d = _make_device()
+        d.device_data = None
+        result = await sw.get_switch(d)
+        assert isinstance(result.device_data, dict)
+        assert result.device_data.get("online") is True
+
+    async def test_non_activeplug_skips_power_usage_and_attributes(self):
+        """Non-activeplug hive_type runs the online branch but skips activeplug-only fields."""
+        products = {"plug-1": {"state": {"status": "ON"}, "props": {}}}
+        devices = {"dev-1": {"props": {"online": True}}}
+        sw = _make_switch(products=products, devices=devices)
+        d = _make_device(hive_type="Heating_Heat_On_Demand")
+        result = await sw.get_switch(d)
+        assert "power_usage" not in result.status
+        assert result.attributes == {}
+        sw.session.attr.state_attributes.assert_not_called()
+        sw.session.heating.get_heat_on_demand.assert_awaited_once_with(d)
