@@ -43,11 +43,14 @@ jobs:
             --cov=src \
             --cov-report=term-missing \
             --cov-report=lcov:coverage/lcov.info \
-            --cov-fail-under=10
+            --cov-fail-under=100
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
           files: coverage/lcov.info
+          flags: unittests
+          slug: ${{ github.repository }}
+          disable_search: true
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}

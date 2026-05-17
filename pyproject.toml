@@ -115,7 +115,7 @@ omit = [
 show_missing = true
 skip_covered = false
 precision = 1
-fail_under = 10
+fail_under = 100
 exclude_also = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
