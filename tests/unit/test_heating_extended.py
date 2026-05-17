@@ -10,10 +10,7 @@ from apyhiveapi.helper.map import Map
 
 _TODAY = str(datetime.date(datetime.now()))
 _CURRENT_TEMP = 19.0
-_TARGET_TEMP = 21.0
-_MANUAL_MODE = "MANUAL"
 _SCHEDULE_MODE = "SCHEDULE"
-_BOOST_MODE = "BOOST"
 _BOOST_MINS = 5
 _OFF_MODE = "OFF"
 

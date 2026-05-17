@@ -116,7 +116,9 @@ class DeviceRegistrationMixin:
         timestamp = re.sub(
             r" 0(\d) ",
             r" \1 ",
-            datetime.datetime.now(datetime.UTC).strftime("%a %b %d %H:%M:%S UTC %Y"),
+            datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%a %b %d %H:%M:%S UTC %Y"
+            ),
         )
         hkdf = await self.get_device_authentication_key(
             self.device_group_key,
