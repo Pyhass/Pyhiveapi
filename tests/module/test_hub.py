@@ -2,7 +2,7 @@
 
 # pylint: disable=protected-access
 import sys
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from apyhiveapi import Hive
 from apyhiveapi.devices.hub import HiveHub
@@ -144,15 +144,18 @@ class TestHiveLifecycle:
             username="test@example.com",
             password="pass",  # pragma: allowlist secret
         ) as hive:
-            hive.set_debugging([])
-        assert sys.gettrace() is None
+            with patch.object(sys, "settrace") as mock_settrace:
+                hive.set_debugging([])
+        mock_settrace.assert_called_once_with(None)
 
     async def test_set_debugging_with_function_sets_trace(self):
         """set_debugging([name]) installs the trace_debug function."""
+        from apyhiveapi.hive import trace_debug
+
         async with Hive(
             username="test@example.com",
             password="pass",  # pragma: allowlist secret
         ) as hive:
-            hive.set_debugging(["some_func"])
-            assert sys.gettrace() is not None
-            sys.settrace(None)  # clean up
+            with patch.object(sys, "settrace") as mock_settrace:
+                hive.set_debugging(["some_func"])
+        mock_settrace.assert_called_once_with(trace_debug)
