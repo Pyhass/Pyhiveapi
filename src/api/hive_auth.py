@@ -258,7 +258,9 @@ class HiveAuth:
         timestamp = re.sub(
             r" 0(\d) ",
             r" \1 ",
-            datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
+            datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%a %b %d %H:%M:%S UTC %Y"
+            ),
         )
         hkdf = self.get_device_authentication_key(
             self.device_group_key,
@@ -303,7 +305,9 @@ class HiveAuth:
         timestamp = re.sub(
             r" 0(\d) ",
             r" \1 ",
-            datetime.datetime.utcnow().strftime("%a %b %d %H:%M:%S UTC %Y"),
+            datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%a %b %d %H:%M:%S UTC %Y"
+            ),
         )
         hkdf = self.get_password_authentication_key(
             self.user_id, self.password, srp_b_hex, salt_hex
