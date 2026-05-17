@@ -41,6 +41,13 @@ class TestDebugContextEnter:
             returned = ctx.__enter__()
         assert returned is ctx
 
+    def test_disabled_context_does_not_set_sys_trace(self):
+        ctx = DebugContext("my_func", False)
+        with patch.object(sys, "settrace") as mock_settrace:
+            returned = ctx.__enter__()
+        mock_settrace.assert_not_called()
+        assert returned is ctx
+
 
 class TestDebugContextExit:
     """Tests for DebugContext.__exit__."""
@@ -50,6 +57,20 @@ class TestDebugContextExit:
         with patch.object(sys, "settrace") as mock_settrace:
             ctx.__exit__(None, None, None)
             mock_settrace.assert_called_once_with(None)
+
+    def test_restores_previous_trace(self):
+        previous_trace = object()
+        ctx = DebugContext("my_func", True)
+        ctx._previous_trace = previous_trace
+        with patch.object(sys, "settrace") as mock_settrace:
+            ctx.__exit__(None, None, None)
+        mock_settrace.assert_called_once_with(previous_trace)
+
+    def test_disabled_context_exit_does_not_clear_trace(self):
+        ctx = DebugContext("my_func", False)
+        with patch.object(sys, "settrace") as mock_settrace:
+            ctx.__exit__(None, None, None)
+        mock_settrace.assert_not_called()
 
     def test_returns_false(self):
         ctx = DebugContext("my_func", True)

@@ -12,16 +12,21 @@ class DebugContext:
         self.name = name
         self.enabled = enabled
         self.logging = logging.getLogger(__name__)
+        self._previous_trace = None
 
     def __enter__(self):
         """Set trace calls on entering debugger."""
         self.logging.debug("Entering debug context for %s", self.name)
+        if not self.enabled:
+            return self
+        self._previous_trace = sys.gettrace()
         sys.settrace(self.trace_calls)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Remove trace on exiting debugger."""
-        sys.settrace(None)
+        if self.enabled:
+            sys.settrace(self._previous_trace)
         return False
 
     def trace_calls(self, frame, event, _arg):
