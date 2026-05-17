@@ -65,5 +65,5 @@ jobs:
           gh pr create \
             --base master \
             --head dev \
-            --title "Release: dev -> master" \
+            --title "Release: $(cat pyproject.toml | grep version | cut -d'"' -f2)" \
             --body "Automated release PR. Contains merged feature PRs and a single version bump."

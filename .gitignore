@@ -18,7 +18,7 @@ __pycache__/
 # Testing and coverage
 .tox
 .cache
-htmlcov/
+coverage/
 .coverage
 .coverage.*
 custom_tests/*
@@ -44,3 +44,13 @@ ENV/
 
 # Claude superpowers
 superpowers/
+
+
+# caches
+*cache*
+
+
+# coverage (legacy locations)
+coverage.lcov
+lcov.info
+htmlcov/

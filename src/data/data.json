@@ -89,12 +89,12 @@
         "sortOrder": 0,
         "created": 1490945300074,
         "lastSeen": 1496048965374,
-        "parent": "parent-0000-0000-0000-000000000002",
+        "parent": "boilermodule-0000-0000-0000-000000000001",
         "props": {
           "online": true,
           "model": "SLR2",
           "version": "08074640",
-          "zone": "parent-0000-0000-0000-000000000002",
+          "zone": "boilermodule-0000-0000-0000-000000000001",
           "maxEvents": 6,
           "holidayMode": {
             "enabled": false,
@@ -662,7 +662,7 @@
         },
         "state": {
           "name": "TRV Zone 1",
-          "mode": "OFF",
+          "mode": "SCHEDULE",
           "target": 7,
           "frostProtection": 7,
           "schedule": {

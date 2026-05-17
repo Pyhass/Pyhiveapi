@@ -9,7 +9,7 @@ description = "A Python library to interface with the Hive API"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "KJonline24", email = "53_galleys_snark@icloud.com" }]
-keywords = ["Hive", "API", "Library", "smart-home", "home-automation", "IoT", "async", "integration"]
+keywords = ["hive", "home", "api", "library", "smart-home", "home-automation", "IoT", "async", "integration"]
 requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -48,6 +48,8 @@ dev = [
     "bandit",
     "pre-commit",
     "graphifyy",
+    "unasync",
+    "tokenize-rt",
 ]
 
 [tool.setuptools]
@@ -59,6 +61,7 @@ pyhive = "src"
 
 [tool.setuptools.package-data]
 apyhiveapi = ["data/*.json"]
+pyhive = ["data/*.json"]
 
 [tool.ruff]
 line-length = 88
@@ -67,6 +70,13 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B", "PL"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "PLR2004",  # magic values are expected in test assertions
+    "PLR0913",  # test factory functions legitimately take many parameters
+    "PLC0415",  # conditional/lazy imports are a valid test-isolation pattern
+]
 
 [tool.ruff.lint.isort]
 known-third-party = [
@@ -77,14 +87,50 @@ known-third-party = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = "--cov --cov-context=test --cov-report=lcov:coverage/lcov.info --cov-report=html:coverage/html --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["tests/*"]
+branch = true
+data_file = "coverage/.coverage"
+omit = [
+    "tests/*",
+    # deprecation shims — re-export only
+    "src/action.py",
+    "src/boost.py",
+    "src/color.py",
+    "src/device_attributes.py",
+    "src/heating.py",
+    "src/hotwater.py",
+    "src/hub.py",
+    "src/light.py",
+    "src/plug.py",
+    "src/sensor.py",
+    "src/session_discovery.py",
+    "src/session_polling.py",
+    "src/session_tokens.py",
+]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+precision = 1
+fail_under = 0
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "pragma: no cover",
+    "@(abc\\.)?abstractmethod",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.",
+]
+
+[tool.coverage.html]
+directory = "coverage/html"
+show_contexts = true
+
+[tool.coverage.lcov]
+output = "coverage/lcov.info"
 
 [tool.mypy]
 python_version = "3.10"

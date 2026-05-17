@@ -1,0 +1,172 @@
+"""Extended branch-coverage tests for Sensor (devices/sensor.py)."""
+
+# pylint: disable=protected-access
+
+from unittest.mock import AsyncMock, MagicMock
+
+from apyhiveapi.devices.sensor import Sensor
+from apyhiveapi.helper.hivedataclasses import Device, SessionConfig
+from apyhiveapi.helper.map import Map
+
+
+def _make_session(products=None, devices=None):
+    session = MagicMock()
+    session.data = Map(
+        {
+            "products": products or {},
+            "devices": devices or {},
+            "actions": {},
+            "minMax": {},
+            "user": {},
+        }
+    )
+    session.config = SessionConfig()
+    session.helper = MagicMock()
+    session.helper.device_recovered = MagicMock()
+    session.helper.error_check = AsyncMock()
+    session.attr = MagicMock()
+    session.attr.online_offline = AsyncMock(return_value=True)
+    session.attr.state_attributes = AsyncMock(return_value={})
+    session.api = MagicMock()
+    session.api.set_state = AsyncMock(return_value={"original": 200, "parsed": {}})
+    session.hive_refresh_tokens = AsyncMock()
+    session.get_devices = AsyncMock(return_value=True)
+    session.should_use_cached_data = MagicMock(return_value=False)
+    session.get_cached_device = MagicMock(return_value=None)
+    session.set_cached_device = MagicMock(side_effect=lambda d: d)
+    return session
+
+
+def _make_device(
+    hive_id="sensor-1",
+    device_id="dev-1",
+    hive_type="contactsensor",
+    ha_type="binary_sensor",
+):
+    return Device(
+        hive_id=hive_id,
+        hive_name="Front Door",
+        hive_type=hive_type,
+        ha_type=ha_type,
+        device_id=device_id,
+        device_name="Front Door",
+        device_data={"online": True},
+        ha_name="Front Door",
+    )
+
+
+class TestGetSensor:
+    """Tests for Sensor.get_sensor covering previously uncovered branches."""
+
+    async def test_cache_hit_returns_cached(self):
+        """Lines 92-97: should_use_cached_data True + cache hit returns cached device."""
+        session = _make_session()
+        cached_device = _make_device()
+        session.should_use_cached_data = MagicMock(return_value=True)
+        session.get_cached_device = MagicMock(return_value=cached_device)
+
+        sensor = Sensor(session=session)
+        device = _make_device()
+        result = await sensor.get_sensor(device)
+
+        assert result is cached_device
+        session.attr.online_offline.assert_not_called()
+
+    async def test_device_data_not_dict_gets_initialized(self):
+        """Line 100: non-dict device_data is replaced with an empty dict."""
+        hive_id = "sensor-1"
+        device_id = "dev-1"
+        products = {
+            hive_id: {
+                "type": "contactsensor",
+                "props": {"status": "CLOSED"},
+            }
+        }
+        devices = {device_id: {"props": {"online": True}, "parent": None}}
+        session = _make_session(products=products, devices=devices)
+
+        sensor = Sensor(session=session)
+        device = _make_device(hive_id=hive_id, device_id=device_id)
+        device.device_data = None  # not a dict
+
+        result = await sensor.get_sensor(device)
+
+        assert isinstance(result.device_data, dict)
+
+    async def test_hive_id_in_products_when_not_in_devices(self):
+        """Lines 119-120: device_id not in devices but hive_id in products → reads products."""
+        hive_id = "sensor-2"
+        device_id = "dev-missing"
+        products = {
+            hive_id: {
+                "type": "contactsensor",
+                "props": {"status": "OPEN"},
+            }
+        }
+        # devices does NOT contain device_id; the elif branch should fire
+        session = _make_session(products=products, devices={})
+
+        sensor = Sensor(session=session)
+        device = _make_device(
+            hive_id=hive_id,
+            device_id=device_id,
+            hive_type="contactsensor",
+        )
+        # Ensure set_cached_device returns the device so we can inspect it
+        session.set_cached_device = MagicMock(side_effect=lambda d: d)
+
+        result = await sensor.get_sensor(device)
+
+        # The HIVE_TYPES["Sensor"] branch sets device.status
+        assert result.status is not None
+        assert "state" in result.status
+
+    async def test_contact_sensor_in_hive_types_sets_status(self):
+        """Lines 135-144: contactsensor hits HIVE_TYPES["Sensor"] branch and status is set."""
+        hive_id = "sensor-3"
+        device_id = "dev-3"
+        products = {
+            hive_id: {
+                "type": "contactsensor",
+                "props": {"status": "CLOSED"},
+            }
+        }
+        devices = {device_id: {"props": {"online": True}, "parent": None}}
+        session = _make_session(products=products, devices=devices)
+
+        sensor = Sensor(session=session)
+        device = _make_device(
+            hive_id=hive_id,
+            device_id=device_id,
+            hive_type="contactsensor",
+        )
+        result = await sensor.get_sensor(device)
+
+        assert result.status is not None
+        assert "state" in result.status
+        session.attr.state_attributes.assert_awaited_once()
+
+
+class TestGetState:
+    """Tests for HiveSensor.get_state covering the motionsensor branch (lines 37-42)."""
+
+    async def test_motionsensor_returns_motion_status(self):
+        """Lines 37-38: data['type'] == 'motionsensor' returns motion status."""
+        hive_id = "motion-1"
+        products = {
+            hive_id: {
+                "type": "motionsensor",
+                "props": {"motion": {"status": True}},
+            }
+        }
+        session = _make_session(products=products)
+
+        sensor = Sensor(session=session)
+        device = _make_device(
+            hive_id=hive_id,
+            device_id="dev-motion",
+            hive_type="motionsensor",
+        )
+        state = await sensor.get_state(device)
+
+        assert state is True
