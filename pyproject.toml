@@ -48,6 +48,8 @@ dev = [
     "bandit",
     "pre-commit",
     "graphifyy",
+    "unasync",
+    "tokenize-rt",
 ]
 
 [tool.setuptools]
