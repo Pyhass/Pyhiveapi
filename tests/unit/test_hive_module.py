@@ -236,7 +236,6 @@ class TestHiveInit:
                     mock_settrace.assert_called_with(trace_debug)
         finally:
             hive_module.debug = original_debug
-            sys.settrace(None)
 
     async def test_init_with_empty_debug_does_not_set_trace(self):
         import apyhiveapi.hive as hive_module

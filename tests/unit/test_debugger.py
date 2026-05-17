@@ -33,7 +33,6 @@ class TestDebugContextEnter:
         with patch.object(sys, "settrace") as mock_settrace:
             result = ctx.__enter__()
             mock_settrace.assert_called_once_with(ctx.trace_calls)
-        sys.settrace(None)
         assert result is ctx
 
     def test_returns_self(self):
@@ -170,8 +169,8 @@ class TestDebugDecorator:
         def multiply(x, y):
             return x * y
 
-        result = multiply(3, 4)
-        sys.settrace(None)
+        with patch.object(sys, "settrace"):
+            result = multiply(3, 4)
         assert result == 12
 
     def test_decorator_enabled_false_executes_function(self):
