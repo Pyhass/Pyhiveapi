@@ -7,7 +7,16 @@ import traceback
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from apyhiveapi.hive import Hive, exception_handler, trace_debug
+from apyhiveapi.hive import Hive, debug, exception_handler, trace_debug
+
+
+@pytest.fixture(autouse=True)
+def _reset_debug_list():
+    """Save and restore the global debug list so no test leaks state."""
+    original = debug[:]
+    yield
+    debug.clear()
+    debug.extend(original)
 
 
 class TestExceptionHandler:
