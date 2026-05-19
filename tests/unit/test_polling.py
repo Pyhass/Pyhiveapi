@@ -179,3 +179,31 @@ class TestShouldUseCachedData:
 
         result = await _hold_lock()
         assert result is False
+
+
+# ---------------------------------------------------------------------------
+# _poll_devices
+# ---------------------------------------------------------------------------
+
+
+class TestPollDevices:
+    """Tests for PollingMixin._poll_devices."""
+
+    async def test_poll_devices_delegates_to_get_devices(self):
+        """_poll_devices calls get_devices('No_ID') and returns its result."""
+        from unittest.mock import AsyncMock
+
+        p = _make_polling()
+        p.get_devices = AsyncMock(return_value=True)
+        result = await p._poll_devices()
+        p.get_devices.assert_awaited_once_with("No_ID")
+        assert result is True
+
+    async def test_poll_devices_propagates_false(self):
+        """_poll_devices returns False when get_devices returns False."""
+        from unittest.mock import AsyncMock
+
+        p = _make_polling()
+        p.get_devices = AsyncMock(return_value=False)
+        result = await p._poll_devices()
+        assert result is False

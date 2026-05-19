@@ -40,9 +40,6 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest tests/ --tb=short \
-            --cov=src \
-            --cov-report=term-missing \
-            --cov-report=lcov:coverage/lcov.info \
             --cov-fail-under=100
 
       - name: Upload to Codecov

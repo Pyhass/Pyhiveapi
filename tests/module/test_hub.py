@@ -1,8 +1,7 @@
 """Tests for session polling behaviour, HiveHub sensor status, and Hive lifecycle."""
 
 # pylint: disable=protected-access
-import sys
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from apyhiveapi import Hive
 from apyhiveapi.devices.hub import HiveHub
@@ -118,7 +117,7 @@ class TestHiveHubSensorStatus:
 
 
 class TestHiveLifecycle:
-    """Tests for Hive context manager and set_debugging."""
+    """Tests for Hive context manager."""
 
     async def test_context_manager_aenter_returns_self(self):
         """__aenter__ returns the Hive instance itself."""
@@ -137,25 +136,3 @@ class TestHiveLifecycle:
             ws = hive.api.websession
         # After context exit the session should be closed
         assert ws.closed
-
-    async def test_set_debugging_empty_list_clears_trace(self):
-        """set_debugging([]) removes any active trace function."""
-        async with Hive(
-            username="test@example.com",
-            password="pass",  # pragma: allowlist secret
-        ) as hive:
-            with patch.object(sys, "settrace") as mock_settrace:
-                hive.set_debugging([])
-        mock_settrace.assert_called_once_with(None)
-
-    async def test_set_debugging_with_function_sets_trace(self):
-        """set_debugging([name]) installs the trace_debug function."""
-        from apyhiveapi.hive import trace_debug
-
-        async with Hive(
-            username="test@example.com",
-            password="pass",  # pragma: allowlist secret
-        ) as hive:
-            with patch.object(sys, "settrace") as mock_settrace:
-                hive.set_debugging(["some_func"])
-        mock_settrace.assert_called_once_with(trace_debug)
