@@ -364,22 +364,29 @@ class TestUpdateDataExtended:
         assert result is False
 
     async def test_update_task_changed_during_poll_skips_reset_in_finally(self):
-        """Lines 113->116: when _update_task is changed during _poll_devices,
-        the finally block does NOT reset it (False branch of the is-check)."""
+        """Lines 113->116: when _update_task is replaced during _poll_devices,
+        the finally block does NOT reset it (False branch of the is-check).
+
+        Uses a sentinel object so the branch fires on every Python version —
+        on Python 3.10, asyncio.current_task() can be None inside
+        run_until_complete(), which would make ``None is None`` evaluate to
+        True and skip the False branch if we set _update_task to None instead.
+        """
         p = _make_stub()
         p.config.last_update = datetime.now() - _FAR_PAST
         p.config.scan_interval = timedelta(seconds=60)
 
-        async def poll_that_clears_task():
-            # Simulate another coroutine having cleared _update_task
-            p._update_task = None
+        sentinel = object()
+
+        async def poll_that_replaces_task():
+            # Simulate another coroutine taking ownership of _update_task
+            p._update_task = sentinel
             return True
 
-        p._poll_devices = poll_that_clears_task
+        p._poll_devices = poll_that_replaces_task
         result = await p.update_data(_make_device())
 
-        # Poll succeeded
         assert result is True
-        # _update_task is still None (the finally block's False branch didn't re-set it
-        # because _update_task was already None and didn't match current_task)
-        assert p._update_task is None
+        # finally block left _update_task alone because it no longer matched
+        # current_task (the False branch — line 113->116)
+        assert p._update_task is sentinel
