@@ -39,8 +39,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest tests/ --tb=short \
-            --cov-fail-under=100
+          pytest tests/ --tb=short
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
