@@ -1167,6 +1167,42 @@ class TestHiveHelperZoneMismatch:
         # The zone mismatch means device was never re-assigned; returns the product
         assert result is product
 
+    def test_trv_without_zone_does_not_log_warning(self, caplog):
+        """TRV devices that omit 'zone' from props are silently skipped (no warning)."""
+        import logging
+
+        helper = HiveHelper(session=MagicMock())
+        helper.session.data = Map(
+            {
+                "devices": {
+                    "trv-1": {
+                        "type": "trv",
+                        "props": {
+                            "online": True
+                        },  # no 'zone' key — current API behaviour
+                    }
+                },
+                "products": {},
+                "actions": {},
+                "user": {},
+                "minMax": {},
+            }
+        )
+
+        product = {
+            "type": "heating",
+            "id": "prod-1",
+            "props": {"zone": "zone-A"},
+        }
+
+        with caplog.at_level(logging.WARNING, logger="apyhiveapi.helper.hive_helper"):
+            result = helper.get_device_data(product)
+
+        assert result is product
+        assert not caplog.records, (
+            f"Unexpected warnings: {[r.getMessage() for r in caplog.records]}"
+        )
+
     def test_zone_match_replaces_device_with_thermostat(self):
         """Matching zones cause device to be replaced with the thermostat entry."""
         helper = HiveHelper(session=MagicMock())
