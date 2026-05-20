@@ -1,7 +1,6 @@
 """Tests for session polling behaviour, HiveHub sensor status, and Hive lifecycle."""
 
 # pylint: disable=protected-access
-import sys
 from unittest.mock import AsyncMock, MagicMock
 
 from apyhiveapi import Hive
@@ -118,7 +117,7 @@ class TestHiveHubSensorStatus:
 
 
 class TestHiveLifecycle:
-    """Tests for Hive context manager and set_debugging."""
+    """Tests for Hive context manager."""
 
     async def test_context_manager_aenter_returns_self(self):
         """__aenter__ returns the Hive instance itself."""
@@ -137,22 +136,3 @@ class TestHiveLifecycle:
             ws = hive.api.websession
         # After context exit the session should be closed
         assert ws.closed
-
-    async def test_set_debugging_empty_list_clears_trace(self):
-        """set_debugging([]) removes any active trace function."""
-        async with Hive(
-            username="test@example.com",
-            password="pass",  # pragma: allowlist secret
-        ) as hive:
-            hive.set_debugging([])
-        assert sys.gettrace() is None
-
-    async def test_set_debugging_with_function_sets_trace(self):
-        """set_debugging([name]) installs the trace_debug function."""
-        async with Hive(
-            username="test@example.com",
-            password="pass",  # pragma: allowlist secret
-        ) as hive:
-            hive.set_debugging(["some_func"])
-            assert sys.gettrace() is not None
-            sys.settrace(None)  # clean up
