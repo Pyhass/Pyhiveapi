@@ -157,20 +157,14 @@ class HiveHelper:
         device = product
         product_type = product["type"]
         if product_type in ("heating", "hotwater"):
+            product_zone = product.get("props", {}).get("zone")
             for a_device in self.session.data.devices:
                 if self.session.data.devices[a_device]["type"] in HIVE_TYPES["Thermo"]:
-                    try:
-                        if (
-                            product["props"]["zone"]
-                            == self.session.data.devices[a_device]["props"]["zone"]
-                        ):
-                            device = self.session.data.devices[a_device]
-                    except KeyError as e:
-                        _LOGGER.warning(
-                            "get_device_data - KeyError accessing zone data for device %s: %s",
-                            a_device,
-                            str(e),
-                        )
+                    device_zone = (
+                        self.session.data.devices[a_device].get("props", {}).get("zone")
+                    )
+                    if product_zone and device_zone and product_zone == device_zone:
+                        device = self.session.data.devices[a_device]
         elif product_type == "trvcontrol":
             trv_present = len(product["props"]["trvs"]) > 0
             if trv_present:
