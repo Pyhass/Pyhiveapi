@@ -38,11 +38,7 @@ class TestEpochTime:
     """Tests for the top-level epoch_time() helper function."""
 
     def test_to_epoch_returns_int(self):
-        """to_epoch converts a date string to an integer Unix timestamp.
-
-        Note: epoch_time ignores the *pattern* argument for "to_epoch" —
-        it always applies "%d.%m.%Y %H:%M:%S" internally.
-        """
+        """to_epoch converts a date string to an integer Unix timestamp."""
         result = epoch_time("01.01.2024 12:00:00", "%d.%m.%Y %H:%M:%S", "to_epoch")
         assert isinstance(result, int)
 

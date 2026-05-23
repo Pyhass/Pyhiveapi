@@ -109,3 +109,29 @@ class TestSanitizePayload:
         payload = {"password": "supersecretpassword"}
         result = helper.sanitize_payload(payload)
         assert result["password"] == "supe...word"
+
+
+# ---------------------------------------------------------------------------
+# epoch_time — to_epoch must honour the pattern argument
+# ---------------------------------------------------------------------------
+
+
+class TestEpochTimePattern:
+    """epoch_time to_epoch must honour the pattern argument."""
+
+    def test_to_epoch_uses_caller_pattern(self):
+        """Passing a custom pattern must parse the date string with that pattern."""
+        from apyhiveapi.helper.hive_helper import epoch_time
+
+        # ISO date — only parses if the custom pattern is respected
+        result = epoch_time("2024-06-15", "%Y-%m-%d", "to_epoch")
+        assert isinstance(result, int), "Expected int epoch timestamp"
+        assert result > 0
+
+    def test_to_epoch_standard_hive_format_still_works(self):
+        """The standard Hive date+time format must still parse correctly."""
+        from apyhiveapi.helper.hive_helper import epoch_time
+
+        result = epoch_time("15.06.2024 12:00:00", "%d.%m.%Y %H:%M:%S", "to_epoch")
+        assert isinstance(result, int)
+        assert result > 0

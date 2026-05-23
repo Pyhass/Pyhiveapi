@@ -25,7 +25,6 @@ def epoch_time(date_time: Any, pattern: str, action: str) -> Any:
         Converted value, or ``None`` if *action* is unrecognised.
     """
     if action == "to_epoch":
-        pattern = "%d.%m.%Y %H:%M:%S"
         return int(time.mktime(time.strptime(str(date_time), pattern)))
     if action == "from_epoch":
         return datetime.datetime.fromtimestamp(int(date_time)).strftime(pattern)
