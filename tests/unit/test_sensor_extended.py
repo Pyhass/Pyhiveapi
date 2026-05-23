@@ -2,7 +2,7 @@
 
 # pylint: disable=protected-access
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from apyhiveapi.devices.sensor import Sensor
 from apyhiveapi.helper.hivedataclasses import Device, SessionConfig
@@ -145,6 +145,39 @@ class TestGetSensor:
         assert result.status is not None
         assert "state" in result.status
         session.attr.state_attributes.assert_awaited_once()
+
+    async def test_contact_sensor_uses_device_id_not_hive_id_for_props(self):
+        """HIVE_TYPES['Sensor'] branch must look up data.devices by device_id.
+
+        Before the fix, line 160 used hive_id; data was always {} so
+        device.parent_device was always None even when the device existed.
+        """
+        hive_id = "prod-abc"
+        device_id = "dev-xyz"  # deliberately different from hive_id
+
+        products = {}  # contactsensor is NOT in products
+        devices = {
+            device_id: {
+                "props": {"online": True, "signal": -70},
+                "parent": "hub-parent-id",
+            }
+        }
+        session = _make_session(products=products, devices=devices)
+        session.attr.online_offline = AsyncMock(return_value=True)
+
+        device = _make_device(
+            hive_id=hive_id, device_id=device_id, hive_type="contactsensor"
+        )
+        device.device_data = {"online": True}
+
+        sensor = Sensor(session)
+        with patch.object(sensor, "get_state", new=AsyncMock(return_value="CLOSED")):
+            result = await sensor.get_sensor(device)
+
+        assert result is not None
+        assert device.parent_device == "hub-parent-id", (
+            "parent_device must come from data.devices[device_id], not hive_id lookup"
+        )
 
 
 class TestGetState:

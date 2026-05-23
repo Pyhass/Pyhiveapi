@@ -157,7 +157,7 @@ class Sensor(SensorCompatMixin, HiveSensor):
                 device.device_data = props
                 device.parent_device = data.get("parent", None)
             elif device.hive_type in HIVE_TYPES["Sensor"]:
-                data = self.session.data.devices.get(device.hive_id, {})
+                data = self.session.data.devices.get(device.device_id, {})
                 device.status = {"state": await self.get_state(device)}
                 props = data.get("props") or {}
                 props["online"] = online
