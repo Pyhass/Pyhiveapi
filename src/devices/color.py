@@ -33,7 +33,7 @@ class LightColorHandler:  # pylint: disable=no-member
             data = self.session.data.products[device.hive_id]
             state = data["props"]["colourTemperature"]["max"]
             return round((1 / state) * 1000000)
-        except KeyError as e:
+        except (KeyError, ZeroDivisionError) as e:
             _LOGGER.error(e)
         return None
 
@@ -50,7 +50,7 @@ class LightColorHandler:  # pylint: disable=no-member
             data = self.session.data.products[device.hive_id]
             state = data["props"]["colourTemperature"]["min"]
             return round((1 / state) * 1000000)
-        except KeyError as e:
+        except (KeyError, ZeroDivisionError) as e:
             _LOGGER.error(e)
         return None
 
@@ -67,7 +67,7 @@ class LightColorHandler:  # pylint: disable=no-member
             data = self.session.data.products[device.hive_id]
             state = data["state"]["colourTemperature"]
             return round((1 / state) * 1000000)
-        except KeyError as e:
+        except (KeyError, ZeroDivisionError) as e:
             _LOGGER.error(e)
         return None
 

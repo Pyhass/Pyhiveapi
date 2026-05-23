@@ -99,3 +99,49 @@ class TestGetMaxColorTemp:
         result = await handler.get_max_color_temp(device)
 
         assert result is None
+
+
+class TestZeroDivisionGuards:
+    """Colour-temperature methods must return None instead of raising ZeroDivisionError."""
+
+    async def test_get_min_color_temp_zero_returns_none(self):
+        """min colourTemperature == 0 must return None, not raise ZeroDivisionError.
+
+        get_min_color_temp reads colourTemperature['max'] and divides by it,
+        so 'max' must be 0 to trigger ZeroDivisionError.
+        """
+        session = _make_session(
+            products={
+                "light-1": {"props": {"colourTemperature": {"max": 0, "min": 153}}}
+            }
+        )
+        h = _make_handler(session)
+        device = _make_device()
+        result = await h.get_min_color_temp(device)
+        assert result is None
+
+    async def test_get_max_color_temp_zero_returns_none(self):
+        """max colourTemperature == 0 must return None, not raise ZeroDivisionError.
+
+        get_max_color_temp reads colourTemperature['min'] and divides by it,
+        so 'min' must be 0 to trigger ZeroDivisionError.
+        """
+        session = _make_session(
+            products={
+                "light-1": {"props": {"colourTemperature": {"max": 500, "min": 0}}}
+            }
+        )
+        h = _make_handler(session)
+        device = _make_device()
+        result = await h.get_max_color_temp(device)
+        assert result is None
+
+    async def test_get_color_temp_zero_returns_none(self):
+        """state colourTemperature == 0 must return None, not raise ZeroDivisionError."""
+        session = _make_session(
+            products={"light-1": {"state": {"colourTemperature": 0}}}
+        )
+        h = _make_handler(session)
+        device = _make_device()
+        result = await h.get_color_temp(device)
+        assert result is None
