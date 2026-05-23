@@ -966,3 +966,56 @@ class TestRefreshTokenSwallowedEndpointError:
 
         with pytest.raises(HiveApiError):
             await auth.refresh_token("some-refresh-token")
+
+
+# ---------------------------------------------------------------------------
+# Tests: async_init() — missing REGION or UPID keys
+# ---------------------------------------------------------------------------
+
+
+class TestAsyncInitMissingKeys:
+    """async_init must raise HiveUnknownConfiguration when login info keys are absent."""
+
+    async def test_async_init_missing_region_raises_configuration_error(self):
+        """If REGION is absent from login info, raise HiveUnknownConfiguration."""
+        from apyhiveapi.api.hive_auth_async import HiveAuthAsync
+        from apyhiveapi.helper.hive_exceptions import HiveUnknownConfiguration
+
+        auth = HiveAuthAsync(username="user@test.com", password="pass")
+        bad_login_info = {"UPID": "eu-west-1_TestPool", "CLIID": "test-client-id"}
+        mock_loop = MagicMock()
+        mock_loop.run_in_executor = AsyncMock(side_effect=[bad_login_info])
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            with pytest.raises(HiveUnknownConfiguration):
+                await auth.async_init()
+
+    async def test_async_init_missing_upid_raises_configuration_error(self):
+        """If UPID is absent from login info, raise HiveUnknownConfiguration."""
+        from apyhiveapi.api.hive_auth_async import HiveAuthAsync
+        from apyhiveapi.helper.hive_exceptions import HiveUnknownConfiguration
+
+        auth = HiveAuthAsync(username="user@test.com", password="pass")
+        bad_login_info = {"CLIID": "test-client-id", "REGION": "eu-west-1_TestPool"}
+        mock_loop = MagicMock()
+        mock_loop.run_in_executor = AsyncMock(side_effect=[bad_login_info])
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            with pytest.raises(HiveUnknownConfiguration):
+                await auth.async_init()
+
+
+# ---------------------------------------------------------------------------
+# Tests: get_password_authentication_key() — None _pool_id
+# ---------------------------------------------------------------------------
+
+
+class TestGetPasswordAuthKeyNonePoolId:
+    """get_password_authentication_key must not crash with AttributeError when _pool_id is None."""
+
+    async def test_none_pool_id_raises_configuration_error(self):
+        """If _pool_id is None, raise HiveUnknownConfiguration (not AttributeError)."""
+        from apyhiveapi.helper.hive_exceptions import HiveUnknownConfiguration
+
+        auth = await _make_auth()
+        auth._pool_id = None
+        with pytest.raises(HiveUnknownConfiguration):
+            auth.get_password_authentication_key("user", "pass", "DEADBEEF", "ABCDEF")

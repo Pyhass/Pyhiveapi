@@ -23,6 +23,7 @@ from ..helper.hive_exceptions import (
     HiveInvalidPassword,
     HiveInvalidUsername,
     HiveRefreshTokenExpired,
+    HiveUnknownConfiguration,
 )
 from .device_registration import DeviceRegistrationMixin
 from .hive_api import HiveApi
@@ -92,7 +93,12 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         self.data = await self.loop.run_in_executor(None, self.api.get_login_info)
         self._pool_id = self.data.get("UPID")
         self._client_id = self.data.get("CLIID")
-        self._region = self.data.get("REGION").split("_")[0]
+        region_raw = self.data.get("REGION")
+        if not self._pool_id or not region_raw:
+            raise HiveUnknownConfiguration(
+                "SSO login page did not return required pool/region data"
+            )
+        self._region = region_raw.split("_")[0]
         # Cognito USER_SRP_AUTH does not use IAM credentials — boto3 requires non-None values.
         self.client = await self.loop.run_in_executor(
             None,
@@ -151,6 +157,8 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         u_value = calculate_u(self.large_a_value, server_b_value)
         if u_value == 0:
             raise ValueError("U cannot be zero.")
+        if not self._pool_id or "_" not in self._pool_id:
+            raise HiveUnknownConfiguration(f"Invalid pool ID format: {self._pool_id!r}")
         pool_id = self._pool_id.split("_")[1]
         username_password = f"{pool_id}{username}:{password}"
         username_password_hash = hash_sha256(username_password.encode("utf-8"))
