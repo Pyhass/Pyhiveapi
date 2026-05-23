@@ -1,5 +1,6 @@
 """Unit tests for Map — dot-notation dict wrapper."""
 
+import pytest
 from apyhiveapi.helper.map import Map
 
 
@@ -15,10 +16,18 @@ def test_dict_read():
     assert m["key"] == "value"
 
 
-def test_missing_key_returns_none_not_keyerror():
-    """Test that missing keys return None instead of raising KeyError."""
+def test_missing_key_raises_attribute_error():
+    """Missing attribute access raises AttributeError."""
     m = Map({})
-    assert m.missing is None
+    with pytest.raises(AttributeError):
+        _ = m.missing
+
+
+def test_missing_bracket_key_raises_key_error():
+    """Missing bracket access raises KeyError (standard dict behaviour)."""
+    m = Map({})
+    with pytest.raises(KeyError):
+        _ = m["missing"]
 
 
 def test_nested_access():

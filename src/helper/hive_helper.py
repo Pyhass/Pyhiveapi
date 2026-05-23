@@ -8,7 +8,6 @@ import time
 from typing import Any
 
 from .const import HIVE_TYPES
-from .hivedataclasses import Device
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -296,19 +295,6 @@ class HiveHelper:
             )
 
         return schedule_now_and_next
-
-    def get_heat_on_demand_device(self, device: Device):
-        """Use TRV device to get the linked thermostat device.
-
-        Args:
-            device ([dictionary]): [The TRV device to lookup.]
-
-        Returns:
-            [dictionary]: [Gets the thermostat device linked to TRV.]
-        """
-        trv = self.session.data.products.get(device["HiveID"])
-        thermostat = self.session.data.products.get(trv["state"]["zone"])
-        return thermostat
 
     def sanitize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Return a copy of payload with sensitive values masked for logs."""

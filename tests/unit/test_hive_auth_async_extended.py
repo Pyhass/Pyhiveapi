@@ -90,13 +90,13 @@ class TestAsyncInit:
         auth.client = None  # trigger async_init flow
 
         mock_boto_client = MagicMock()
-
-        auth.loop = MagicMock()
-        auth.loop.run_in_executor = AsyncMock(
+        mock_loop = MagicMock()
+        mock_loop.run_in_executor = AsyncMock(
             side_effect=[_LOGIN_INFO, mock_boto_client]
         )
 
-        await auth.async_init()
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await auth.async_init()
 
         assert auth._pool_id == "eu-west-1_TestPool"
         assert auth._client_id == "test-client-id"
@@ -116,12 +116,13 @@ class TestAsyncInit:
             "REGION": "ap-southeast-2_XyzPool",
         }
         mock_boto_client = MagicMock()
-        auth.loop = MagicMock()
-        auth.loop.run_in_executor = AsyncMock(
+        mock_loop = MagicMock()
+        mock_loop.run_in_executor = AsyncMock(
             side_effect=[login_info, mock_boto_client]
         )
 
-        await auth.async_init()
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            await auth.async_init()
 
         assert auth._region == "ap-southeast-2"
 
@@ -712,10 +713,10 @@ class TestLoginInitiateAuthSwallowedClientError:
 
 
 class TestLoginInitiateAuthSwallowedEndpointError:
-    """Arc 284->288: EndpointConnectionError caught but class name is wrong."""
+    """EndpointConnectionError in initiate_auth always raises HiveApiError."""
 
-    async def test_wrong_name_endpoint_error_in_initiate_auth_falls_through(self):
-        """EndpointConnectionError with wrong name is swallowed; response stays None."""
+    async def test_wrong_name_endpoint_error_in_initiate_auth_raises_api_error(self):
+        """Any EndpointConnectionError subclass in initiate_auth raises HiveApiError."""
         auth = await _make_auth()
 
         wrong_cls = type(
@@ -724,7 +725,7 @@ class TestLoginInitiateAuthSwallowedEndpointError:
         wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
         auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
 
-        with pytest.raises((TypeError, KeyError)):
+        with pytest.raises(HiveApiError):
             await auth.login()
 
 
@@ -771,10 +772,10 @@ class TestLoginChallengeSwallowedClientError:
 
 
 class TestLoginChallengeSwallowedEndpointError:
-    """Arc 313->319: EndpointConnectionError caught with wrong class name in challenge."""
+    """EndpointConnectionError in respond_to_auth_challenge always raises HiveApiError."""
 
-    async def test_wrong_name_endpoint_error_in_challenge_falls_through(self):
-        """EndpointConnectionError with wrong name is swallowed; result stays None."""
+    async def test_wrong_name_endpoint_error_in_challenge_raises_api_error(self):
+        """Any EndpointConnectionError subclass in SRP challenge raises HiveApiError."""
         auth = await _make_auth()
 
         challenge_response = {
@@ -797,7 +798,7 @@ class TestLoginChallengeSwallowedEndpointError:
             auth.loop.run_in_executor = AsyncMock(
                 side_effect=[challenge_response, wrong_err]
             )
-            with pytest.raises((TypeError, AttributeError)):
+            with pytest.raises(HiveApiError):
                 await auth.login()
 
 
@@ -884,11 +885,10 @@ class TestDeviceLoginSuccessPath:
 
 
 class TestDeviceLoginEndpointWrongName:
-    """Line 389: EndpointConnectionError with wrong __class__.__name__ raises
-    HiveInvalidDeviceAuthentication instead of HiveApiError."""
+    """Any EndpointConnectionError in device_login always raises HiveApiError."""
 
-    async def test_wrong_name_endpoint_error_raises_invalid_device_auth(self):
-        """A subclass of EndpointConnectionError with a different name hits line 389."""
+    async def test_wrong_name_endpoint_error_raises_api_error(self):
+        """Any EndpointConnectionError subclass in device_login raises HiveApiError."""
         auth = await _make_auth(device_key="dk-err", device_group_key="grp-err")
         auth.device_password = "dev-pass-err"
 
@@ -898,7 +898,7 @@ class TestDeviceLoginEndpointWrongName:
         wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
         auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
 
-        with pytest.raises(HiveInvalidDeviceAuthentication):
+        with pytest.raises(HiveApiError):
             await auth.device_login()
 
 
@@ -930,10 +930,10 @@ class TestSms2faSwallowedClientError:
 
 
 class TestSms2faSwallowedEndpointError:
-    """Arc 431->435: EndpointConnectionError caught with wrong class name in sms_2fa."""
+    """Any EndpointConnectionError in sms_2fa raises HiveApiError."""
 
-    async def test_wrong_name_endpoint_error_is_swallowed(self):
-        """EndpointConnectionError subclass with wrong name is swallowed; returns None."""
+    async def test_wrong_name_endpoint_error_raises_api_error(self):
+        """Any EndpointConnectionError subclass in sms_2fa raises HiveApiError."""
         auth = await _make_auth()
 
         wrong_cls = type(
@@ -942,8 +942,8 @@ class TestSms2faSwallowedEndpointError:
         wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
         auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
 
-        result = await auth.sms_2fa("654321", {"Session": "sess-abc"})
-        assert result is None
+        with pytest.raises(HiveApiError):
+            await auth.sms_2fa("654321", {"Session": "sess-abc"})
 
 
 # ---------------------------------------------------------------------------
@@ -952,10 +952,10 @@ class TestSms2faSwallowedEndpointError:
 
 
 class TestRefreshTokenSwallowedEndpointError:
-    """Arc 479->485: EndpointConnectionError caught with wrong class name in refresh_token."""
+    """Any EndpointConnectionError in refresh_token raises HiveApiError."""
 
-    async def test_wrong_name_endpoint_error_is_swallowed_returns_none(self):
-        """EndpointConnectionError subclass with wrong name is swallowed; result=None returned."""
+    async def test_wrong_name_endpoint_error_raises_api_error(self):
+        """Any EndpointConnectionError subclass in refresh_token raises HiveApiError."""
         auth = await _make_auth()
 
         wrong_cls = type(
@@ -964,6 +964,5 @@ class TestRefreshTokenSwallowedEndpointError:
         wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
         auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
 
-        # result initialised to None; exception swallowed; line 485 reached; returns None
-        result = await auth.refresh_token("some-refresh-token")
-        assert result is None
+        with pytest.raises(HiveApiError):
+            await auth.refresh_token("some-refresh-token")

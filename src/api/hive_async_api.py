@@ -131,8 +131,7 @@ class HiveApiAsync:
     async def refresh_tokens(self):
         """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
         url = self.urls["refresh"]
-        if self.session is not None:
-            tokens = self.session.tokens.token_data
+        tokens = self.session.tokens.token_data if self.session is not None else {}
         jsc = (
             "{"
             + ",".join(
@@ -214,8 +213,8 @@ class HiveApiAsync:
         """Call a way to get motion sensor info."""
         json_return = {}
         url = (
-            self.urls["base"]
-            + self.urls["products"]
+            self.base_url
+            + "/products"
             + "/"
             + sensor["type"]
             + "/"
@@ -266,9 +265,9 @@ class HiveApiAsync:
             resp = await self.request("post", url, data=jsc)
             json_return["original"] = resp.status
             json_return["parsed"] = await resp.json(content_type=None)
-        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
-            if e.__class__.__name__ == "FileInUse":
-                return {"original": "file"}
+        except FileInUse:
+            return {"original": "file"}
+        except (OSError, RuntimeError, ConnectionError):
             await self.error()
 
         return json_return
@@ -276,17 +275,20 @@ class HiveApiAsync:
     async def set_action(self, n_id, data):
         """Set the state of a Action."""
         _LOGGER.debug("Setting action %s", n_id)
+        json_return = {}
         jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
             await self.is_file_being_used()
-            await self.request("put", url, data=jsc)
-        except (FileInUse, OSError, RuntimeError, ConnectionError) as e:
-            if e.__class__.__name__ == "FileInUse":
-                return {"original": "file"}
+            resp = await self.request("put", url, data=jsc)
+            json_return["original"] = resp.status
+            json_return["parsed"] = await resp.json(content_type=None)
+        except FileInUse:
+            return {"original": "file"}
+        except (OSError, RuntimeError, ConnectionError):
             await self.error()
 
-        return self.json_return
+        return json_return
 
     async def error(self):
         """An error has occurred interacting with the Hive API."""

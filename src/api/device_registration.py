@@ -183,14 +183,11 @@ class DeviceRegistrationMixin:
                 ),
             )
         except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ in (
-                "NotAuthorizedException",
-                "CodeMismatchException",
-            ):
+            code = (err.response or {}).get("Error", {}).get("Code", "")
+            if code in ("NotAuthorizedException", "CodeMismatchException"):
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError from err
+            raise HiveApiError from err
 
         return result
 
@@ -210,8 +207,7 @@ class DeviceRegistrationMixin:
                 ),
             )
         except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "EndpointConnectionError":
-                raise HiveApiError from err
+            raise HiveApiError from err
 
         return result
 
@@ -335,10 +331,10 @@ class DeviceRegistrationMixin:
                 ),
             )
         except botocore.exceptions.ClientError as err:
-            if err.__class__.__name__ == "NotAuthorizedException":
+            code = (err.response or {}).get("Error", {}).get("Code", "")
+            if code == "NotAuthorizedException":
                 raise HiveInvalid2FACode from err
         except botocore.exceptions.EndpointConnectionError as err:
-            if err.__class__.__name__ == "ResourceNotFoundException":
-                raise HiveApiError from err
+            raise HiveApiError from err
 
         return result

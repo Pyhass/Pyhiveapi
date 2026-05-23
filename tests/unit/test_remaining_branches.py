@@ -525,7 +525,8 @@ class TestSensorGetSensorHiveTypesSensorPath:
     async def test_contactsensor_in_hive_types_sensor_takes_else_branch(self):
         """contactsensor is in HIVE_TYPES['Sensor'] and not in sensor_commands key set,
         so the elif branch is taken."""
-        from apyhiveapi.helper.const import HIVE_TYPES, sensor_commands
+        from apyhiveapi.devices.sensor import sensor_commands
+        from apyhiveapi.helper.const import HIVE_TYPES
 
         # 'contactsensor' is in HIVE_TYPES['Sensor'] and NOT a key in sensor_commands
         assert "contactsensor" in HIVE_TYPES["Sensor"]
@@ -546,7 +547,8 @@ class TestSensorGetSensorHiveTypesSensorPath:
 
     async def test_motionsensor_in_hive_types_sensor_sets_status(self):
         """motionsensor is in HIVE_TYPES['Sensor'] and not in sensor_commands key set."""
-        from apyhiveapi.helper.const import HIVE_TYPES, sensor_commands
+        from apyhiveapi.devices.sensor import sensor_commands
+        from apyhiveapi.helper.const import HIVE_TYPES
 
         assert "motionsensor" in HIVE_TYPES["Sensor"]
         assert "motionsensor" not in sensor_commands

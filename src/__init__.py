@@ -12,7 +12,10 @@ else:
 from .helper.const import SMS_REQUIRED
 from .helper.hive_exceptions import (
     HiveApiError,
+    HiveAuthCredentialError,
     HiveAuthError,
+    HiveConfigurationError,
+    HiveError,
     HiveFailedToRefreshTokens,
     HiveInvalid2FACode,
     HiveInvalidDeviceAuthentication,

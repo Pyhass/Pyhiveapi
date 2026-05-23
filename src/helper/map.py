@@ -10,6 +10,11 @@ class Map(dict):
         dict (dict): dictionary to map.
     """
 
-    __getattr__ = dict.get
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(f"Map has no key {key!r}") from None
+
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__

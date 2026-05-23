@@ -482,32 +482,9 @@ class TestForgetDevice:
         result = await stub.forget_device("acc-token", "dev-key")
         assert result is None
 
-    async def test_endpoint_error_does_not_raise_api_error(self):
-        """EndpointConnectionError only raises HiveApiError if class name is
-        'ResourceNotFoundException', which can never be true for an
-        EndpointConnectionError. The exception is therefore silently swallowed."""
+    async def test_endpoint_error_raises_api_error(self):
         stub = await _make_stub()
         stub.loop.run_in_executor.side_effect = _endpoint_error()
-        # The guard condition is always False for a real EndpointConnectionError,
-        # so no exception propagates.
-        result = await stub.forget_device("acc-token", "dev-key")
-        assert result is None
-
-    async def test_endpoint_error_named_resource_not_found_raises_api_error(self):
-        """A subclass of EndpointConnectionError named 'ResourceNotFoundException'
-        satisfies the guard at line 339 and raises HiveApiError (line 340)."""
-        stub = await _make_stub()
-        # Craft a class whose __class__.__name__ == "ResourceNotFoundException"
-        # but which IS an EndpointConnectionError (so it's caught by the except clause)
-        resource_cls = type(
-            "ResourceNotFoundException",
-            (botocore.exceptions.EndpointConnectionError,),
-            {},
-        )
-        resource_err = resource_cls(
-            endpoint_url="https://cognito.eu-west-1.amazonaws.com"
-        )
-        stub.loop.run_in_executor.side_effect = resource_err
         with pytest.raises(HiveApiError):
             await stub.forget_device("acc-token", "dev-key")
 
@@ -635,33 +612,6 @@ class TestConfirmDeviceSwallowedErrors:
         stub.loop.run_in_executor.side_effect = wrong_err
         result = await stub.confirm_device("name")
         assert result is None  # no HiveInvalid2FACode raised
-
-    async def test_endpoint_error_wrong_name_is_swallowed(self):
-        """EndpointConnectionError subclass with wrong __name__ is swallowed (190->193)."""
-        stub = await _make_stub()
-        stub.generate_hash_device = AsyncMock(
-            return_value={"PasswordVerifier": "pv", "Salt": "s"}
-        )
-        wrong_cls = type(
-            "WrongEndpoint", (botocore.exceptions.EndpointConnectionError,), {}
-        )
-        wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
-        stub.loop.run_in_executor.side_effect = wrong_err
-        result = await stub.confirm_device("name")
-        assert result is None  # no HiveApiError raised
-
-
-class TestUpdateDeviceStatusSwallowedEndpointError:
-    async def test_endpoint_error_wrong_name_is_swallowed(self):
-        """EndpointConnectionError with wrong name is caught but not re-raised (211->214)."""
-        stub = await _make_stub()
-        wrong_cls = type(
-            "WrongEndpoint", (botocore.exceptions.EndpointConnectionError,), {}
-        )
-        wrong_err = wrong_cls(endpoint_url="https://cognito.eu-west-1.amazonaws.com")
-        stub.loop.run_in_executor.side_effect = wrong_err
-        result = await stub.update_device_status()
-        assert result is None  # no HiveApiError raised
 
 
 class TestDeviceRegistration:

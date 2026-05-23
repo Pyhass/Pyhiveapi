@@ -144,7 +144,17 @@ class PollingMixin:
                 api_call_start = time.monotonic()
                 try:
                     api_resp_d = await self.api.get_all()
+                    api_call_duration = time.monotonic() - api_call_start
+                    if api_call_duration > self._slow_poll_threshold:
+                        _LOGGER.debug(
+                            "get_devices - Hive API response took %.1fs — marking poll as slow.",
+                            api_call_duration,
+                        )
+                        self._last_poll_slow = True
+                    else:
+                        self._last_poll_slow = False
                 except HiveAuthError:
+                    self._last_poll_slow = False
                     _LOGGER.warning(
                         "Auth error (401/403) after token refresh, "
                         "falling back to full device re-login."
@@ -154,15 +164,6 @@ class PollingMixin:
                         self.api.get_all,
                         reraise_as=HiveReauthRequired,
                     )
-                api_call_duration = time.monotonic() - api_call_start
-                if api_call_duration > self._slow_poll_threshold:
-                    _LOGGER.debug(
-                        "get_devices - Hive API response took %.1fs — marking poll as slow.",
-                        api_call_duration,
-                    )
-                    self._last_poll_slow = True
-                else:
-                    self._last_poll_slow = False
                 if not str(api_resp_d["original"]).startswith("2"):
                     raise HTTPException
                 if api_resp_d["parsed"] is None:

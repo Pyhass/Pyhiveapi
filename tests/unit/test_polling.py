@@ -207,3 +207,77 @@ class TestPollDevices:
         p.get_devices = AsyncMock(return_value=False)
         result = await p._poll_devices()
         assert result is False
+
+
+# ---------------------------------------------------------------------------
+# TestGetDevicesSlowPoll
+# ---------------------------------------------------------------------------
+
+
+class TestGetDevicesSlowPoll:
+    async def test_auth_error_sets_last_poll_slow_false(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from apyhiveapi.helper.hive_exceptions import HiveAuthError
+
+        p = _make_polling()
+        p.api = MagicMock()
+        p.api.get_all = AsyncMock(side_effect=HiveAuthError())
+        p.config = MagicMock()
+        p.config.file = False
+        p.tokens = MagicMock()
+        p._last_poll_slow = True  # pre-set to True to confirm it gets cleared
+
+        retry_result = {
+            "original": 200,
+            "parsed": {"products": [], "devices": [], "actions": []},
+        }
+
+        async def fake_retry_login():
+            pass
+
+        async def fake_retry_with_backoff(_fn, _reraise_as=None):
+            return retry_result
+
+        p._retry_login = fake_retry_login
+        p._retry_with_backoff = fake_retry_with_backoff
+        p.hive_refresh_tokens = AsyncMock()
+        p.data = MagicMock()
+        p.data.products = {}
+        p.data.devices = {}
+        p.data.actions = {}
+        p.config.last_update = MagicMock()
+        p.config.scan_interval = MagicMock()
+
+        await p.get_devices("No_ID")
+        assert p._last_poll_slow is False
+
+    async def test_slow_api_call_sets_last_poll_slow_true(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        p = _make_polling()
+        p._slow_poll_threshold = 0  # any call will be "slow"
+        p.api = MagicMock()
+
+        slow_result = {
+            "original": 200,
+            "parsed": {"products": [], "devices": [], "actions": []},
+        }
+
+        async def slow_get_all():
+            return slow_result
+
+        p.api.get_all = slow_get_all
+        p.config = MagicMock()
+        p.config.file = False
+        p.tokens = MagicMock()
+        p.hive_refresh_tokens = AsyncMock()
+        p.data = MagicMock()
+        p.data.products = {}
+        p.data.devices = {}
+        p.data.actions = {}
+        p.config.last_update = MagicMock()
+        p.config.scan_interval = MagicMock()
+
+        await p.get_devices("No_ID")
+        assert p._last_poll_slow is True

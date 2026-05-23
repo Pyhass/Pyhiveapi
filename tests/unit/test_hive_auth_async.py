@@ -79,11 +79,26 @@ async def _make_auth(
 
 
 class TestHiveAuthAsyncInit:
-    def test_pool_region_raises_value_error(self):
+    def test_pool_region_no_longer_accepted(self):
         from apyhiveapi.api.hive_auth_async import HiveAuthAsync
 
-        with pytest.raises(ValueError, match="pool_region"):
+        with pytest.raises(TypeError):
             HiveAuthAsync(username="u", password="p", pool_region="eu-west-1")
+
+    async def test_async_init_sets_running_loop(self):
+        from apyhiveapi.api.hive_auth_async import HiveAuthAsync
+
+        auth = HiveAuthAsync(username="u@test.com", password="pass")
+        assert auth.loop is None  # not set until async_init
+        mock_data = {
+            "UPID": "eu-west-1_Test",
+            "CLIID": "client-id",
+            "REGION": "eu-west-1_Test",
+        }
+        with patch.object(auth.api, "get_login_info", return_value=mock_data):
+            with patch("boto3.client", return_value=MagicMock()):
+                await auth.async_init()
+        assert auth.loop is not None
 
     async def test_file_flag_set_for_magic_username(self):
         from apyhiveapi.api.hive_auth_async import HiveAuthAsync
@@ -443,6 +458,14 @@ class TestSms2fa:
         await auth.sms_2fa("123456", {"Session": "sess-1"})
         assert auth.device_group_key == "sms-grp"
         assert auth.device_key == "sms-dev"
+
+    @pytest.mark.asyncio
+    async def test_no_authentication_result_key_does_not_raise(self):
+        auth = await _make_auth()
+        auth.loop.run_in_executor.return_value = {"ChallengeName": "SMS_MFA"}
+        result = await auth.sms_2fa("123456", {"Session": "sess-1"})
+        assert auth.access_token is None
+        assert result == {"ChallengeName": "SMS_MFA"}
 
 
 # ---------------------------------------------------------------------------

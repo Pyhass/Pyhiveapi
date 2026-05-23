@@ -60,38 +60,6 @@ class TestGetDeviceFromIdBranch:
 
 
 # ---------------------------------------------------------------------------
-# get_heat_on_demand_device — lines 315-317
-# ---------------------------------------------------------------------------
-
-
-class TestGetHeatOnDemandDevice:
-    """Covers HiveHelper.get_heat_on_demand_device (lines 315-317)."""
-
-    def test_returns_linked_thermostat(self):
-        """Looks up TRV by HiveID, then fetches linked thermostat by zone."""
-        trv_id = "trv-001"
-        thermostat_id = "zone-001"
-
-        trv_data = {"state": {"zone": thermostat_id}, "type": "trvcontrol"}
-        thermostat_data = {"id": thermostat_id, "type": "heating"}
-
-        products = {
-            trv_id: trv_data,
-            thermostat_id: thermostat_data,
-        }
-        helper = _make_helper(products=products)
-
-        # Device accessed with dict-style key "HiveID" as used inside the method
-        device = MagicMock()
-        device.__getitem__ = MagicMock(
-            side_effect=lambda k: trv_id if k == "HiveID" else None
-        )
-
-        result = helper.get_heat_on_demand_device(device)
-        assert result == thermostat_data
-
-
-# ---------------------------------------------------------------------------
 # sanitize_payload — list masking (line 329) and non-str/dict/list fallthrough
 # ---------------------------------------------------------------------------
 
