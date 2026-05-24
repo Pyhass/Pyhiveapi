@@ -362,10 +362,12 @@ class TestSessionCompatMixinUpdateInterval:
     """updateInterval must actually update config.scan_interval."""
 
     async def test_update_interval_sets_scan_interval(self):
-        """updateInterval(300) must set self.config.scan_interval = 300."""
+        """updateInterval(300) must set self.config.scan_interval to timedelta(seconds=300)."""
+        from datetime import timedelta
+
         session = _make_concrete_session()
         await session.updateInterval(300)
-        assert session.config.scan_interval == 300
+        assert session.config.scan_interval == timedelta(seconds=300)
 
     async def test_update_interval_returns_true(self):
         """updateInterval must return True on success."""
