@@ -111,7 +111,7 @@ class TestGetLoginInfo:
             api.get_login_info()
 
         mock_get.assert_called_once_with(
-            url="https://sso.hivehome.com/", verify=False, timeout=api.timeout
+            url="https://sso.hivehome.com/", timeout=api.timeout
         )
 
     def test_uses_first_script_tag(self):
@@ -425,3 +425,38 @@ class TestRefreshTokensSessionNone:
             await api.refresh_tokens()
         except (NameError, UnboundLocalError, AttributeError):
             pass  # expected — tokens was never defined since session is None
+
+
+# ---------------------------------------------------------------------------
+# Tests: set_state() JSON encoding — Fix A
+# ---------------------------------------------------------------------------
+
+
+class TestSetStateJsonEncoding:
+    """set_state must produce valid JSON even when kwarg values contain special characters."""
+
+    async def test_set_state_escapes_quotes_in_value(self):
+        """A value containing double-quotes must produce valid, parseable JSON."""
+        import json  # noqa: PLC0415
+
+        session = MagicMock()
+        session.tokens.token_data = {"token": "tok"}
+        session.config.file = False
+        api = HiveApiAsync(hive_session=session)
+        api.urls = {"nodes": "https://beekeeper.hivehome.com/1.0/nodes/{}/{}"}
+
+        captured = {}
+
+        async def fake_request(_method, _url, **kwargs):
+            captured["data"] = kwargs.get("data")
+            resp = MagicMock()
+            resp.status = 200
+            resp.json = AsyncMock(return_value={})
+            return resp
+
+        with patch.object(api, "request", side_effect=fake_request):
+            with patch.object(api, "is_file_being_used", new=AsyncMock()):
+                await api.set_state("heating", "node-1", mode='MANUAL"injected')
+
+        parsed = json.loads(captured["data"])
+        assert parsed["mode"] == 'MANUAL"injected'

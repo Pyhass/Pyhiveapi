@@ -6,7 +6,6 @@ import logging
 import time
 
 import requests
-import urllib3
 from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
 from pyquery import PyQuery
 
@@ -14,8 +13,6 @@ from ..helper.const import HTTP_FORBIDDEN, HTTP_OK, HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
 
 _LOGGER = logging.getLogger(__name__)
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class HiveApiAsync:
@@ -111,7 +108,7 @@ class HiveApiAsync:
         """Get login properties to make the login request."""
         url = "https://sso.hivehome.com/"
 
-        data = requests.get(url=url, verify=False, timeout=self.timeout)
+        data = requests.get(url=url, timeout=self.timeout)
         html = PyQuery(data.content)
         json_data = json.loads(
             '{"'
@@ -251,13 +248,7 @@ class HiveApiAsync:
         """Set the state of a Device."""
         _LOGGER.debug("set_state - Setting state for %s/%s: %s", n_type, n_id, kwargs)
         json_return = {}
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in kwargs.items())
-            )
-            + "}"
-        )
+        jsc = json.dumps(kwargs)
 
         url = self.urls["nodes"].format(n_type, n_id)
         try:
