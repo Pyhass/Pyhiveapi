@@ -11,7 +11,7 @@ from apyhiveapi.helper.compat_aliases import (
     SwitchCompatMixin,
     WaterHeaterCompatMixin,
 )
-from apyhiveapi.helper.hivedataclasses import Device
+from apyhiveapi.helper.hivedataclasses import Device, SessionConfig
 
 
 def _make_device():
@@ -319,13 +319,56 @@ class TestSessionCompatMixin:
         assert s.deviceList is s.device_list
 
     async def test_update_interval_returns_true(self):
-        """updateInterval always returns True (deprecated no-op)."""
+        """updateInterval returns True and updates config.scan_interval."""
 
         class Stub(SessionCompatMixin):
             """Stub for updateInterval test."""
 
             device_list = {}
 
+            def __init__(self):
+                self.config = SessionConfig()
+
         s = Stub()
         result = await s.updateInterval(60)
+        assert result is True
+
+
+# ---------------------------------------------------------------------------
+# SessionCompatMixin.updateInterval — bug fix tests
+# ---------------------------------------------------------------------------
+
+
+def _make_concrete_session():
+    """Return a minimal SessionCompatMixin subclass with a real SessionConfig."""
+
+    class ConcreteSession(SessionCompatMixin):
+        """Minimal concrete SessionCompatMixin for updateInterval tests."""
+
+        def __init__(self):
+            self.config = SessionConfig()
+            self.device_list = {}
+
+        async def start_session(self, config=None):  # pylint: disable=unused-argument
+            """Stub."""
+
+        async def update_data(self, device):  # pylint: disable=unused-argument
+            """Stub."""
+
+    return ConcreteSession()
+
+
+class TestSessionCompatMixinUpdateInterval:
+    """updateInterval must actually update config.scan_interval."""
+
+    async def test_update_interval_sets_scan_interval(self):
+        """updateInterval(300) must set self.config.scan_interval = 300."""
+        session = _make_concrete_session()
+        await session.updateInterval(300)
+        assert session.config.scan_interval == 300
+
+    async def test_update_interval_returns_true(self):
+        """updateInterval must return True on success."""
+        session = _make_concrete_session()
+        result = await session.updateInterval(60)
         assert result is True
