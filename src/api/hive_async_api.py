@@ -9,7 +9,7 @@ import requests
 from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
 from pyquery import PyQuery
 
-from ..helper.const import HTTP_FORBIDDEN, HTTP_OK, HTTP_UNAUTHORIZED
+from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,14 +94,12 @@ class HiveApiAsync:
             raise HiveAuthError(
                 f"Token expired or forbidden calling {url} — HTTP {resp.status}"
             )
-        if url is not None and resp.status is not None:
-            _LOGGER.error(
-                "Something has gone wrong calling %s - HTTP status is - %s — response: %s",
-                url,
-                resp.status,
-                resp_body[:200],
-            )
-
+        _LOGGER.error(
+            "Something has gone wrong calling %s - HTTP status is - %s — response: %s",
+            url,
+            resp.status,
+            resp_body[:200],
+        )
         raise HiveApiError
 
     def get_login_info(self):
@@ -124,32 +122,6 @@ class HiveApiAsync:
         login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
         login_data.update({"REGION": json_data["HiveSSOPoolId"]})
         return login_data
-
-    async def refresh_tokens(self):
-        """Refresh tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
-        url = self.urls["refresh"]
-        tokens = self.session.tokens.token_data if self.session is not None else {}
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in tokens.items())
-            )
-            + "}"
-        )
-        try:
-            await self.request("post", url, data=jsc)
-
-            if self.json_return["original"] == HTTP_OK:
-                info = self.json_return["parsed"]
-                if "token" in info:
-                    await self.session.update_tokens(info)
-                    # pylint: disable-next=invalid-sequence-index
-                    self.base_url = info["platform"]["endpoint"]
-                return True
-        except (ConnectionError, OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return self.json_return
 
     async def get_all(self):
         """Build and query all endpoint."""

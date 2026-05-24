@@ -281,20 +281,6 @@ class TestMotionSensor:
 
 
 # ---------------------------------------------------------------------------
-# Tests: HiveApiAsync.refresh_tokens
-# ---------------------------------------------------------------------------
-
-
-class TestRefreshTokens:
-    async def test_no_name_error_when_session_is_none(self):
-        websession = _make_mock_websession(status=200)
-        api = HiveApiAsync(hive_session=None, websession=websession)
-        api.request = AsyncMock()
-        result = await api.refresh_tokens()
-        assert result == api.json_return
-
-
-# ---------------------------------------------------------------------------
 # Tests: HiveApiAsync.error
 # ---------------------------------------------------------------------------
 
