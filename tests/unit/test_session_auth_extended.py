@@ -290,3 +290,55 @@ class TestHiveRefreshTokensExtended:
         s.auth.refresh_token.return_value = AUTH_RESULT
         await s.hive_refresh_tokens(force_refresh=True)
         s.auth.refresh_token.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# update_tokens — elif "token" branch missing token_created and bare refreshToken
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateTokensTokenBranch:
+    """update_tokens must set token_created and guard missing refreshToken in elif branch."""
+
+    async def test_token_branch_sets_token_created(self):
+        """elif 'token' branch must update token_created (was missing, stayed datetime.min)."""
+        s = _make_stub()
+        await s.update_tokens(
+            {"token": "id-tok", "refreshToken": "ref-tok", "accessToken": "acc-tok"}
+        )
+        assert s.tokens.token_created > datetime.min
+
+    async def test_token_branch_updates_token_data(self):
+        """elif 'token' branch stores all three token values."""
+        s = _make_stub()
+        await s.update_tokens(
+            {"token": "id", "refreshToken": "ref", "accessToken": "acc"}
+        )
+        assert s.tokens.token_data["token"] == "id"
+        assert s.tokens.token_data["refreshToken"] == "ref"
+        assert s.tokens.token_data["accessToken"] == "acc"
+
+    async def test_token_branch_missing_refresh_token_does_not_crash(self):
+        """elif 'token' branch without refreshToken key must not raise KeyError."""
+        s = _make_stub()
+        await s.update_tokens({"token": "id", "accessToken": "acc"})
+        assert s.tokens.token_data["token"] == "id"
+
+
+# ---------------------------------------------------------------------------
+# hive_refresh_tokens — bare refreshToken access raises KeyError when missing
+# ---------------------------------------------------------------------------
+
+
+class TestHiveRefreshTokensMissingRefreshToken:
+    """hive_refresh_tokens must not crash when token_data has no refreshToken."""
+
+    async def test_missing_refresh_token_does_not_raise_key_error(self):
+        """hive_refresh_tokens without refreshToken in token_data must not crash."""
+        s = _make_stub()
+        s.tokens.token_data = {"token": "id", "accessToken": "acc"}
+        s.tokens.token_created = datetime.now() - timedelta(hours=2)
+        s.tokens.token_expiry = timedelta(hours=1)
+        s.auth.refresh_token.return_value = None
+        result = await s.hive_refresh_tokens()
+        assert result is None

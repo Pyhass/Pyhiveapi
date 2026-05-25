@@ -100,8 +100,11 @@ class SessionAuthMixin:
         elif "token" in tokens:
             data = tokens
             self.tokens.token_data.update({"token": data["token"]})
-            self.tokens.token_data.update({"refreshToken": data["refreshToken"]})
+            if "refreshToken" in data:
+                self.tokens.token_data.update({"refreshToken": data["refreshToken"]})
             self.tokens.token_data.update({"accessToken": data["accessToken"]})
+            if update_expiry_time:
+                self.tokens.token_created = datetime.now()
 
         if "ExpiresIn" in data:
             self.tokens.token_expiry = timedelta(seconds=data["ExpiresIn"])
@@ -335,7 +338,7 @@ class SessionAuthMixin:
                     )
                     try:
                         result = await self.auth.refresh_token(
-                            self.tokens.token_data["refreshToken"]
+                            self.tokens.token_data.get("refreshToken")
                         )
 
                         if result and "AuthenticationResult" in result:
