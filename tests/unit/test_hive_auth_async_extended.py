@@ -692,7 +692,7 @@ class TestLoginInitiateAuthSwallowedClientError:
     """Arc 280->288: ClientError caught but class name is not UserNotFoundException."""
 
     async def test_other_client_error_in_initiate_auth_falls_through(self):
-        """Non-UserNotFoundException ClientError is swallowed; response stays None → TypeError."""
+        """Non-UserNotFoundException ClientError raises HiveApiError."""
         auth = await _make_auth()
 
         wrong_cls = type("SomeOtherError", (botocore.exceptions.ClientError,), {})
@@ -701,9 +701,7 @@ class TestLoginInitiateAuthSwallowedClientError:
         )
         auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
 
-        # Exception is swallowed; line 288 `response["ChallengeName"]` raises TypeError
-        # because response is None
-        with pytest.raises((TypeError, KeyError)):
+        with pytest.raises(HiveApiError):
             await auth.login()
 
 
@@ -738,7 +736,7 @@ class TestLoginChallengeSwallowedClientError:
     """Arc 307->319: ClientError caught in challenge response with name not matching."""
 
     async def test_other_client_error_in_challenge_falls_through(self):
-        """ClientError that is neither NotAuthorized nor ResourceNotFound is swallowed."""
+        """ClientError that is neither NotAuthorized nor ResourceNotFound raises HiveApiError."""
         auth = await _make_auth()
 
         challenge_response = {
@@ -761,8 +759,7 @@ class TestLoginChallengeSwallowedClientError:
             auth.loop.run_in_executor = AsyncMock(
                 side_effect=[challenge_response, wrong_err]
             )
-            # Exception is swallowed; result stays None → TypeError on line 321
-            with pytest.raises((TypeError, AttributeError)):
+            with pytest.raises(HiveApiError):
                 await auth.login()
 
 
@@ -1019,3 +1016,74 @@ class TestGetPasswordAuthKeyNonePoolId:
         auth._pool_id = None
         with pytest.raises(HiveUnknownConfiguration):
             auth.get_password_authentication_key("user", "pass", "DEADBEEF", "ABCDEF")
+
+
+# ---------------------------------------------------------------------------
+# Tests: login() — unhandled ClientError codes must raise HiveApiError
+# ---------------------------------------------------------------------------
+
+
+class TestLoginUnhandledClientError:
+    """Unhandled ClientError codes in login() must raise HiveApiError, not crash."""
+
+    async def test_initiate_auth_unhandled_error_raises_hive_api_error(self):
+        """Non-UserNotFoundException ClientError from initiate_auth raises HiveApiError."""
+        auth = await _make_auth()
+        err = botocore.exceptions.ClientError(
+            {"Error": {"Code": "TooManyRequestsException", "Message": "too many"}},
+            "InitiateAuth",
+        )
+        auth.loop.run_in_executor = AsyncMock(side_effect=err)
+
+        with pytest.raises(HiveApiError):
+            await auth.login()
+
+    async def test_respond_to_challenge_unhandled_error_raises_hive_api_error(self):
+        """Non-NotAuthorized/ResourceNotFound ClientError raises HiveApiError."""
+        auth = await _make_auth()
+        challenge_response = {
+            "ChallengeName": "PASSWORD_VERIFIER",
+            "ChallengeParameters": {
+                "USER_ID_FOR_SRP": "user@test.com",
+                "SALT": "aabbccdd",
+                "SRP_B": "ccddee",
+                "SECRET_BLOCK": "YWJj",
+            },
+        }
+        respond_err = botocore.exceptions.ClientError(
+            {"Error": {"Code": "InternalErrorException", "Message": "internal"}},
+            "RespondToAuthChallenge",
+        )
+        auth.loop.run_in_executor = AsyncMock(
+            side_effect=[challenge_response, respond_err]
+        )
+        auth.process_challenge = AsyncMock(
+            return_value={"TIMESTAMP": "t", "USERNAME": "u"}
+        )
+
+        with pytest.raises(HiveApiError):
+            await auth.login()
+
+
+# ---------------------------------------------------------------------------
+# Tests: async_init() — None return from get_login_info raises HiveUnknownConfiguration
+# ---------------------------------------------------------------------------
+
+
+class TestAsyncInitNoneGuard:
+    """async_init must guard against get_login_info returning None."""
+
+    async def test_async_init_raises_when_login_info_is_none(self):
+        """async_init raises HiveUnknownConfiguration when get_login_info returns None."""
+        from apyhiveapi.api.hive_auth_async import HiveAuthAsync
+        from apyhiveapi.helper.hive_exceptions import HiveUnknownConfiguration
+
+        auth = HiveAuthAsync(username="user@test.com", password="pass")
+        auth.client = None
+
+        mock_loop = MagicMock()
+        mock_loop.run_in_executor = AsyncMock(return_value=None)
+
+        with patch("asyncio.get_running_loop", return_value=mock_loop):
+            with pytest.raises(HiveUnknownConfiguration):
+                await auth.async_init()

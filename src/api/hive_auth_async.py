@@ -91,6 +91,8 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         """Initialise async variables."""
         self.loop = asyncio.get_running_loop()
         self.data = await self.loop.run_in_executor(None, self.api.get_login_info)
+        if not self.data:
+            raise HiveUnknownConfiguration("SSO login page returned no data")
         self._pool_id = self.data.get("UPID")
         self._client_id = self.data.get("CLIID")
         region_raw = self.data.get("REGION")
@@ -258,7 +260,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
 
         return response
 
-    async def login(self):  # noqa: PLR0912
+    async def login(self):  # noqa: PLR0912, PLR0915  # pylint: disable=too-many-statements
         """Login into a Hive account - handles initial SRP auth only."""
         if self.use_file:
             _LOGGER.debug("login - Using file-based authentication.")
@@ -286,6 +288,8 @@ class HiveAuthAsync(DeviceRegistrationMixin):
             if code == "UserNotFoundException":
                 _LOGGER.error("Cognito auth failed: user not found.")
                 raise HiveInvalidUsername from err
+            _LOGGER.error("Cognito auth failed: %s", code)
+            raise HiveApiError from err
         except botocore.exceptions.EndpointConnectionError as err:
             _LOGGER.error("Cognito auth failed: cannot reach endpoint.")
             raise HiveApiError from err
@@ -315,6 +319,8 @@ class HiveAuthAsync(DeviceRegistrationMixin):
                         "Cognito auth challenge failed: device resource not found."
                     )
                     raise HiveInvalidDeviceAuthentication from err
+                _LOGGER.error("Cognito auth challenge failed: %s", code)
+                raise HiveApiError from err
             except botocore.exceptions.EndpointConnectionError as err:
                 _LOGGER.error("Cognito auth challenge failed: cannot reach endpoint.")
                 raise HiveApiError from err
