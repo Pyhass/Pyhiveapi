@@ -233,3 +233,38 @@ class TestTurnOn:
         call_kwargs = session.api.set_state.call_args.kwargs
         assert call_kwargs.get("colourMode") == "COLOUR"
         assert call_kwargs.get("hue") == str(color[0])
+
+
+# ---------------------------------------------------------------------------
+# get_brightness — must return int, not float
+# ---------------------------------------------------------------------------
+
+
+class TestGetBrightnessReturnsInt:
+    """get_brightness must return int, not float."""
+
+    async def test_get_brightness_returns_int(self):
+        """Brightness value is returned as int (not float) for HA compatibility."""
+        from apyhiveapi.devices.light import HiveLight
+
+        class StubLight(HiveLight):
+            """Concrete stub for testing."""
+
+        h = StubLight()
+        h.session = MagicMock()
+        h.session.data.products = {"h1": {"state": {"brightness": 50}}}
+        d = Device(
+            hive_id="h1",
+            hive_name="L",
+            hive_type="warmwhitelight",
+            ha_type="light",
+            device_id="d1",
+            device_name="L",
+            device_data={"online": True},
+            ha_name="Light",
+        )
+        result = await h.get_brightness(d)
+        assert isinstance(result, int), (
+            f"Expected int, got {type(result).__name__}: {result!r}"
+        )
+        assert result == 127

@@ -145,3 +145,33 @@ class TestZeroDivisionGuards:
         device = _make_device()
         result = await h.get_color_temp(device)
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# get_color — must return HS 2-tuple for HA hs_color, not RGB 3-tuple
+# ---------------------------------------------------------------------------
+
+
+class TestGetColorReturnsHSTuple:
+    """get_color must return (hue_degrees, saturation_percent) 2-tuple for HA hs_color."""
+
+    async def test_get_color_returns_two_tuple(self):
+        """get_color returns a 2-tuple (not 3-tuple)."""
+        session = _make_session(
+            {"light-1": {"state": {"hue": 120, "saturation": 75, "value": 100}}}
+        )
+        h = _make_handler(session)
+        device = _make_device()
+        result = await h.get_color(device)
+        assert result is not None
+        assert len(result) == 2, f"Expected 2-tuple (hue, sat), got {result!r}"
+
+    async def test_get_color_returns_correct_hue_and_saturation(self):
+        """get_color returns (hue, saturation) values matching API data."""
+        session = _make_session(
+            {"light-1": {"state": {"hue": 180, "saturation": 50, "value": 80}}}
+        )
+        h = _make_handler(session)
+        device = _make_device()
+        result = await h.get_color(device)
+        assert result == (180, 50)

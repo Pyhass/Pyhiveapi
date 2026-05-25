@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import colorsys
 import logging
 from typing import Any
 
@@ -72,22 +71,18 @@ class LightColorHandler:  # pylint: disable=no-member
         return None
 
     async def get_color(self, device: Device):
-        """Get light current colour as an RGB tuple.
+        """Get light current colour as an HS tuple for HA hs_color.
 
         Args:
             device (Device): Device to query.
 
         Returns:
-            tuple | None: ``(r, g, b)`` each in 0–255.
+            tuple | None: ``(hue_degrees, saturation_percent)`` where hue is
+                0–360 and saturation is 0–100, or None on error.
         """
         try:
             data = self.session.data.products[device.hive_id]
-            hsv = [
-                data["state"]["hue"] / 360,
-                data["state"]["saturation"] / 100,
-                data["state"]["value"] / 100,
-            ]
-            return tuple(int(i * 255) for i in colorsys.hsv_to_rgb(*hsv))
+            return (data["state"]["hue"], data["state"]["saturation"])
         except KeyError as e:
             _LOGGER.error(e)
         return None
