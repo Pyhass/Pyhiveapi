@@ -271,3 +271,44 @@ class TestGetModeBoostMissingPrevious:
         result = await climate.get_mode(d)
         expected = HIVETOHA["Heating"].get("MANUAL", "MANUAL")
         assert result == expected
+
+
+# ---------------------------------------------------------------------------
+# set_boost_off — must return False when prev_mode is None (not send mode=None to API)
+# ---------------------------------------------------------------------------
+
+
+class TestSetBoostOffNullPrevMode:
+    """set_boost_off returns False (not an API call) when prev_mode is None."""
+
+    async def test_set_boost_off_returns_false_when_prev_mode_missing(self):
+        """set_boost_off returns False and skips _execute_state_change when prev mode absent."""
+        from apyhiveapi.devices.heating import HiveHeating
+
+        class StubHeating(HiveHeating):
+            """Concrete stub for testing."""
+
+        h = StubHeating()
+        h.session = MagicMock()
+        h.session.data.products = {
+            "h1": {
+                "state": {"mode": "BOOST"},
+                "props": {},
+            }
+        }
+        h._execute_state_change = AsyncMock(return_value=True)
+        h.get_boost_status = AsyncMock(return_value="ON")
+
+        d = Device(
+            hive_id="h1",
+            hive_name="T",
+            hive_type="heating",
+            ha_type="climate",
+            device_id="d1",
+            device_name="T",
+            device_data={"online": True},
+            ha_name="Heating",
+        )
+        result = await h.set_boost_off(d)
+        assert result is False
+        h._execute_state_change.assert_not_called()

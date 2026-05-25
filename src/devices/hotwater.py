@@ -142,6 +142,12 @@ class HiveHotwater(BoostMixin, BaseDeviceHandler):
             "set_boost_off - Setting hot water boost OFF for %s.", device.ha_name
         )
         prev_mode = self._get_product_state(device, "props", "previous", "mode")
+        if prev_mode is None:
+            _LOGGER.warning(
+                "set_boost_off - Cannot determine previous mode for %s, skipping.",
+                device.ha_name,
+            )
+            return False
         return await self._execute_state_change(device, mode=prev_mode)
 
 

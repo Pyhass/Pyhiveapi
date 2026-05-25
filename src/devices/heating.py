@@ -318,6 +318,12 @@ class HiveHeating(BoostMixin, BaseDeviceHandler):
             "set_boost_off - Setting heating boost OFF for %s.", device.ha_name
         )
         prev_mode = self._get_product_state(device, "props", "previous", "mode")
+        if prev_mode is None:
+            _LOGGER.warning(
+                "set_boost_off - Cannot determine previous mode for %s, skipping.",
+                device.ha_name,
+            )
+            return False
         kwargs = {"mode": prev_mode}
         if prev_mode in ("MANUAL", "OFF"):
             kwargs["target"] = (

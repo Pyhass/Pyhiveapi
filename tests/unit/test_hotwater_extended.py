@@ -170,7 +170,9 @@ class TestGetScheduleNowNextLater:
 class TestHotwaterGetModeBoostMissingPrevious:
     """get_mode BOOST path must use safe access, not bare dict that logs a spurious error."""
 
-    async def test_boost_missing_previous_returns_off_without_error_log(self):
+    async def test_boost_missing_previous_returns_off_without_error_log(  # noqa: E501
+        self,
+    ):
         """When mode=BOOST and props has no previous, get_mode returns 'OFF' without error log.
 
         The hotwater HIVETOHA mapping maps None→'OFF', so missing previous
@@ -184,3 +186,39 @@ class TestHotwaterGetModeBoostMissingPrevious:
             result = await hw.get_mode(d)
         assert result == "OFF"
         mock_log.error.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# set_boost_off — must return False when prev_mode is None (not send mode=None)
+# ---------------------------------------------------------------------------
+
+
+class TestHotwaterSetBoostOffNullPrevMode:
+    """HiveHotwater.set_boost_off returns False when prev_mode is None."""
+
+    async def test_set_boost_off_returns_false_when_prev_mode_missing(self):
+        """set_boost_off returns False and does not call API when prev mode is absent."""
+        from apyhiveapi.devices.hotwater import HiveHotwater
+
+        class StubHotwater(HiveHotwater):
+            """Concrete stub for testing."""
+
+        h = StubHotwater()
+        h.session = MagicMock()
+        h.session.data.products = {"h1": {"state": {"mode": "BOOST"}, "props": {}}}
+        h._execute_state_change = AsyncMock(return_value=True)
+        h.get_boost_status = AsyncMock(return_value="ON")
+
+        d = Device(
+            hive_id="h1",
+            hive_name="T",
+            hive_type="hotwater",
+            ha_type="water_heater",
+            device_id="d1",
+            device_name="T",
+            device_data={"online": True},
+            ha_name="Hotwater",
+        )
+        result = await h.set_boost_off(d)
+        assert result is False
+        h._execute_state_change.assert_not_called()
