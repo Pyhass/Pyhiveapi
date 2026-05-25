@@ -151,6 +151,34 @@ class TestGetState:
         result = await climate.get_state(_make_device())
         assert result is None
 
+    async def test_key_error_in_get_current_temperature_is_caught(self):
+        """KeyError from get_current_temperature is caught; get_state returns None."""
+        climate = _make_climate(
+            {"heat-1": {"state": {"mode": "MANUAL", "target": 20.0}, "props": {}}}
+        )
+        with patch.object(
+            climate, "get_current_temperature", new_callable=AsyncMock
+        ) as mock_t:
+            mock_t.side_effect = KeyError("missing_key")
+            result = await climate.get_state(_make_device())
+        assert result is None
+
+    async def test_type_error_in_get_target_temperature_is_caught(self):
+        """TypeError from get_target_temperature is caught; get_state returns None."""
+        climate = _make_climate(
+            {"heat-1": {"state": {"mode": "MANUAL", "target": 20.0}, "props": {}}}
+        )
+        with patch.object(
+            climate, "get_current_temperature", new_callable=AsyncMock
+        ) as mock_cur:
+            mock_cur.return_value = 19.0
+            with patch.object(
+                climate, "get_target_temperature", new_callable=AsyncMock
+            ) as mock_tgt:
+                mock_tgt.side_effect = TypeError("bad type")
+                result = await climate.get_state(_make_device())
+        assert result is None
+
 
 class TestGetCurrentOperation:
     async def test_returns_working_state(self):

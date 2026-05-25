@@ -194,6 +194,14 @@ class TestSanitizePayload:
         result = helper.sanitize_payload({"token": _non_string_int})
         assert result["token"] == _non_string_int
 
+    def test_dict_under_sensitive_key_is_recursively_masked(self):
+        """A dict value under a sensitive key has its own values masked."""
+        helper, _ = _make_helper()
+        result = helper.sanitize_payload({"token": {"inner_key": "secret_value"}})
+        assert isinstance(result["token"], dict)
+        assert "inner_key" in result["token"]
+        assert result["token"]["inner_key"] != "secret_value"
+
 
 # ---------------------------------------------------------------------------
 # HiveHelper.device_recovered

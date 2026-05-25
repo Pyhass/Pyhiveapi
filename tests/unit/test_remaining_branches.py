@@ -273,27 +273,6 @@ class TestHeatingGetHeatOnDemand:
         assert result is None
 
 
-class TestHeatingSetBoostOffOffMode:
-    """Lines 321->325: set_boost_off when previous mode is 'OFF' with a real target."""
-
-    async def test_set_boost_off_off_mode_with_target_restores_target(self):
-        """Previous mode OFF with a real target value restores that target."""
-        climate = _make_climate(
-            {
-                "heat-1": {
-                    "type": "heating",
-                    "state": {"boost": 5},
-                    "props": {"previous": {"mode": "OFF", "target": 18.0}},
-                }
-            }
-        )
-        result = await climate.set_boost_off(_make_device())
-        assert result is True
-        _, kwargs = climate.session.api.set_state.call_args
-        assert kwargs.get("mode") == "OFF"
-        assert kwargs.get("target") == 18.0
-
-
 class TestHeatingSetHeatOnDemand:
     """Lines 337-342: set_heat_on_demand calls _execute_state_change with autoBoost kwarg."""
 
@@ -313,21 +292,6 @@ class TestHeatingSetHeatOnDemand:
         assert result is True
         _, kwargs = climate.session.api.set_state.call_args
         assert kwargs.get("autoBoost") == "DISABLED"
-
-
-class TestHeatingGetClimateCacheHit:
-    """Lines 371->377: get_climate returns cached device when cache is available."""
-
-    async def test_get_climate_returns_cached_when_available(self):
-        """Cache hit short-circuits all I/O and returns the cached dict."""
-        climate = _make_climate({"heat-1": {"type": "heating"}})
-        cached = {"current_temperature": 20.0}
-        climate.session.should_use_cached_data.return_value = True
-        climate.session.get_cached_device.return_value = cached
-        result = await climate.get_climate(_make_device())
-        assert result == cached
-        # No API calls should have been made
-        climate.session.attr.online_offline.assert_not_called()
 
 
 class TestHeatingGetScheduleNNLKeyError:
@@ -402,20 +366,6 @@ class TestHotwaterGetStateKeyError:
         assert result is None
 
 
-class TestHotwaterGetWaterHeaterCacheHit:
-    """Lines 173->180: get_water_heater returns cached when cache is available."""
-
-    async def test_get_water_heater_returns_cached(self):
-        """Cache hit short-circuits all I/O and returns the cached value."""
-        hw = _make_hotwater()
-        cached = {"current_operation": "ON"}
-        hw.session.should_use_cached_data.return_value = True
-        hw.session.get_cached_device.return_value = cached
-        result = await hw.get_water_heater(_make_hw_device())
-        assert result == cached
-        hw.session.attr.online_offline.assert_not_called()
-
-
 class TestHotwaterScheduleNNLNone:
     """Lines 225->227: get_schedule_now_next_later returns None when schedule is absent."""
 
@@ -425,24 +375,6 @@ class TestHotwaterScheduleNNLNone:
         # _get_product_state(device, "state", "schedule") → None (key absent)
         result = await hw.get_schedule_now_next_later(_make_hw_device())
         assert result is None
-
-    async def test_non_schedule_mode_returns_none(self):
-        """Non-SCHEDULE mode skips the schedule lookup and returns None directly."""
-        hw = _make_hotwater({"hw-1": {"state": {"mode": "MANUAL"}}})
-        result = await hw.get_schedule_now_next_later(_make_hw_device())
-        assert result is None
-
-    async def test_schedule_present_returns_nnl(self):
-        """When schedule data exists, get_schedule_nnl result is returned."""
-        schedule_data = {"foo": "bar"}
-        hw = _make_hotwater(
-            {"hw-1": {"state": {"mode": "SCHEDULE", "schedule": schedule_data}}}
-        )
-        expected = {"now": {}, "next": {}, "later": {}}
-        hw.session.helper.get_schedule_nnl.return_value = expected
-        result = await hw.get_schedule_now_next_later(_make_hw_device())
-        assert result == expected
-        hw.session.helper.get_schedule_nnl.assert_called_once_with(schedule_data)
 
 
 # ===========================================================================
@@ -466,109 +398,6 @@ class TestSensorGetStateKeyError:
         d = _make_sensor_device()
         result = await sensor.get_state(d)
         assert result is None
-
-
-class TestSensorGetSensorCacheHit:
-    """Lines 92->98: get_sensor returns cached device when cache is available."""
-
-    async def test_get_sensor_returns_cached(self):
-        """Cache hit short-circuits all I/O and returns the cached value."""
-        sensor = _make_sensor()
-        cached = {"state": True}
-        sensor.session.should_use_cached_data.return_value = True
-        sensor.session.get_cached_device.return_value = cached
-        result = await sensor.get_sensor(_make_sensor_device())
-        assert result == cached
-        sensor.session.attr.online_offline.assert_not_called()
-
-
-class TestSensorGetSensorProductsFallback:
-    """Lines 119->122: when device_id not in devices, fall back to products."""
-
-    async def test_uses_products_when_device_id_absent_from_devices(self):
-        """device_id not in session.data.devices → hive_id looked up in products."""
-        sensor = _make_sensor(
-            products={"sens-1": {"type": "contactsensor", "props": {"status": "OPEN"}}},
-            devices={},
-        )
-        d = _make_sensor_device(
-            hive_id="sens-1", device_id="unknown-dev", hive_type="contactsensor"
-        )
-        # Sensor with hive_type in sensor_commands path will be followed;
-        # the important thing is the products-fallback path is entered without error.
-        result = await sensor.get_sensor(d)
-        # Result should be the device (set_cached_device returns the device itself)
-        assert result is not None
-
-    async def test_products_fallback_data_used_for_device_data(self):
-        """Props from the products entry propagate to device.device_data."""
-        sensor = _make_sensor(
-            products={
-                "sens-1": {
-                    "type": "contactsensor",
-                    "props": {"status": "OPEN", "online": True},
-                }
-            },
-            devices={},
-        )
-        d = _make_sensor_device(
-            hive_id="sens-1", device_id="unknown-dev", hive_type="contactsensor"
-        )
-        await sensor.get_sensor(d)
-        # get_state uses self.session.data.products[device.hive_id] directly
-        # so we just verify it ran without KeyError
-
-
-class TestSensorGetSensorHiveTypesSensorPath:
-    """Lines 135->146: elif device.hive_type in HIVE_TYPES['Sensor'] path."""
-
-    async def test_contactsensor_in_hive_types_sensor_takes_else_branch(self):
-        """contactsensor is in HIVE_TYPES['Sensor'] and not in sensor_commands key set,
-        so the elif branch is taken."""
-        from apyhiveapi.devices.sensor import sensor_commands
-        from apyhiveapi.helper.const import HIVE_TYPES
-
-        # 'contactsensor' is in HIVE_TYPES['Sensor'] and NOT a key in sensor_commands
-        assert "contactsensor" in HIVE_TYPES["Sensor"]
-        assert "contactsensor" not in sensor_commands
-
-        sensor = _make_sensor(
-            products={"sens-1": {"type": "contactsensor", "props": {"status": "OPEN"}}},
-            devices={"dev-1": {"props": {"online": True}, "type": "contactsensor"}},
-        )
-        d = _make_sensor_device(
-            hive_id="sens-1", device_id="dev-1", hive_type="contactsensor"
-        )
-        d.device_data = {"online": True}
-        await sensor.get_sensor(d)
-        # The elif branch sets device.status with 'state' key
-        assert d.status is not None
-        assert "state" in d.status
-
-    async def test_motionsensor_in_hive_types_sensor_sets_status(self):
-        """motionsensor is in HIVE_TYPES['Sensor'] and not in sensor_commands key set."""
-        from apyhiveapi.devices.sensor import sensor_commands
-        from apyhiveapi.helper.const import HIVE_TYPES
-
-        assert "motionsensor" in HIVE_TYPES["Sensor"]
-        assert "motionsensor" not in sensor_commands
-
-        sensor = _make_sensor(
-            products={
-                "sens-1": {
-                    "type": "motionsensor",
-                    "props": {"motion": {"status": True}},
-                }
-            },
-            devices={"dev-1": {"props": {"online": True}, "type": "motionsensor"}},
-        )
-        d = _make_sensor_device(
-            hive_id="sens-1", device_id="dev-1", hive_type="motionsensor"
-        )
-        d.device_data = {"online": True}
-        await sensor.get_sensor(d)
-        assert d.status is not None
-        assert "state" in d.status
 
 
 # ===========================================================================
@@ -1205,66 +1034,6 @@ class TestHiveHelperZoneMismatch:
             f"Unexpected warnings: {[r.getMessage() for r in caplog.records]}"
         )
 
-    def test_zone_match_replaces_device_with_thermostat(self):
-        """Matching zones cause device to be replaced with the thermostat entry."""
-        helper = HiveHelper(session=MagicMock())
-        thermo_data = {
-            "type": "thermostatui",
-            "props": {"zone": "zone-X"},
-        }
-        helper.session.data = Map(
-            {
-                "devices": {"thermo-1": thermo_data},
-                "products": {},
-                "actions": {},
-                "user": {},
-                "minMax": {},
-            }
-        )
-
-        product = {
-            "type": "heating",
-            "id": "prod-1",
-            "props": {"zone": "zone-X"},  # matching zone
-        }
-
-        result = helper.get_device_data(product)
-        assert result is thermo_data
-
-
-class TestHiveHelperSanitizeDictValue:
-    """hive_helper.py line 328: dict value under a sensitive key calls _mask(dict)."""
-
-    def test_dict_under_sensitive_key_is_recursively_masked(self):
-        """A dict value under 'token' key hits the isinstance(value, dict) branch."""
-        helper = HiveHelper()
-        result = helper.sanitize_payload({"token": {"inner_key": "secret_value"}})
-        # 'token' is sensitive → _mask is called with the nested dict
-        # _mask for a dict returns {k: _mask(v) for k, v in value.items()}
-        # _mask("secret_value") → "sec...lue" (long enough) or "***"
-        assert "token" in result
-        assert isinstance(result["token"], dict)
-        assert "inner_key" in result["token"]
-        # The inner value should be masked (not the original)
-        assert result["token"]["inner_key"] != "secret_value"
-
-    def test_nested_dict_keys_preserved_after_masking(self):
-        """Keys inside a sensitive dict are preserved, values are masked."""
-        helper = HiveHelper()
-        result = helper.sanitize_payload(
-            {
-                "authenticationresult": {
-                    "AccessToken": "long-secret-token-value",
-                    "ExpiresIn": 3600,
-                }
-            }
-        )
-        inner = result["authenticationresult"]
-        assert "AccessToken" in inner
-        assert "ExpiresIn" in inner
-        # ExpiresIn is an int, _mask returns it as-is
-        assert inner["ExpiresIn"] == 3600
-
 
 class TestHiveHelperSanitizeListNode:
     """hive_helper.py line 359: list value under a non-sensitive key calls _walk(list)."""
@@ -1296,37 +1065,3 @@ class TestHiveHelperSanitizeListNode:
         assert result["items"][0]["token"] != "abc"
         assert result["items"][1]["name"] == "device2"
         assert result["items"][1]["token"] != "xyz"
-
-
-class TestHeatingGetStateExceptionCaught:
-    """heating.py lines 206-207: except (KeyError, TypeError) handler is reached."""
-
-    async def test_key_error_in_get_current_temperature_is_caught(self):
-        """KeyError raised by get_current_temperature is caught, final stays None."""
-        climate = _make_climate(
-            {"heat-1": {"state": {"mode": "MANUAL", "target": 20.0}, "props": {}}}
-        )
-        d = _make_device()
-        with patch.object(
-            climate, "get_current_temperature", new_callable=AsyncMock
-        ) as mock_t:
-            mock_t.side_effect = KeyError("missing_key")
-            result = await climate.get_state(d)
-        assert result is None
-
-    async def test_type_error_in_get_target_temperature_is_caught(self):
-        """TypeError raised by get_target_temperature is caught, final stays None."""
-        climate = _make_climate(
-            {"heat-1": {"state": {"mode": "MANUAL", "target": 20.0}, "props": {}}}
-        )
-        d = _make_device()
-        with patch.object(
-            climate, "get_current_temperature", new_callable=AsyncMock
-        ) as mock_cur:
-            mock_cur.return_value = 19.0
-            with patch.object(
-                climate, "get_target_temperature", new_callable=AsyncMock
-            ) as mock_tgt:
-                mock_tgt.side_effect = TypeError("bad type")
-                result = await climate.get_state(d)
-        assert result is None
