@@ -50,6 +50,7 @@ class HiveSession(SessionCompatMixin, SessionAuthMixin, PollingMixin, DiscoveryM
             username=username,
             password=password,
         )
+        self._owns_websession = websession is None
         self.api = API(hive_session=self, websession=websession)
         self.helper = HiveHelper(self)
         self.attr = HiveAttributes(self)
@@ -75,8 +76,8 @@ class HiveSession(SessionCompatMixin, SessionAuthMixin, PollingMixin, DiscoveryM
         self._update_task: asyncio.Task | None = None
 
     async def close(self) -> None:
-        """Close the underlying aiohttp ClientSession."""
-        if not self.api.websession.closed:
+        """Close the underlying aiohttp ClientSession if we own it."""
+        if self._owns_websession and not self.api.websession.closed:
             await self.api.websession.close()
 
     async def __aenter__(self):
