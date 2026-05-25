@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ..helper.const import DEVICES, EXPECTED_DEVICE_DATA_LENGTH, HIVE_TYPES, PRODUCTS
-from ..helper.hive_exceptions import HiveReauthRequired, HiveUnknownConfiguration
+from ..helper.hive_exceptions import HiveUnknownConfiguration
 from ..helper.hivedataclasses import Device
 
 _DATA_DIR = Path(__file__).parent.parent / "data"
@@ -163,10 +163,8 @@ class DiscoveryMixin:
         await self.get_devices("No_ID")  # type: ignore[attr-defined]
 
         if not self.data.devices or not self.data.products:
-            _LOGGER.error(
-                "No devices or products returned from Hive API, reauthentication required."
-            )
-            raise HiveReauthRequired
+            _LOGGER.error("No devices or products returned from Hive API.")
+            raise HiveUnknownConfiguration
 
         return await self.create_devices()
 
@@ -237,7 +235,7 @@ class DiscoveryMixin:
                     )
 
             if device_type in hive_type:
-                self.config.battery.append(d["id"])
+                self.config.battery.append(d.get("id", a_device))
                 _LOGGER.debug(
                     "create_devices - Added device %s to battery monitoring list",
                     device_name,
@@ -313,7 +311,7 @@ class DiscoveryMixin:
                     )
 
             if product_type in hive_type:
-                self.config.mode.append(p["id"])
+                self.config.mode.append(p.get("id", a_product))
                 _LOGGER.debug(
                     "create_devices - Added product %s to mode list", product_name
                 )

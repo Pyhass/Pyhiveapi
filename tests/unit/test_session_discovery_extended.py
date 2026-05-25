@@ -175,11 +175,11 @@ class TestStartSessionExtended:
         with pytest.raises(HiveUnknownConfiguration):
             await s.start_session({"username": "user@test.com"})
 
-    async def test_empty_devices_after_get_devices_raises_reauth(self):
-        """start_session raises HiveReauthRequired when data.devices is empty post-poll."""
+    async def test_empty_devices_after_get_devices_raises_unknown_configuration(self):
+        """start_session raises HiveUnknownConfiguration when data.devices is empty post-poll."""
         s = _make_stub(has_data=False)
         s.config.file = True
-        with pytest.raises(HiveReauthRequired):
+        with pytest.raises(HiveUnknownConfiguration):
             await s.start_session({})
 
     async def test_none_config_defaults_to_empty_dict(self):
@@ -310,3 +310,72 @@ class TestCreateDevicesExtended:
         result = await s.create_devices()
         assert len(result["climate"]) == 1
         assert result["climate"][0].hive_id == "good"
+
+
+# ---------------------------------------------------------------------------
+# start_session raises wrong exception for empty device data
+# ---------------------------------------------------------------------------
+
+
+class TestStartSessionWrongException:
+    """start_session must raise HiveUnknownConfiguration (not HiveReauthRequired) for empty data."""
+
+    async def test_empty_devices_raises_unknown_configuration(self):
+        """start_session raises HiveUnknownConfiguration when API returns no devices."""
+        s = _make_stub(has_data=False)
+        s.get_devices = AsyncMock()
+
+        with pytest.raises(HiveUnknownConfiguration):
+            await s.start_session({})
+
+    async def test_does_not_raise_reauth_for_empty_data(self):
+        """start_session must NOT raise HiveReauthRequired when device data is empty."""
+        s = _make_stub(has_data=False)
+        s.get_devices = AsyncMock()
+
+        with pytest.raises(Exception) as exc_info:
+            await s.start_session({})
+
+        assert not isinstance(exc_info.value, HiveReauthRequired), (
+            "HiveReauthRequired must not be raised for empty device list"
+        )
+
+
+# ---------------------------------------------------------------------------
+# create_devices — bare d["id"] and p["id"] crash when id key is absent
+# ---------------------------------------------------------------------------
+
+
+class TestBareIdAccess:
+    """create_devices must use .get('id', fallback) instead of bare ['id'] access."""
+
+    async def test_battery_device_without_id_does_not_crash(self):
+        """Device with no 'id' key in battery-type must not raise KeyError."""
+        s = _make_create_stub()
+        s.data["devices"] = {
+            "trv-key": {
+                "type": "trv",
+                "state": {"name": "TRV"},
+                "props": {},
+            }
+        }
+        s.config.battery = []
+        try:
+            await s.create_devices()
+        except KeyError as err:
+            pytest.fail(f"KeyError raised for missing 'id' in device: {err}")
+
+    async def test_mode_product_without_id_does_not_crash(self):
+        """Product with no 'id' key in mode-type must not raise KeyError."""
+        s = _make_create_stub()
+        s.data["products"] = {
+            "heating-key": {
+                "type": "heating",
+                "state": {"name": "Hall"},
+            }
+        }
+        s.config.mode = []
+        try:
+            await s.create_devices()
+        except KeyError as err:
+            pytest.fail(f"KeyError raised for missing 'id' in product: {err}")
