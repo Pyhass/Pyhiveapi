@@ -135,3 +135,52 @@ class TestEpochTimePattern:
         result = epoch_time("15.06.2024 12:00:00", "%d.%m.%Y %H:%M:%S", "to_epoch")
         assert isinstance(result, int)
         assert result > 0
+
+
+def _sample_schedule():
+    """Minimal 7-day schedule with 3 slots on every day."""
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    schedule = {}
+    for d in days:
+        schedule[d] = [
+            {"start": 0, "value": {"status": "ON"}},
+            {"start": 480, "value": {"status": "OFF"}},
+            {"start": 1200, "value": {"status": "ON"}},
+        ]
+    return schedule
+
+
+class TestGetScheduleNnlMutation:
+    """get_schedule_nnl must not mutate the input schedule dicts."""
+
+    def test_second_call_returns_same_result_as_first_call(self):
+        """Calling get_schedule_nnl twice on the same schedule dict gives consistent results."""
+        h = _make_helper()
+        schedule = _sample_schedule()
+
+        result1 = h.get_schedule_nnl(schedule)
+        result2 = h.get_schedule_nnl(schedule)
+
+        assert result1.get("now", {}).get("value") == result2.get("now", {}).get(
+            "value"
+        ), "Second call returned different 'now' value — schedule was mutated in-place"
+
+    def test_input_schedule_slots_not_modified(self):
+        """Slot dicts in the input schedule must not gain 'Start_DateTime' after the call."""
+        h = _make_helper()
+        schedule = _sample_schedule()
+        monday_slot_before = dict(schedule["monday"][0])
+
+        h.get_schedule_nnl(schedule)
+
+        assert schedule["monday"][0] == monday_slot_before, (
+            "get_schedule_nnl mutated the original slot dict"
+        )

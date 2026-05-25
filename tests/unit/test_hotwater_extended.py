@@ -222,3 +222,39 @@ class TestHotwaterSetBoostOffNullPrevMode:
         result = await h.set_boost_off(d)
         assert result is False
         h._execute_state_change.assert_not_called()
+
+
+class TestHotwaterGetStateScheduleGuard:
+    """get_state handles empty schedule NNL without KeyError."""
+
+    async def test_get_state_schedule_guard_empty_nnl(self):
+        """get_state does not crash when get_schedule_nnl returns empty dict."""
+        from apyhiveapi.devices.hotwater import HiveHotwater
+
+        class StubHotwater(HiveHotwater):
+            pass
+
+        h = StubHotwater()
+        h.session = MagicMock()
+        h.session.data.products = {
+            "h1": {
+                "state": {"status": "ON", "mode": "SCHEDULE", "schedule": {}},
+                "props": {},
+            }
+        }
+        h.session.helper.get_schedule_nnl = MagicMock(return_value={})
+        h.get_mode = AsyncMock(return_value="SCHEDULE")
+        h.get_boost_status = AsyncMock(return_value="OFF")
+
+        d = Device(
+            hive_id="h1",
+            hive_name="T",
+            hive_type="hotwater",
+            ha_type="water_heater",
+            device_id="d1",
+            device_name="T",
+            device_data={"online": True},
+            ha_name="Hotwater",
+        )
+        result = await h.get_state(d)
+        assert result is None or isinstance(result, str)

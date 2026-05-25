@@ -78,7 +78,8 @@ class HiveHotwater(BoostMixin, BaseDeviceHandler):
                     snan = self.session.helper.get_schedule_nnl(
                         data["state"]["schedule"]
                     )
-                    state = snan["now"]["value"]["status"]
+                    if snan and "now" in snan:
+                        state = snan["now"]["value"]["status"]
 
             final = HIVETOHA[self.hotwater_type].get(state, state)
         except KeyError as e:

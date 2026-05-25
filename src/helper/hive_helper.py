@@ -254,8 +254,9 @@ class HiveHelper:
                 if slot_time_date_dt <= date_time_now:
                     slot_time_date_dt = slot_time_date_dt + datetime.timedelta(days=7)
 
-                current_slot_custom["Start_DateTime"] = slot_time_date_dt
-                full_schedule_list.append(current_slot_custom)
+                slot_copy = dict(current_slot_custom)
+                slot_copy["Start_DateTime"] = slot_time_date_dt
+                full_schedule_list.append(slot_copy)
 
         fsl_sorted = sorted(
             full_schedule_list,
