@@ -74,38 +74,6 @@ class HiveApi:
             _LOGGER.error("Request failed: %s", e)
             raise
 
-    def refresh_tokens(self, tokens=None):
-        """Get new session tokens - DEPRECATED NOW BY AWS TOKEN MANAGEMENT."""
-        _LOGGER.debug("refresh_tokens - Attempting token refresh (deprecated method)")
-        if tokens is None:
-            tokens = {}
-        url = self.urls["refresh"]
-        if self.session is not None:
-            tokens = self.session.tokens.token_data
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in tokens.items())
-            )
-            + "}"
-        )
-        try:
-            info = self.request("POST", url, jsc)
-            data = json.loads(info.text)
-            if "token" in data and self.session:
-                _LOGGER.debug(
-                    "refresh_tokens - Token refresh successful, updating session"
-                )
-                self.session.update_tokens(data)
-                self.urls.update({"base": data["platform"]["endpoint"]})
-            self.json_return.update({"original": info.status_code})
-            self.json_return.update({"parsed": info.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, json.JSONDecodeError) as e:
-            _LOGGER.error("Token refresh failed: %s", str(e))
-            self.error()
-
-        return self.json_return
-
     def get_login_info(self):
         """Get login properties to make the login request."""
         _LOGGER.debug(
