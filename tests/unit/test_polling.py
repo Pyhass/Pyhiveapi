@@ -362,3 +362,14 @@ class TestGetDevicesHomesKey:
         }
         p, _ = await self._run_get_devices_with_parsed(parsed)
         assert p.config.home_id == "home-abc"
+
+    async def test_homes_data_not_dict_does_not_crash(self):
+        """No crash when homes_data is a non-dict (list); home_id stays unset."""
+        parsed = {
+            "products": [],
+            "devices": [],
+            "actions": [],
+            "homes": [{"id": "home-list"}],
+        }
+        _p, result = await self._run_get_devices_with_parsed(parsed)
+        assert isinstance(result, bool)

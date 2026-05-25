@@ -324,6 +324,17 @@ class TestUpdateTokensTokenBranch:
         await s.update_tokens({"token": "id", "accessToken": "acc"})
         assert s.tokens.token_data["token"] == "id"
 
+    async def test_token_branch_update_expiry_false_does_not_update_token_created(self):
+        """update_expiry_time=False skips the token_created assignment in elif 'token' branch."""
+
+        s = _make_stub()
+        original_created = s.tokens.token_created
+        await s.update_tokens(
+            {"token": "id", "accessToken": "acc"},
+            update_expiry_time=False,
+        )
+        assert s.tokens.token_created == original_created
+
 
 # ---------------------------------------------------------------------------
 # hive_refresh_tokens — bare refreshToken access raises KeyError when missing
