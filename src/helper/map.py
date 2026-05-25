@@ -17,4 +17,9 @@ class Map(dict):
             raise AttributeError(f"Map has no key {key!r}") from None
 
     __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(f"Map has no key {key!r}") from None

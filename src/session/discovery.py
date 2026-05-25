@@ -235,7 +235,7 @@ class DiscoveryMixin:
                     )
 
             if device_type in hive_type:
-                self.config.battery.append(d.get("id", a_device))
+                self.config.battery.add(d.get("id", a_device))
                 _LOGGER.debug(
                     "create_devices - Added device %s to battery monitoring list",
                     device_name,
@@ -311,7 +311,7 @@ class DiscoveryMixin:
                     )
 
             if product_type in hive_type:
-                self.config.mode.append(p.get("id", a_product))
+                self.config.mode.add(p.get("id", a_product))
                 _LOGGER.debug(
                     "create_devices - Added product %s to mode list", product_name
                 )

@@ -359,7 +359,7 @@ class TestBareIdAccess:
                 "props": {},
             }
         }
-        s.config.battery = []
+        s.config.battery = set()
         try:
             await s.create_devices()
         except KeyError as err:
@@ -374,7 +374,7 @@ class TestBareIdAccess:
                 "state": {"name": "Hall"},
             }
         }
-        s.config.mode = []
+        s.config.mode = set()
         try:
             await s.create_devices()
         except KeyError as err:

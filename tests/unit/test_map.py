@@ -41,3 +41,13 @@ def test_attribute_write():
     m = Map({})
     m.foo = "bar"
     assert m["foo"] == "bar"
+
+
+class TestMapDelAttr:
+    """Map.__delattr__ must raise AttributeError (not KeyError) for missing keys."""
+
+    def test_delattr_missing_key_raises_attribute_error(self):
+        """del m.missing raises AttributeError, not KeyError."""
+        m = Map({"a": 1})
+        with pytest.raises(AttributeError):
+            del m.nonexistent
