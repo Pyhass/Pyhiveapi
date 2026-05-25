@@ -164,6 +164,8 @@ class PollingMixin:
                         self.api.get_all,
                         reraise_as=HiveReauthRequired,
                     )
+                if api_resp_d is None:
+                    return get_nodes_successful
                 if not str(api_resp_d["original"]).startswith("2"):
                     raise HTTPException
                 if api_resp_d["parsed"] is None:
@@ -190,7 +192,11 @@ class PollingMixin:
                     for a_action in api_resp_p[hive_type_key]:
                         tmp_actions.update({a_action["id"]: a_action})
                 if hive_type_key == "homes":
-                    self.config.home_id = api_resp_p[hive_type_key]["homes"][0]["id"]
+                    homes_data = api_resp_p[hive_type_key]
+                    if isinstance(homes_data, dict):
+                        homes_list = homes_data.get("homes") or []
+                        if homes_list:
+                            self.config.home_id = homes_list[0]["id"]
 
             _LOGGER.debug(
                 "get_devices - API returned %d products, %d devices, %d actions.",
