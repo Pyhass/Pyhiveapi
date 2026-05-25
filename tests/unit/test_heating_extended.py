@@ -2,7 +2,7 @@
 
 # pylint: disable=too-few-public-methods
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from apyhiveapi.devices.heating import Climate
 from apyhiveapi.helper.hivedataclasses import Device, SessionConfig
@@ -236,3 +236,38 @@ class TestGetScheduleNowNextLater:
         climate.session.attr.online_offline = AsyncMock(return_value=False)
         result = await climate.get_schedule_now_next_later(_make_device())
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# get_mode — BOOST path with missing props.previous must not log error
+# ---------------------------------------------------------------------------
+
+
+class TestGetModeBoostMissingPrevious:
+    """get_mode BOOST path must use safe access, not bare dict that logs a spurious error."""
+
+    async def test_boost_missing_previous_returns_none_without_error_log(self):
+        """When mode=BOOST and props has no previous, get_mode returns None without error log."""
+        climate = _make_climate({"heat-1": {"state": {"mode": "BOOST"}, "props": {}}})
+        d = _make_device()
+        with patch("apyhiveapi.devices.heating._LOGGER") as mock_log:
+            result = await climate.get_mode(d)
+        assert result is None
+        mock_log.error.assert_not_called()
+
+    async def test_boost_with_previous_mode_returns_mapped_value(self):
+        """When mode=BOOST and props.previous.mode exists, returns the mapped HA value."""
+        from apyhiveapi.helper.const import HIVETOHA
+
+        climate = _make_climate(
+            {
+                "heat-1": {
+                    "state": {"mode": "BOOST"},
+                    "props": {"previous": {"mode": "MANUAL"}},
+                }
+            }
+        )
+        d = _make_device()
+        result = await climate.get_mode(d)
+        expected = HIVETOHA["Heating"].get("MANUAL", "MANUAL")
+        assert result == expected

@@ -176,7 +176,7 @@ class HiveHeating(BoostMixin, BaseDeviceHandler):
             data = self.session.data.products[device.hive_id]
             state = data["state"]["mode"]
             if state == "BOOST":
-                state = data["props"]["previous"]["mode"]
+                state = self._get_product_state(device, "props", "previous", "mode")
             final = HIVETOHA[self.heating_type].get(state, state)
         except KeyError as e:
             _LOGGER.error("get_mode - KeyError getting mode for %s: %s", device_name, e)

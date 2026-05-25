@@ -160,3 +160,27 @@ class TestGetScheduleNowNextLater:
         hw = _make_hotwater({"hw-1": {"state": {"mode": _ON_MODE}}})
         result = await hw.get_schedule_now_next_later(_make_device())
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# get_mode — BOOST path with missing props.previous must not log error
+# ---------------------------------------------------------------------------
+
+
+class TestHotwaterGetModeBoostMissingPrevious:
+    """get_mode BOOST path must use safe access, not bare dict that logs a spurious error."""
+
+    async def test_boost_missing_previous_returns_off_without_error_log(self):
+        """When mode=BOOST and props has no previous, get_mode returns 'OFF' without error log.
+
+        The hotwater HIVETOHA mapping maps None→'OFF', so missing previous
+        resolves safely instead of throwing a swallowed KeyError.
+        """
+        from unittest.mock import patch
+
+        hw = _make_hotwater({"hw-1": {"state": {"mode": "BOOST"}, "props": {}}})
+        d = _make_device()
+        with patch("apyhiveapi.devices.hotwater._LOGGER") as mock_log:
+            result = await hw.get_mode(d)
+        assert result == "OFF"
+        mock_log.error.assert_not_called()
