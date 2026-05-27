@@ -202,6 +202,23 @@ class TestSanitizePayload:
         assert "inner_key" in result["token"]
         assert result["token"]["inner_key"] != "secret_value"
 
+    def test_list_value_under_sensitive_key_masks_each_element(self):
+        """A list under a sensitive key has each element masked individually."""
+        helper, _ = _make_helper()
+        payload = {"token": ["short", "averylongtoken123"]}
+        result = helper.sanitize_payload(payload)
+        assert result["token"] == ["***", "aver...n123"]
+
+    def test_none_under_sensitive_key_passes_through(self):
+        """None under a sensitive key is returned unchanged."""
+        helper, _ = _make_helper()
+        assert helper.sanitize_payload({"token": None})["token"] is None
+
+    def test_bool_under_sensitive_key_passes_through(self):
+        """A bool under a sensitive key is returned unchanged."""
+        helper, _ = _make_helper()
+        assert helper.sanitize_payload({"token": True})["token"] is True
+
 
 # ---------------------------------------------------------------------------
 # HiveHelper.device_recovered
@@ -566,3 +583,93 @@ class TestHiveHelperSanitizeListNode:
         assert result["items"][0]["token"] != "abc"
         assert result["items"][1]["name"] == "device2"
         assert result["items"][1]["token"] != "xyz"
+
+
+# ---------------------------------------------------------------------------
+# Migrated from test_hive_helper_extended.py
+# ---------------------------------------------------------------------------
+
+
+class TestGetDeviceFromIdBranch:
+    """Covers the branch where no cache entry matches the requested ID."""
+
+    def test_returns_false_when_no_match_in_cache(self):
+        """When entity_cache has entries but none match n_id, returns False."""
+        other_device = Device(
+            hive_id="other-hive-id",
+            hive_name="Other",
+            hive_type="heating",
+            ha_type="climate",
+            device_id="other-device-id",
+            device_name="Other",
+            device_data={},
+        )
+        helper, _ = _make_helper(entity_cache={"other-key": other_device})
+        result = helper.get_device_from_id("nonexistent-id")
+        assert result is False
+
+    def test_returns_false_when_cache_is_empty(self):
+        """When entity_cache is empty, returns False without entering the loop."""
+        helper, _ = _make_helper(entity_cache={})
+        assert helper.get_device_from_id("any-id") is False
+
+
+class TestEpochTimePattern:
+    """epoch_time to_epoch must honour the pattern argument."""
+
+    def test_to_epoch_uses_caller_pattern(self):
+        """Passing a custom pattern must parse the date string with that pattern."""
+        result = epoch_time("2024-06-15", "%Y-%m-%d", "to_epoch")
+        assert isinstance(result, int), "Expected int epoch timestamp"
+        assert result > 0
+
+    def test_to_epoch_standard_hive_format_still_works(self):
+        """The standard Hive date+time format must still parse correctly."""
+        result = epoch_time("15.06.2024 12:00:00", "%d.%m.%Y %H:%M:%S", "to_epoch")
+        assert isinstance(result, int)
+        assert result > 0
+
+
+def _sample_schedule():
+    """Minimal 7-day schedule with 3 slots on every day."""
+    days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    ]
+    schedule = {}
+    for d in days:
+        schedule[d] = [
+            {"start": 0, "value": {"status": "ON"}},
+            {"start": 480, "value": {"status": "OFF"}},
+            {"start": 1200, "value": {"status": "ON"}},
+        ]
+    return schedule
+
+
+class TestGetScheduleNnlMutation:
+    """get_schedule_nnl must not mutate the input schedule dicts."""
+
+    def test_second_call_returns_same_result_as_first_call(self):
+        """Calling get_schedule_nnl twice on the same schedule dict gives consistent results."""
+        h, _ = _make_helper()
+        schedule = _sample_schedule()
+        result1 = h.get_schedule_nnl(schedule)
+        result2 = h.get_schedule_nnl(schedule)
+        assert result1.get("now", {}).get("value") == result2.get("now", {}).get(
+            "value"
+        ), "Second call returned different 'now' value — schedule was mutated in-place"
+
+    def test_input_schedule_slots_not_modified(self):
+        """Slot dicts in the input schedule must not gain 'Start_DateTime' after the call."""
+        h, _ = _make_helper()
+        schedule = _sample_schedule()
+        monday_slot_before = dict(schedule["monday"][0])
+        h.get_schedule_nnl(schedule)
+        assert schedule["monday"][0] == monday_slot_before, (
+            "get_schedule_nnl mutated the original slot dict"
+        )

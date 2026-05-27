@@ -140,7 +140,7 @@ class TestStartSessionExtended:
         )
         assert s.auth.device_group_key == "grp-key"
         assert s.auth.device_key == "dev-key"
-        assert s.auth.device_password == "dev-pass"
+        assert s.auth.device_password == "dev-pass"  # pragma: allowlist secret
 
     async def test_with_device_data_4_items_sets_token_created(self):
         """4-item device_data with a token_created timestamp sets tokens.token_created."""
