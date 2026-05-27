@@ -2,14 +2,14 @@
 
 # pylint: disable=attribute-defined-outside-init,too-few-public-methods,protected-access
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from apyhiveapi.helper.hive_exceptions import (
     HiveReauthRequired,
     HiveUnknownConfiguration,
 )
-from apyhiveapi.helper.hivedataclasses import SessionConfig, SessionTokens
+from apyhiveapi.helper.hivedataclasses import EntityConfig, SessionConfig, SessionTokens
 from apyhiveapi.helper.map import Map
 from apyhiveapi.session.discovery import DiscoveryMixin
 
@@ -379,3 +379,212 @@ class TestBareIdAccess:
             await s.create_devices()
         except KeyError as err:
             pytest.fail(f"KeyError raised for missing 'id' in product: {err}")
+
+
+# ===========================================================================
+# Migrated from test_remaining_branches.py
+# ===========================================================================
+
+
+class TestCreateDevicesEntityConfigKwargs:
+    """Lines 224->226, 226->228, 228->230: entity_config kwarg population in DEVICES loop."""
+
+    async def test_entity_config_with_all_fields_populates_kwargs(self):
+        """EntityConfig with ha_name, hive_type, and category all set → all kwargs passed."""
+        s = _make_create_stub()
+        s.data["devices"] = {
+            "dev-1": {
+                "id": "dev-1",
+                "type": "hub",
+                "state": {"name": "My Hub"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="binary_sensor",
+            ha_name="Hub Status",
+            hive_type="Connectivity",
+            category="diagnostic",
+        )
+        with patch("apyhiveapi.session.discovery.DEVICES", {"hub": [entity_cfg]}):
+            result = await s.create_devices()
+        assert len(result["binary_sensor"]) == 1
+        created = result["binary_sensor"][0]
+        assert created.hive_type == "Connectivity"
+        assert created.category == "diagnostic"
+
+    async def test_entity_config_empty_fields_does_not_add_to_kwargs(self):
+        """EntityConfig with empty ha_name and hive_type does not inject those keys."""
+        s = _make_create_stub()
+        s.data["devices"] = {
+            "dev-1": {
+                "id": "dev-1",
+                "type": "hub",
+                "state": {"name": "My Hub"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="binary_sensor",
+            ha_name="",  # falsy — should not be added to kwargs
+            hive_type="",  # falsy — should not be added to kwargs
+            category=None,  # None — should not be added to kwargs
+        )
+        with patch("apyhiveapi.session.discovery.DEVICES", {"hub": [entity_cfg]}):
+            result = await s.create_devices()
+        # Should still process without error
+        assert isinstance(result, dict)
+
+
+class TestCreateDevicesDeviceAddListError:
+    """Lines 232-233: KeyError/TypeError from add_list in DEVICES loop is caught."""
+
+    async def test_add_list_keyerror_is_caught_not_raised(self):
+        """KeyError from add_list during device processing is logged, not propagated."""
+        s = _make_create_stub()
+        s.data["devices"] = {
+            "dev-1": {
+                "id": "dev-1",
+                "type": "hub",
+                "state": {"name": "My Hub"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="binary_sensor",
+            ha_name="Hub Status",
+            hive_type="Connectivity",
+            category="diagnostic",
+        )
+        with patch("apyhiveapi.session.discovery.DEVICES", {"hub": [entity_cfg]}):
+            with patch.object(s, "add_list", side_effect=KeyError("bad key")):
+                # Should complete without raising
+                result = await s.create_devices()
+        assert isinstance(result, dict)
+
+    async def test_add_list_typeerror_is_caught_not_raised(self):
+        """TypeError from add_list during device processing is caught."""
+        s = _make_create_stub()
+        s.data["devices"] = {
+            "dev-1": {
+                "id": "dev-1",
+                "type": "hub",
+                "state": {"name": "My Hub"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="binary_sensor",
+            ha_name="",
+            hive_type="",
+            category=None,
+        )
+        with patch("apyhiveapi.session.discovery.DEVICES", {"hub": [entity_cfg]}):
+            with patch.object(s, "add_list", side_effect=TypeError("bad type")):
+                result = await s.create_devices()
+        assert isinstance(result, dict)
+
+
+class TestCreateDevicesActionAddListError:
+    """Lines 258-259: KeyError/TypeError from add_list in actions loop is caught."""
+
+    async def test_action_add_list_keyerror_is_caught(self):
+        """KeyError from add_list when processing an action is logged, not propagated."""
+        s = _make_create_stub()
+        s.data["actions"] = {"act-1": {"id": "act-1", "name": "Good Night"}}
+        with patch.object(s, "add_list", side_effect=KeyError("missing")):
+            result = await s.create_devices()
+        assert isinstance(result, dict)
+
+    async def test_action_add_list_typeerror_is_caught(self):
+        """TypeError from add_list when processing an action is caught."""
+        s = _make_create_stub()
+        s.data["actions"] = {"act-1": {"id": "act-1", "name": "Wake Up"}}
+        with patch.object(s, "add_list", side_effect=TypeError("type error")):
+            result = await s.create_devices()
+        assert isinstance(result, dict)
+
+
+class TestCreateDevicesProductTemperatureUnit:
+    """Line 305: entity_config.temperature_unit is used when set and entity_type != 'climate'."""
+
+    async def test_entity_config_temperature_unit_passed_to_add_list(self):
+        """EntityConfig with temperature_unit set propagates that value as a kwarg."""
+        s = _make_create_stub()
+        s.data["products"] = {
+            "prod-1": {
+                "id": "prod-1",
+                "type": "heating",
+                "state": {"name": "Heating"},
+                "props": {},
+            }
+        }
+        # A non-climate entity with temperature_unit set triggers line 305
+        entity_cfg = EntityConfig(
+            entity_type="sensor",
+            ha_name="Temp Sensor",
+            hive_type="Current_Temperature",
+            category="diagnostic",
+            temperature_unit="F",
+        )
+        captured_kwargs = {}
+
+        original_add_list = s.add_list
+
+        def capturing_add_list(entity_type, data, **kwargs):
+            captured_kwargs.update(kwargs)
+            return original_add_list(entity_type, data, **kwargs)
+
+        with patch("apyhiveapi.session.discovery.PRODUCTS", {"heating": [entity_cfg]}):
+            with patch.object(s, "add_list", side_effect=capturing_add_list):
+                await s.create_devices()
+
+        assert captured_kwargs.get("temperature_unit") == "F"
+
+
+class TestCreateDevicesProductAddListAttributeError:
+    """Lines 308-309: NameError/AttributeError from add_list in products loop is caught."""
+
+    async def test_product_add_list_attribute_error_is_caught(self):
+        """AttributeError from add_list when processing a product is caught."""
+        s = _make_create_stub()
+        s.data["products"] = {
+            "prod-1": {
+                "id": "prod-1",
+                "type": "heating",
+                "state": {"name": "Heating"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="climate",
+            ha_name="",
+            hive_type="",
+            category=None,
+        )
+        with patch("apyhiveapi.session.discovery.PRODUCTS", {"heating": [entity_cfg]}):
+            with patch.object(s, "add_list", side_effect=AttributeError("attr error")):
+                result = await s.create_devices()
+        assert isinstance(result, dict)
+
+    async def test_product_add_list_name_error_is_caught(self):
+        """NameError from add_list when processing a product is caught."""
+        s = _make_create_stub()
+        s.data["products"] = {
+            "prod-1": {
+                "id": "prod-1",
+                "type": "heating",
+                "state": {"name": "Heating"},
+                "props": {},
+            }
+        }
+        entity_cfg = EntityConfig(
+            entity_type="climate",
+            ha_name="",
+            hive_type="",
+            category=None,
+        )
+        with patch("apyhiveapi.session.discovery.PRODUCTS", {"heating": [entity_cfg]}):
+            with patch.object(s, "add_list", side_effect=NameError("name error")):
+                result = await s.create_devices()
+        assert isinstance(result, dict)

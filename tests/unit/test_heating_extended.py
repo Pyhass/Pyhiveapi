@@ -4,6 +4,7 @@
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from apyhiveapi.devices.heating import Climate
 from apyhiveapi.helper.hivedataclasses import Device, SessionConfig
 from apyhiveapi.helper.map import Map
@@ -340,3 +341,130 @@ class TestSetBoostOffNullPrevMode:
         result = await h.set_boost_off(d)
         assert result is False
         h._execute_state_change.assert_not_called()
+
+
+# ===========================================================================
+# Migrated from test_remaining_branches.py
+# ===========================================================================
+
+
+class TestHeatingGetStateKeyError:
+    """Lines 206-207: KeyError/TypeError branch in get_state."""
+
+    async def test_get_state_key_error_returns_none(self):
+        """Missing product entry causes get_current_temperature to return None,
+        leaving final as None without raising."""
+        # products dict is empty — device.hive_id not found → both temp helpers
+        # return None → the if branch is skipped → final stays None
+        climate = _make_climate(products={})
+        d = _make_device()
+        result = await climate.get_state(d)
+        assert result is None
+
+
+class TestHeatingGetHeatOnDemand:
+    """Line 231: get_heat_on_demand happy path."""
+
+    async def test_get_heat_on_demand_returns_value(self):
+        """Returns the nested autoBoost.active value from products."""
+        climate = _make_climate({"heat-1": {"props": {"autoBoost": {"active": True}}}})
+        result = await climate.get_heat_on_demand(_make_device())
+        assert result is True
+
+    async def test_get_heat_on_demand_returns_none_when_missing(self):
+        """Returns None when the nested path does not exist."""
+        climate = _make_climate({"heat-1": {"props": {}}})
+        result = await climate.get_heat_on_demand(_make_device())
+        assert result is None
+
+
+class TestHeatingSetHeatOnDemand:
+    """Lines 337-342: set_heat_on_demand calls _execute_state_change with autoBoost kwarg."""
+
+    async def test_set_heat_on_demand_enabled(self):
+        """set_heat_on_demand passes autoBoost='ENABLED' to the API."""
+        climate = _make_climate({"heat-1": {"type": "heating"}})
+        result = await climate.set_heat_on_demand(_make_device(), "ENABLED")
+        assert result is True
+        climate.session.api.set_state.assert_called_once()
+        _, kwargs = climate.session.api.set_state.call_args
+        assert kwargs.get("autoBoost") == "ENABLED"
+
+    async def test_set_heat_on_demand_disabled(self):
+        """set_heat_on_demand passes autoBoost='DISABLED' to the API."""
+        climate = _make_climate({"heat-1": {"type": "heating"}})
+        result = await climate.set_heat_on_demand(_make_device(), "DISABLED")
+        assert result is True
+        _, kwargs = climate.session.api.set_state.call_args
+        assert kwargs.get("autoBoost") == "DISABLED"
+
+
+class TestHeatingGetScheduleNNLKeyError:
+    """Lines 438-439: KeyError in get_schedule_now_next_later."""
+
+    async def test_missing_schedule_key_returns_none(self):
+        """Product with state but no 'schedule' key causes KeyError → returns None."""
+        climate = _make_climate(
+            {"heat-1": {"state": {"mode": "SCHEDULE"}}}
+            # no 'schedule' key inside state
+        )
+        # Override get_mode to return SCHEDULE directly so the if-branch is entered
+        climate.session.helper.get_schedule_nnl.side_effect = KeyError("schedule")
+        # get_mode will read data["state"]["mode"] == "SCHEDULE" → enters the try block
+        # data["state"]["schedule"] raises KeyError → caught, returns None
+        result = await climate.get_schedule_now_next_later(_make_device())
+        assert result is None
+
+    async def test_schedule_key_error_caught_not_raised(self):
+        """A KeyError inside the try block does not propagate to the caller."""
+        climate = _make_climate({"heat-1": {"state": {"mode": "SCHEDULE"}}})
+        # Accessing data["state"]["schedule"] will raise KeyError (key absent)
+        try:
+            result = await climate.get_schedule_now_next_later(_make_device())
+        except KeyError:
+            pytest.fail(
+                "KeyError should have been caught inside get_schedule_now_next_later"
+            )
+        assert result is None
+
+
+class TestHeatingSetBoostOffScheduleMode:
+    """Lines 321->325: prev_mode not in ('MANUAL','OFF') — target kwarg not added."""
+
+    async def test_schedule_mode_no_target_kwarg(self):
+        """SCHEDULE as previous mode does not add a target kwarg."""
+        climate = _make_climate(
+            {
+                "heat-1": {
+                    "type": "heating",
+                    "state": {"boost": 5},
+                    "props": {"previous": {"mode": "SCHEDULE"}},
+                }
+            }
+        )
+        result = await climate.set_boost_off(_make_device())
+        assert result is True
+        _, kwargs = climate.session.api.set_state.call_args
+        assert "target" not in kwargs
+        assert kwargs.get("mode") == "SCHEDULE"
+
+
+class TestHeatingGetClimateCacheMiss:
+    """Lines 371->377: cache enabled but cached device is None → normal execution."""
+
+    async def test_cached_none_falls_through_to_normal_path(self):
+        """should_use_cached_data=True but get_cached_device=None → normal update."""
+        climate = _make_climate(
+            {
+                "heat-1": {
+                    "state": {"mode": "MANUAL", "target": 20.0},
+                    "props": {"temperature": 19.0},
+                }
+            },
+            devices={"dev-1": {"state": {}, "props": {}}},
+        )
+        climate.session.should_use_cached_data.return_value = True
+        climate.session.get_cached_device.return_value = None
+        result = await climate.get_climate(_make_device())
+        assert result is not None
+        climate.session.attr.online_offline.assert_called_once()

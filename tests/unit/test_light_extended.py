@@ -268,3 +268,27 @@ class TestGetBrightnessReturnsInt:
             f"Expected int, got {type(result).__name__}: {result!r}"
         )
         assert result == 127
+
+
+# ===========================================================================
+# Migrated from test_remaining_branches.py
+# ===========================================================================
+
+
+class TestLightGetLightCacheMiss:
+    """Lines 141->147: cache enabled but cached is None → normal execution."""
+
+    async def test_cached_none_falls_through(self):
+        session = _make_session(
+            products={
+                "light-1": {"state": {"status": "ON", "brightness": 100}, "props": {}}
+            },
+            devices={"dev-1": {"state": {}, "props": {}}},
+        )
+        light = Light(session=session)
+        d = _make_device()
+        session.should_use_cached_data.return_value = True
+        session.get_cached_device.return_value = None
+        result = await light.get_light(d)
+        assert result is not None
+        session.attr.online_offline.assert_called_once()

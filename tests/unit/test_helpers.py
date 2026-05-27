@@ -476,3 +476,93 @@ class TestGetDeviceData:
         }
         result = helper.get_device_data(product)
         assert result["id"] == "thermo-1"
+
+
+# ===========================================================================
+# Migrated from test_remaining_branches.py
+# ===========================================================================
+
+
+class TestHiveHelperZoneMismatch:
+    """hive_helper.py 163->160: loop continues when zones don't match."""
+
+    def test_zone_mismatch_keeps_product_as_device(self):
+        """When a Thermo device's zone doesn't match the product's zone,
+        the loop arc 163->160 is taken and device stays as the product."""
+        helper, _ = _make_helper(
+            devices={
+                "thermo-1": {
+                    "type": "thermostatui",
+                    "props": {"zone": "zone-B"},
+                }
+            }
+        )
+
+        product = {
+            "type": "heating",
+            "id": "prod-1",
+            "props": {"zone": "zone-A"},  # different zone from thermo-1
+        }
+
+        result = helper.get_device_data(product)
+        # The zone mismatch means device was never re-assigned; returns the product
+        assert result is product
+
+    def test_trv_without_zone_does_not_log_warning(self, caplog):
+        """TRV devices that omit 'zone' from props are silently skipped (no warning)."""
+        import logging
+
+        helper, _ = _make_helper(
+            devices={
+                "trv-1": {
+                    "type": "trv",
+                    "props": {"online": True},  # no 'zone' key — current API behaviour
+                }
+            }
+        )
+
+        product = {
+            "type": "heating",
+            "id": "prod-1",
+            "props": {"zone": "zone-A"},
+        }
+
+        with caplog.at_level(logging.WARNING, logger="apyhiveapi.helper.hive_helper"):
+            result = helper.get_device_data(product)
+
+        assert result is product
+        assert not caplog.records, (
+            f"Unexpected warnings: {[r.getMessage() for r in caplog.records]}"
+        )
+
+
+class TestHiveHelperSanitizeListNode:
+    """hive_helper.py line 359: list value under a non-sensitive key calls _walk(list)."""
+
+    def test_list_under_non_sensitive_key_is_walked(self):
+        """A list value under a non-sensitive key hits the isinstance(node, list) branch."""
+        helper, _ = _make_helper()
+        result = helper.sanitize_payload({"devices": ["device-a", "device-b"]})
+        # 'devices' is not a sensitive key → _walk called for the list
+        # _walk for a list returns [_walk(item) for item in node]
+        # Each string item: _walk(str) → str (falls through to return node)
+        assert result == {"devices": ["device-a", "device-b"]}
+
+    def test_list_containing_dicts_is_walked_recursively(self):
+        """A list of dicts under a non-sensitive key is recursively processed."""
+        helper, _ = _make_helper()
+        result = helper.sanitize_payload(
+            {
+                "items": [
+                    {"token": "abc", "name": "device1"},
+                    {"token": "xyz", "name": "device2"},
+                ]
+            }
+        )
+        # 'items' is not sensitive → _walk called for the list
+        # Each dict in the list is processed by _walk
+        # 'token' IS sensitive → masked in each sub-dict
+        assert result["items"][0]["name"] == "device1"
+        assert result["items"][0]["token"] != "abc"
+        assert result["items"][1]["name"] == "device2"
+        assert result["items"][1]["token"] != "xyz"

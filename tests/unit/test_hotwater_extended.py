@@ -258,3 +258,72 @@ class TestHotwaterGetStateScheduleGuard:
         )
         result = await h.get_state(d)
         assert result is None or isinstance(result, str)
+
+
+# ===========================================================================
+# Migrated from test_remaining_branches.py
+# ===========================================================================
+
+
+class TestHotwaterGetModeKeyError:
+    """Lines 43-44: KeyError in get_mode."""
+
+    async def test_get_mode_missing_state_returns_none(self):
+        """Product with no 'state' key causes KeyError → final stays None."""
+        hw = _make_hotwater({"hw-1": {}})
+        result = await hw.get_mode(_make_device())
+        assert result is None
+
+
+class TestHotwaterGetStateKeyError:
+    """Lines 83-84: KeyError in get_state."""
+
+    async def test_get_state_missing_status_key_returns_none(self):
+        """Product 'state' dict missing 'status' key triggers KeyError → None."""
+        hw = _make_hotwater({"hw-1": {"state": {"mode": "MANUAL"}}})
+        # 'status' key is absent from state → KeyError on data["state"]["status"]
+        result = await hw.get_state(_make_device())
+        assert result is None
+
+    async def test_get_state_missing_schedule_in_schedule_mode_returns_none(self):
+        """SCHEDULE mode with no 'schedule' key in state causes KeyError → None."""
+        hw = _make_hotwater(
+            {
+                "hw-1": {
+                    "state": {
+                        "mode": "SCHEDULE",
+                        "status": "ON",
+                        "boost": False,
+                        # no 'schedule' key
+                    }
+                }
+            }
+        )
+        result = await hw.get_state(_make_device())
+        assert result is None
+
+
+class TestHotwaterScheduleNNLNone:
+    """Lines 225->227: get_schedule_now_next_later returns None when schedule is absent."""
+
+    async def test_schedule_none_when_no_schedule_in_state(self):
+        """SCHEDULE mode product without 'schedule' key → _get_product_state returns None → None."""
+        hw = _make_hotwater({"hw-1": {"state": {"mode": "SCHEDULE"}}})
+        # _get_product_state(device, "state", "schedule") → None (key absent)
+        result = await hw.get_schedule_now_next_later(_make_device())
+        assert result is None
+
+
+class TestHotwaterGetWaterHeaterCacheMiss:
+    """Lines 173->180: cache enabled but cached is None → continues with network call."""
+
+    async def test_cached_none_falls_through(self):
+        hw = _make_hotwater(
+            {"hw-1": {"state": {"mode": "ON"}, "props": {}}},
+            devices={"dev-1": {"state": {}, "props": {}}},
+        )
+        hw.session.should_use_cached_data.return_value = True
+        hw.session.get_cached_device.return_value = None
+        result = await hw.get_water_heater(_make_device())
+        assert result is not None
+        hw.session.attr.online_offline.assert_called_once()
