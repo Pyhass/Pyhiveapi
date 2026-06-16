@@ -5,14 +5,20 @@ import json
 import logging
 import time
 
-import requests
-from aiohttp import ClientResponse, ClientSession, ClientTimeout, web_exceptions
-from pyquery import PyQuery
+from aiohttp import (
+    ClientError,
+    ClientResponse,
+    ClientSession,
+    ClientTimeout,
+    web_exceptions,
+)
 
 from ..helper.const import HTTP_FORBIDDEN, HTTP_UNAUTHORIZED
 from ..helper.hive_exceptions import FileInUse, HiveApiError, HiveAuthError, NoApiToken
 
 _LOGGER = logging.getLogger(__name__)
+
+_REQUEST_ERRORS = (ClientError, OSError, RuntimeError, json.JSONDecodeError)
 
 
 class HiveApiAsync:
@@ -40,7 +46,17 @@ class HiveApiAsync:
             "parsed": "No response to Hive API request",
         }
         self.session = hive_session
-        self.websession = ClientSession() if websession is None else websession
+        self.websession = websession
+
+    def _get_websession(self) -> ClientSession:
+        """Return the shared ClientSession, creating it on first use.
+
+        Created lazily so the session is constructed inside a running
+        event loop rather than in the synchronous constructor.
+        """
+        if self.websession is None:
+            self.websession = ClientSession()
+        return self.websession
 
     async def request(self, method: str, url: str, **kwargs) -> ClientResponse:
         """Make a request."""
@@ -69,7 +85,7 @@ class HiveApiAsync:
 
         timeout = ClientTimeout(total=self.timeout)
         req_start = time.monotonic()
-        async with self.websession.request(
+        async with self._get_websession().request(
             method, url, headers=headers, data=data, timeout=timeout
         ) as resp:
             resp_body = await resp.text()
@@ -102,85 +118,39 @@ class HiveApiAsync:
         )
         raise HiveApiError
 
-    def get_login_info(self):
-        """Get login properties to make the login request."""
-        url = "https://sso.hivehome.com/"
-
-        data = requests.get(url=url, timeout=self.timeout)
-        html = PyQuery(data.content)
-        json_data = json.loads(
-            '{"'
-            + (html("script:first").text())
-            .replace(",", ', "')
-            .replace("=", '":')
-            .replace("window.", "")
-            + "}"
-        )
-
-        login_data = {}
-        login_data.update({"UPID": json_data["HiveSSOPoolId"]})
-        login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-        login_data.update({"REGION": json_data["HiveSSOPoolId"]})
-        return login_data
-
-    async def get_all(self):
-        """Build and query all endpoint."""
-        json_return = {}
-        url = self.urls["all"]
+    async def _call_endpoint(self, method: str, url: str, data=None) -> dict:
+        """Call an endpoint and return {"original": status, "parsed": json}."""
+        json_return: dict = {}
         try:
-            resp = await self.request("get", url)
+            resp = await self.request(method, url, data=data)
             json_return.update({"original": resp.status})
             json_return.update({"parsed": await resp.json(content_type=None)})
         except asyncio.TimeoutError:
-            _LOGGER.warning("Hive API request timed out fetching all nodes.")
+            _LOGGER.warning("Hive API request timed out calling %s", url)
             raise
-        except (OSError, RuntimeError, ZeroDivisionError):
+        except _REQUEST_ERRORS:
             await self.error()
 
         return json_return
+
+    async def get_all(self):
+        """Build and query all endpoint."""
+        return await self._call_endpoint("get", self.urls["all"])
 
     async def get_devices(self):
         """Call the get devices endpoint."""
-        json_return = {}
-        url = self.urls["devices"]
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("get", self.urls["devices"])
 
     async def get_products(self):
         """Call the get products endpoint."""
-        json_return = {}
-        url = self.urls["products"]
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("get", self.urls["products"])
 
     async def get_actions(self):
         """Call the get actions endpoint."""
-        json_return = {}
-        url = self.urls["actions"]
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("get", self.urls["actions"])
 
     async def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
-        json_return = {}
         url = (
             self.base_url
             + "/products"
@@ -193,65 +163,34 @@ class HiveApiAsync:
             + "&to="
             + str(toepoch)
         )
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("get", url)
 
     async def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
-        json_return = {}
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
-        try:
-            resp = await self.request("get", url)
-            json_return.update({"original": resp.status})
-            json_return.update({"parsed": await resp.json(content_type=None)})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("get", url)
 
     async def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
         _LOGGER.debug("set_state - Setting state for %s/%s: %s", n_type, n_id, kwargs)
-        json_return = {}
         jsc = json.dumps(kwargs)
-
         url = self.urls["nodes"].format(n_type, n_id)
         try:
             await self.is_file_being_used()
-            resp = await self.request("post", url, data=jsc)
-            json_return["original"] = resp.status
-            json_return["parsed"] = await resp.json(content_type=None)
         except FileInUse:
             return {"original": "file"}
-        except (OSError, RuntimeError, ConnectionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("post", url, data=jsc)
 
     async def set_action(self, n_id, data):
         """Set the state of a Action."""
         _LOGGER.debug("Setting action %s", n_id)
-        json_return = {}
-        jsc = data
         url = self.urls["actions"] + "/" + n_id
         try:
             await self.is_file_being_used()
-            resp = await self.request("put", url, data=jsc)
-            json_return["original"] = resp.status
-            json_return["parsed"] = await resp.json(content_type=None)
         except FileInUse:
             return {"original": "file"}
-        except (OSError, RuntimeError, ConnectionError):
-            await self.error()
-
-        return json_return
+        return await self._call_endpoint("put", url, data=data)
 
     async def error(self):
         """An error has occurred interacting with the Hive API."""

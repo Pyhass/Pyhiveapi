@@ -63,9 +63,9 @@ class HiveLight(LightColorHandler, BaseDeviceHandler):
             data = self.session.data.products[device.hive_id]
             state = data["state"]["brightness"]
             final = int((state / 100) * 255)
-        except KeyError as e:
+        except (KeyError, TypeError) as e:
             _LOGGER.error(
-                "KeyError getting light brightness for %s: %s", device_name, str(e)
+                "Error getting light brightness for %s: %s", device_name, str(e)
             )
 
         return final

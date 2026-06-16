@@ -270,6 +270,23 @@ class TestGetBrightnessReturnsInt:
         assert result == 127
 
 
+class TestGetBrightnessNullValue:
+    """A null brightness in the API payload must not raise TypeError."""
+
+    async def test_null_brightness_returns_none(self):
+        session = _make_session(
+            products={
+                "light-1": {
+                    "state": {"status": "ON", "brightness": None},
+                    "props": {},
+                }
+            },
+        )
+        light = Light(session=session)
+        result = await light.get_brightness(_make_device())
+        assert result is None
+
+
 # ===========================================================================
 # Migrated from test_remaining_branches.py
 # ===========================================================================

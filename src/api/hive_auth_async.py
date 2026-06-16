@@ -131,6 +131,25 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         random_long_int = get_random(128)
         return random_long_int % self.big_n
 
+    def _new_srp_ephemeral(self) -> None:
+        """Generate a fresh SRP client ephemeral (a, A) pair.
+
+        SRP ephemerals must not be reused across handshakes, so this is
+        called at the start of every authentication attempt.
+        """
+        self.small_a_value = self.generate_random_small_a()
+        self.large_a_value = self.calculate_a()
+
+    def _store_auth_result(self, result: dict) -> None:
+        """Store tokens and any new device keys from an AuthenticationResult."""
+        auth_result = result["AuthenticationResult"]
+        self.access_token = auth_result["AccessToken"]
+        self.token_created = datetime.datetime.now()
+        if "NewDeviceMetadata" in auth_result:
+            self.device_group_key = auth_result["NewDeviceMetadata"]["DeviceGroupKey"]
+            self.device_key = auth_result["NewDeviceMetadata"]["DeviceKey"]
+            _LOGGER.debug("Device keys stored successfully.")
+
     def calculate_a(self):
         """
         Calculate the client's public value A.
@@ -269,6 +288,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         if self.client is None:
             await self.async_init()
 
+        self._new_srp_ephemeral()
         auth_params = await self.get_auth_params()
         response = None
         result = None
@@ -294,7 +314,12 @@ class HiveAuthAsync(DeviceRegistrationMixin):
             _LOGGER.error("Cognito auth failed: cannot reach endpoint.")
             raise HiveApiError from err
 
-        if response["ChallengeName"] == self.PASSWORD_VERIFIER_CHALLENGE:
+        if "AuthenticationResult" in response:
+            _LOGGER.debug("login - Authenticated directly without a challenge.")
+            self._store_auth_result(response)
+            return response
+
+        if response.get("ChallengeName") == self.PASSWORD_VERIFIER_CHALLENGE:
             _LOGGER.debug("login - Processing PASSWORD_VERIFIER challenge.")
             challenge_response = await self.process_challenge(
                 response["ChallengeParameters"]
@@ -328,20 +353,11 @@ class HiveAuthAsync(DeviceRegistrationMixin):
             _LOGGER.debug("login - SRP auth challenge completed successfully.")
 
             if "AuthenticationResult" in result:
-                self.access_token = result["AuthenticationResult"]["AccessToken"]
-                self.token_created = datetime.datetime.now()
-                if "NewDeviceMetadata" in result["AuthenticationResult"]:
-                    self.device_group_key = result["AuthenticationResult"][
-                        "NewDeviceMetadata"
-                    ]["DeviceGroupKey"]
-                    self.device_key = result["AuthenticationResult"][
-                        "NewDeviceMetadata"
-                    ]["DeviceKey"]
-                    _LOGGER.debug("login - Device keys stored successfully.")
+                self._store_auth_result(result)
 
             return result
 
-        challenge_name = response["ChallengeName"]
+        challenge_name = response.get("ChallengeName")
         _LOGGER.error("Unsupported Cognito challenge: %s", challenge_name)
         raise NotImplementedError(f"The {challenge_name} challenge is not supported")
 
@@ -356,6 +372,7 @@ class HiveAuthAsync(DeviceRegistrationMixin):
         if self.client is None:
             await self.async_init()
 
+        self._new_srp_ephemeral()
         auth_params = await self.get_auth_params(is_device_login=True)
 
         _LOGGER.debug("device_login - Processing DEVICE_SRP_AUTH challenge.")
@@ -419,20 +436,14 @@ class HiveAuthAsync(DeviceRegistrationMixin):
                 ),
             )
             if result and "AuthenticationResult" in result:
-                self.access_token = result["AuthenticationResult"]["AccessToken"]
-                self.token_created = datetime.datetime.now()
-                if "NewDeviceMetadata" in result["AuthenticationResult"]:
-                    self.device_group_key = result["AuthenticationResult"][
-                        "NewDeviceMetadata"
-                    ]["DeviceGroupKey"]
-                    self.device_key = result["AuthenticationResult"][
-                        "NewDeviceMetadata"
-                    ]["DeviceKey"]
+                self._store_auth_result(result)
         except botocore.exceptions.ClientError as err:
             code = (err.response or {}).get("Error", {}).get("Code", "")
             if code in ("NotAuthorizedException", "CodeMismatchException"):
                 _LOGGER.error("2FA code rejected by Cognito.")
                 raise HiveInvalid2FACode from err
+            _LOGGER.error("2FA failed: %s", code)
+            raise HiveApiError from err
         except botocore.exceptions.EndpointConnectionError as err:
             _LOGGER.error("2FA failed: cannot reach Cognito endpoint.")
             raise HiveApiError from err

@@ -209,6 +209,49 @@ class TestLogin:
             await auth.login()
 
     @pytest.mark.asyncio
+    async def test_direct_authentication_without_challenge_stores_token(self):
+        """A response with AuthenticationResult and no ChallengeName must not crash."""
+        auth = await _make_auth()
+        auth_result = {"AuthenticationResult": {"AccessToken": "direct-tok"}}
+        auth.loop.run_in_executor.return_value = auth_result
+
+        result = await auth.login()
+
+        assert result is auth_result
+        assert auth.access_token == "direct-tok"
+
+    @pytest.mark.asyncio
+    async def test_login_regenerates_srp_ephemeral_each_attempt(self):
+        """Each login() must use a fresh SRP (a, A) ephemeral pair."""
+        auth = await _make_auth()
+        auth.loop.run_in_executor.return_value = {
+            "AuthenticationResult": {"AccessToken": "tok"}
+        }
+
+        initial_a = auth.large_a_value
+        await auth.login()
+        second_a = auth.large_a_value
+        await auth.login()
+        third_a = auth.large_a_value
+
+        assert len({initial_a, second_a, third_a}) == 3
+
+    @pytest.mark.asyncio
+    async def test_device_login_regenerates_srp_ephemeral(self):
+        """device_login() must use a fresh SRP (a, A) ephemeral pair."""
+        auth = await _make_auth(device_key="dk-1", device_group_key="grp-1")
+        auth.device_password = "dev-pass"  # pragma: allowlist secret
+        auth.loop.run_in_executor.return_value = {"ChallengeParameters": {}}
+
+        initial_a = auth.large_a_value
+        with patch.object(
+            auth, "process_device_challenge", new=AsyncMock(return_value={})
+        ):
+            await auth.device_login()
+
+        assert auth.large_a_value != initial_a
+
+    @pytest.mark.asyncio
     async def test_endpoint_error_on_initiate_raises_api_error(self):
         auth = await _make_auth()
         auth.loop.run_in_executor.side_effect = _endpoint_error()
@@ -1240,19 +1283,19 @@ class TestDeviceLoginEndpointWrongName:
             await auth.device_login()
 
 
-class TestSms2faSwallowedClientError:
-    """Arc 424->435: ClientError caught in sms_2fa with unrecognised class name."""
+class TestSms2faUnrecognisedClientError:
+    """An unrecognised ClientError in sms_2fa must surface as HiveApiError."""
 
-    async def test_other_client_error_is_swallowed_returns_none(self):
-        """Non-matching ClientError is swallowed; result stays None (returned)."""
+    async def test_other_client_error_raises_hive_api_error(self):
+        """A ClientError that is not a 2FA rejection must not be swallowed."""
         auth = await _make_auth()
 
-        wrong_cls = type("OtherError", (botocore.exceptions.ClientError,), {})
-        wrong_err = wrong_cls({"Error": {"Code": "OtherError", "Message": "msg"}}, "op")
-        auth.loop.run_in_executor = AsyncMock(side_effect=wrong_err)
+        auth.loop.run_in_executor = AsyncMock(
+            side_effect=_named_client_error("LimitExceededException")
+        )
 
-        result = await auth.sms_2fa("123456", {"Session": "sess-xyz"})
-        assert result is None
+        with pytest.raises(HiveApiError):
+            await auth.sms_2fa("123456", {"Session": "sess-xyz"})
 
 
 class TestSms2faSwallowedEndpointError:

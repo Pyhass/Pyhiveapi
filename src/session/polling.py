@@ -181,7 +181,7 @@ class PollingMixin:
             for hive_type_key in api_resp_p:
                 if hive_type_key == "user":
                     self.data.user = api_resp_p[hive_type_key]
-                    self.config.user_id = api_resp_p[hive_type_key]["id"]
+                    self.config.user_id = api_resp_p[hive_type_key].get("id")
                 if hive_type_key == "products":
                     for a_product in api_resp_p[hive_type_key]:
                         tmp_products.update({a_product["id"]: a_product})
@@ -228,6 +228,7 @@ class PollingMixin:
             HiveApiError,
             ConnectionError,
             HTTPException,
+            KeyError,
         ) as err:
             _LOGGER.error("Failed to fetch devices: %s", err)
             self.config.last_update = (

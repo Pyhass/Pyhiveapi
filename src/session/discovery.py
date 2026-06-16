@@ -148,10 +148,15 @@ class DiscoveryMixin:
                 self.auth.password = config["password"]
 
             if "device_data" in config and not self.config.file:
-                self.auth.device_group_key = config["device_data"][0]
-                self.auth.device_key = config["device_data"][1]
-                self.auth.device_password = config["device_data"][2]
                 device_data = config["device_data"]
+                if len(device_data) < EXPECTED_DEVICE_DATA_LENGTH:
+                    raise HiveUnknownConfiguration(
+                        "device_data must contain device_group_key, "
+                        "device_key and device_password"
+                    )
+                self.auth.device_group_key = device_data[0]
+                self.auth.device_key = device_data[1]
+                self.auth.device_password = device_data[2]
                 if len(device_data) > EXPECTED_DEVICE_DATA_LENGTH:
                     token_created = device_data[3]
                     if token_created:

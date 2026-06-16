@@ -142,6 +142,18 @@ class TestStartSessionExtended:
         assert s.auth.device_key == "dev-key"
         assert s.auth.device_password == "dev-pass"  # pragma: allowlist secret
 
+    async def test_with_device_data_too_short_raises_unknown_configuration(self):
+        """device_data with fewer than 3 items raises HiveUnknownConfiguration."""
+        s = _make_stub()
+        s.config.file = False
+        with pytest.raises(HiveUnknownConfiguration):
+            await s.start_session(
+                {
+                    "tokens": {},
+                    "device_data": ["grp-key", "dev-key"],
+                }
+            )
+
     async def test_with_device_data_4_items_sets_token_created(self):
         """4-item device_data with a token_created timestamp sets tokens.token_created."""
         s = _make_stub()

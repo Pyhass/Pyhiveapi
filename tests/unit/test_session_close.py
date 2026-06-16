@@ -20,6 +20,15 @@ class TestHiveSessionClose:
 
         session.api.websession.close.assert_called_once()
 
+    async def test_close_with_no_websession_does_not_raise(self):
+        """close() is a no-op when the lazy websession was never created."""
+        session = object.__new__(HiveSession)
+        session.api = MagicMock()
+        session.api.websession = None
+        session._owns_websession = True
+
+        await session.close()
+
     async def test_close_skips_websession_close_when_already_closed(self):
         """close() does NOT call websession.close() when websession is already closed."""
         session = object.__new__(HiveSession)

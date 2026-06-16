@@ -189,6 +189,31 @@ class TestGetCurrentOperation:
         assert result is True
 
 
+class TestSetBoostOnValidation:
+    """set_boost_on input validation must reject bad values with None."""
+
+    async def test_non_numeric_mins_returns_none(self):
+        climate = _make_climate(products={"heat-1": {"type": "heating"}})
+        result = await climate.set_boost_on(_make_device(), "abc", 20)
+        assert result is None
+
+    async def test_non_numeric_temp_returns_none(self):
+        climate = _make_climate(products={"heat-1": {"type": "heating"}})
+        result = await climate.set_boost_on(_make_device(), "30", "hot")
+        assert result is None
+
+    async def test_temp_fraction_above_max_returns_none(self):
+        """32.9 exceeds the 32 maximum and must not be truncated past validation."""
+        climate = _make_climate(products={"heat-1": {"type": "heating"}})
+        result = await climate.set_boost_on(_make_device(), "30", 32.9)
+        assert result is None
+
+    async def test_valid_boost_executes_state_change(self):
+        climate = _make_climate(products={"heat-1": {"type": "heating"}})
+        result = await climate.set_boost_on(_make_device(), "30", 22)
+        assert result is True
+
+
 class TestSetBoostOff:
     async def test_not_in_products_returns_false(self):
         """Device hive_id not present in products returns False."""

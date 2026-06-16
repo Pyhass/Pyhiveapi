@@ -152,6 +152,27 @@ class TestRequest:
 
 
 class TestGetLoginInfo:
+    def test_tls_verification_is_not_disabled(self):
+        """The SSO bootstrap request must not pass verify=False."""
+        api = _make_api()
+        html_content = (
+            b"<script>"
+            b'window.HiveSSOPoolId="eu-west-1_abc",'
+            b'window.HiveSSOPublicCognitoClientId="client123"'
+            b"</script>"
+        )
+        mock_resp = MagicMock()
+        mock_resp.content = html_content
+        mock_resp.status_code = 200
+
+        with patch(
+            "apyhiveapi.api.hive_api.requests.get", return_value=mock_resp
+        ) as mock_get:
+            api.get_login_info()
+
+        _, call_kwargs = mock_get.call_args
+        assert call_kwargs.get("verify", True) is not False
+
     def test_successful_parse_returns_login_data(self):
         """Parses HiveSSOPoolId and HiveSSOPublicCognitoClientId from the SSO page."""
         api = _make_api()
@@ -230,14 +251,13 @@ class TestGetAll:
         assert result["original"] == 200
         assert result["parsed"] == payload
 
-    def test_none_response_logs_error_and_returns_empty(self):
+    def test_none_response_logs_error_and_returns_no_response_marker(self):
         """When request returns None the method should not crash."""
         api = _make_api()
         with patch.object(api, "request", return_value=None):
             result = api.get_all()
 
-        # No keys populated — dict remains empty
-        assert "original" not in result
+        assert result["original"] == "No response to Hive API request"
 
     def test_os_error_calls_error_method(self):
         api = _make_api()
@@ -471,8 +491,7 @@ class TestSetState:
         with patch.object(api, "request", return_value=None):
             result = api.set_state("heating", "node-1", mode="MANUAL")
 
-        # json_return stays at default (unchanged from init defaults)
-        assert result is api.json_return
+        assert result["original"] == "No response to Hive API request"
 
     def test_os_error_calls_error(self):
         api = _make_api()
@@ -512,6 +531,28 @@ class TestSetState:
         assert "SCHEDULE" in jsc_arg
         assert "target" in jsc_arg
         assert "21" in jsc_arg
+
+    def test_payload_is_valid_json_with_native_types(self):
+        """The payload must round-trip through json.loads with types intact."""
+        api = _make_api()
+        mock_resp = _make_mock_response(200, json_data={})
+
+        with patch.object(api, "request", return_value=mock_resp) as mock_req:
+            api.set_state("heating", "n1", mode="SCHEDULE", target=21.5)
+
+        jsc_arg = mock_req.call_args[0][2]
+        assert json.loads(jsc_arg) == {"mode": "SCHEDULE", "target": 21.5}
+
+    def test_payload_with_quotes_is_valid_json(self):
+        """Values containing quotes must not break or inject into the JSON."""
+        api = _make_api()
+        mock_resp = _make_mock_response(200, json_data={})
+
+        with patch.object(api, "request", return_value=mock_resp) as mock_req:
+            api.set_state("heating", "n1", name='say "hi", "extra": "injected')
+
+        jsc_arg = mock_req.call_args[0][2]
+        assert json.loads(jsc_arg) == {"name": 'say "hi", "extra": "injected'}
 
 
 # ---------------------------------------------------------------------------
@@ -572,6 +613,52 @@ class TestSetAction:
             api.set_action("act-1", "{}")
 
         assert api.json_return["original"] == "Error making API call"
+
+
+# ---------------------------------------------------------------------------
+# Tests: result isolation between calls
+# ---------------------------------------------------------------------------
+
+
+class TestResultIsolation:
+    def test_results_are_independent_between_calls(self):
+        """A later call must not mutate the dict returned by an earlier call."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+        resp_products = _make_mock_response(200, json_data=[{"id": "prod1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, resp_products]):
+            devices = api.get_devices()
+            products = api.get_products()
+
+        assert devices is not products
+        assert devices["parsed"] == [{"id": "dev1"}]
+        assert products["parsed"] == [{"id": "prod1"}]
+
+    def test_error_call_does_not_corrupt_previous_result(self):
+        """An error in a later call must not overwrite an earlier result."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, OSError("down")]):
+            devices = api.get_devices()
+            failed = api.get_products()
+
+        assert devices["original"] == 200
+        assert devices["parsed"] == [{"id": "dev1"}]
+        assert failed["original"] == "Error making API call"
+
+    def test_set_state_none_response_does_not_return_stale_data(self):
+        """set_state with no response must not surface a previous call's payload."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, None]):
+            api.get_devices()
+            result = api.set_state("heating", "n1", mode="MANUAL")
+
+        assert result["parsed"] != [{"id": "dev1"}]
+        assert result["original"] == "No response to Hive API request"
 
 
 # ---------------------------------------------------------------------------

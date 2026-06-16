@@ -93,6 +93,84 @@ class TestUpdateTokensExtended:
         await s.update_tokens(AUTH_RESULT, update_expiry_time=True)
         assert s.tokens.token_created > before
 
+    async def test_auth_result_missing_id_token_does_not_raise(self):
+        """AuthenticationResult with only AccessToken (e.g. file mode) must not crash."""
+        s = _make_stub()
+        payload = {"AuthenticationResult": {"AccessToken": "only-access"}}
+        await s.update_tokens(payload)
+        assert s.tokens.token_data["accessToken"] == "only-access"
+        # IdToken absent — the session token must not have been overwritten
+        assert s.tokens.token_data["token"] == ""
+
+    async def test_flat_dict_missing_access_token_does_not_raise(self):
+        """A flat token dict without accessToken must not crash."""
+        s = _make_stub()
+        flat = {"token": "t-only"}
+        await s.update_tokens(flat)
+        assert s.tokens.token_data["token"] == "t-only"
+        assert s.tokens.token_data["accessToken"] == ""
+
+    async def test_auth_result_missing_access_token_does_not_raise(self):
+        """AuthenticationResult with only IdToken must not crash."""
+        s = _make_stub()
+        payload = {"AuthenticationResult": {"IdToken": "only-id"}}
+        await s.update_tokens(payload)
+        assert s.tokens.token_data["token"] == "only-id"
+        assert s.tokens.token_data["accessToken"] == ""
+
+
+# ---------------------------------------------------------------------------
+# _retry_with_backoff — re-raise semantics
+# ---------------------------------------------------------------------------
+
+
+class _NeedsArgsError(Exception):
+    """Exception type that cannot be constructed without arguments."""
+
+    def __init__(self, first, second):
+        super().__init__(f"{first}/{second}")
+
+
+class TestRetryWithBackoffReraise:
+    """Without reraise_as, the original exception instance must propagate."""
+
+    async def test_original_exception_instance_propagates(self):
+        """The last caught error is re-raised as-is, not re-instantiated."""
+        s = _make_stub()
+        original = _NeedsArgsError("a", "b")
+
+        async def _always_fail():
+            raise original
+
+        with pytest.raises(_NeedsArgsError) as excinfo:
+            await s._retry_with_backoff(_always_fail, delays=(0,))
+
+        assert excinfo.value is original
+
+    async def test_empty_delays_raises_runtime_error(self):
+        """With no attempts configured the defensive fallback raises RuntimeError."""
+        s = _make_stub()
+
+        async def _never_called():
+            raise AssertionError("should not run")
+
+        with pytest.raises(RuntimeError, match="exhausted"):
+            await s._retry_with_backoff(_never_called, delays=())
+
+    async def test_reraise_as_still_translates_exception_type(self):
+        """When reraise_as is given the error is translated with chaining."""
+        s = _make_stub()
+
+        async def _always_fail():
+            raise ValueError("boom")
+
+        with pytest.raises(HiveReauthRequired) as excinfo:
+            await s._retry_with_backoff(
+                _always_fail, delays=(0,), reraise_as=HiveReauthRequired
+            )
+
+        assert isinstance(excinfo.value.__cause__, ValueError)
+
 
 # ---------------------------------------------------------------------------
 # _handle_device_login_challenge — extra branch

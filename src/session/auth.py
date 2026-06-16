@@ -70,10 +70,11 @@ class SessionAuthMixin:
                 raise
             except Exception as err:  # pylint: disable=broad-except
                 last_err = err
-        exc_type = reraise_as or (
-            type(last_err) if last_err is not None else RuntimeError
-        )
-        raise exc_type() from last_err  # pylint: disable=broad-exception-raised
+        if reraise_as is not None:
+            raise reraise_as() from last_err
+        if last_err is not None:
+            raise last_err
+        raise RuntimeError("Retry attempts exhausted without capturing an error")
 
     async def update_tokens(self, tokens: dict, update_expiry_time: bool = True):
         """Update session tokens.
@@ -91,10 +92,12 @@ class SessionAuthMixin:
         )
         if "AuthenticationResult" in tokens:
             data = tokens.get("AuthenticationResult") or {}
-            self.tokens.token_data.update({"token": data["IdToken"]})
+            if "IdToken" in data:
+                self.tokens.token_data.update({"token": data["IdToken"]})
             if "RefreshToken" in data:
                 self.tokens.token_data.update({"refreshToken": data["RefreshToken"]})
-            self.tokens.token_data.update({"accessToken": data["AccessToken"]})
+            if "AccessToken" in data:
+                self.tokens.token_data.update({"accessToken": data["AccessToken"]})
             if update_expiry_time:
                 self.tokens.token_created = datetime.now()
         elif "token" in tokens:
@@ -102,7 +105,8 @@ class SessionAuthMixin:
             self.tokens.token_data.update({"token": data["token"]})
             if "refreshToken" in data:
                 self.tokens.token_data.update({"refreshToken": data["refreshToken"]})
-            self.tokens.token_data.update({"accessToken": data["accessToken"]})
+            if "accessToken" in data:
+                self.tokens.token_data.update({"accessToken": data["accessToken"]})
             if update_expiry_time:
                 self.tokens.token_created = datetime.now()
 

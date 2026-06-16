@@ -2,14 +2,21 @@
 
 import json
 import logging
+import re
 
 import requests
-import urllib3
 from pyquery import PyQuery
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 _LOGGER = logging.getLogger(__name__)
+
+_NO_RESPONSE = "No response to Hive API request"
+_ERROR_RESPONSE = "Error making API call"
+
+# requests exceptions all subclass OSError; response.json() raises a
+# json.JSONDecodeError subclass.
+_REQUEST_ERRORS = (OSError, RuntimeError, json.JSONDecodeError)
+
+_SSO_ASSIGNMENT = re.compile(r'window\.(\w+)\s*=\s*"([^"]*)"')
 
 
 class HiveApi:
@@ -33,8 +40,8 @@ class HiveApi:
         }
         self.timeout = 5
         self.json_return = {
-            "original": "No response to Hive API request",
-            "parsed": "No response to Hive API request",
+            "original": _NO_RESPONSE,
+            "parsed": _NO_RESPONSE,
         }
         self.session = hive_session
         self.token = token
@@ -74,6 +81,25 @@ class HiveApi:
             _LOGGER.error("Request failed: %s", e)
             raise
 
+    def _call_endpoint(self, http_method, url, jsc=None):
+        """Call an endpoint and return a fresh result dict for this call."""
+        json_return = {
+            "original": _NO_RESPONSE,
+            "parsed": _NO_RESPONSE,
+        }
+        try:
+            response = self.request(http_method, url, jsc)
+            if response is not None:
+                json_return["original"] = response.status_code
+                json_return["parsed"] = response.json()
+            else:
+                _LOGGER.error("No response from Hive API call to %s", url)
+        except _REQUEST_ERRORS as e:
+            _LOGGER.error("Hive API call to %s failed: %s", url, e)
+            json_return = self.error()
+
+        return json_return
+
     def get_login_info(self):
         """Get login properties to make the login request."""
         _LOGGER.debug(
@@ -81,33 +107,21 @@ class HiveApi:
         )
         url = self.urls["properties"]
         try:
-            data = requests.get(url=url, verify=False, timeout=self.timeout)
+            data = requests.get(url=url, timeout=self.timeout)
             _LOGGER.debug(
                 "get_login_info - Login info response status: %s", data.status_code
             )
-            html = PyQuery(data.content)
-            json_data = json.loads(
-                '{"'
-                + (html("script:first").text())
-                .replace(",", ', "')
-                .replace("=", '":')
-                .replace("window.", "")
-                + "}"
-            )
+            script_text = PyQuery(data.content)("script:first").text()
+            sso_values = dict(_SSO_ASSIGNMENT.findall(script_text))
 
-            login_data = {}
-            login_data.update({"UPID": json_data["HiveSSOPoolId"]})
-            login_data.update({"CLIID": json_data["HiveSSOPublicCognitoClientId"]})
-            login_data.update({"REGION": json_data["HiveSSOPoolId"]})
+            login_data = {
+                "UPID": sso_values["HiveSSOPoolId"],
+                "CLIID": sso_values["HiveSSOPublicCognitoClientId"],
+                "REGION": sso_values["HiveSSOPoolId"],
+            }
             _LOGGER.debug("get_login_info - Login info extracted successfully")
             return login_data
-        except (
-            OSError,
-            RuntimeError,
-            ZeroDivisionError,
-            json.JSONDecodeError,
-            KeyError,
-        ) as e:
+        except (OSError, RuntimeError, KeyError) as e:
             _LOGGER.error("Failed to get login info: %s", str(e))
             self.error()
             return None
@@ -115,59 +129,23 @@ class HiveApi:
     def get_all(self):
         """Build and query all endpoint."""
         _LOGGER.debug("get_all - Fetching all devices/products/actions from Hive API")
-        json_return = {}
         url = self.urls["base"] + self.urls["all"]
-        try:
-            info = self.request("GET", url)
-            if info is not None:
-                json_return.update({"original": info.status_code})
-                json_return.update({"parsed": info.json()})
-                _LOGGER.debug(
-                    "get_all - All data fetch successful, status: %s", info.status_code
-                )
-            else:
-                _LOGGER.error("Failed to get response from all endpoint")
-        except (OSError, RuntimeError, ZeroDivisionError, json.JSONDecodeError) as e:
-            _LOGGER.error("Failed to fetch all data: %s", str(e))
-            self.error()
-
-        return json_return
+        return self._call_endpoint("GET", url)
 
     def get_devices(self):
         """Call the get devices endpoint."""
         url = self.urls["base"] + self.urls["devices"]
-        try:
-            response = self.request("GET", url)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("GET", url)
 
     def get_products(self):
         """Call the get products endpoint."""
         url = self.urls["base"] + self.urls["products"]
-        try:
-            response = self.request("GET", url)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("GET", url)
 
     def get_actions(self):
         """Call the get actions endpoint."""
         url = self.urls["base"] + self.urls["actions"]
-        try:
-            response = self.request("GET", url)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("GET", url)
 
     def motion_sensor(self, sensor, fromepoch, toepoch):
         """Call a way to get motion sensor info."""
@@ -183,27 +161,13 @@ class HiveApi:
             + "&to="
             + str(toepoch)
         )
-        try:
-            response = self.request("GET", url)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("GET", url)
 
     def get_weather(self, weather_url):
         """Call endpoint to get local weather from Hive API."""
         t_url = self.urls["weather"] + weather_url
         url = t_url.replace(" ", "%20")
-        try:
-            response = self.request("GET", url)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("GET", url)
 
     def set_state(self, n_type, n_id, **kwargs):
         """Set the state of a Device."""
@@ -213,58 +177,27 @@ class HiveApi:
             n_type,
             kwargs,
         )
-        jsc = (
-            "{"
-            + ",".join(
-                ('"' + str(i) + '": "' + str(t) + '" ' for i, t in kwargs.items())
-            )
-            + "}"
-        )
-
+        jsc = json.dumps(kwargs)
         url = self.urls["base"] + self.urls["nodes"].format(n_type, n_id)
-
-        try:
-            response = self.request("POST", url, jsc)
-            if response is not None:
-                self.json_return.update({"original": response.status_code})
-                self.json_return.update({"parsed": response.json()})
-                _LOGGER.debug(
-                    "set_state - State set successfully for %s, status: %s",
-                    n_id,
-                    response.status_code,
-                )
-            else:
-                _LOGGER.error("Failed to set state for %s - no response", n_id)
-        except (
-            OSError,
-            RuntimeError,
-            ZeroDivisionError,
-            ConnectionError,
-            json.JSONDecodeError,
-        ) as e:
-            _LOGGER.error("Failed to set state for %s: %s", n_id, str(e))
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("POST", url, jsc)
 
     def set_action(self, n_id, data):
         """Set the state of a Action."""
         jsc = data
         url = self.urls["base"] + self.urls["actions"] + "/" + n_id
-        try:
-            response = self.request("POST", url, jsc)
-            self.json_return.update({"original": response.status_code})
-            self.json_return.update({"parsed": response.json()})
-        except (OSError, RuntimeError, ZeroDivisionError, ConnectionError):
-            self.error()
-
-        return self.json_return
+        return self._call_endpoint("POST", url, jsc)
 
     def error(self):
         """An error has occurred interacting with the Hive API."""
         _LOGGER.error("API error occurred - returning error response")
-        self.json_return.update({"original": "Error making API call"})
-        self.json_return.update({"parsed": "Error making API call"})
+        error_return = {
+            "original": _ERROR_RESPONSE,
+            "parsed": _ERROR_RESPONSE,
+        }
+        # Kept in sync for backwards compatibility with callers that read
+        # the last error state off the instance.
+        self.json_return.update(error_return)
+        return error_return
 
 
 class UnknownConfig(Exception):

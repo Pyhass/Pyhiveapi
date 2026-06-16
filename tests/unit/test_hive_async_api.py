@@ -3,6 +3,7 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
 import pytest
 from aiohttp import web_exceptions
 from apyhiveapi.api.hive_async_api import HiveApiAsync
@@ -314,14 +315,26 @@ class TestIsFileBeingUsed:
 
 
 class TestInit:
-    async def test_default_websession_created_when_none_passed(self):
+    def test_no_websession_created_at_init(self):
+        """No ClientSession is created in the sync constructor."""
         session = MagicMock()
         session.tokens = MagicMock()
         session.tokens.token_data = {"token": "tok"}
         session.config = MagicMock()
         api = HiveApiAsync(hive_session=session)
-        assert api.websession is not None
-        await api.websession.close()
+        assert api.websession is None
+
+    def test_websession_created_lazily_and_cached(self):
+        """The first _get_websession() call creates and caches a ClientSession."""
+        session = MagicMock()
+        api = HiveApiAsync(hive_session=session)
+        with patch("apyhiveapi.api.hive_async_api.ClientSession") as mock_session_cls:
+            first = api._get_websession()
+            second = api._get_websession()
+        mock_session_cls.assert_called_once()
+        assert first is mock_session_cls.return_value
+        assert second is first
+        assert api.websession is first
 
     def test_custom_websession_is_used(self):
         session = MagicMock()
@@ -363,66 +376,6 @@ class TestRequestNonAuthErrorBranch:
         api = _make_api(status=422)
         with pytest.raises(HiveApiError):
             await api.request("get", "https://beekeeper.hivehome.com/1.0/devices")
-
-
-class TestGetLoginInfo:
-    """Cover lines 112-129: get_login_info() parses HTML and returns login dict."""
-
-    def test_returns_upid_cliid_region(self):
-        """Successful fetch returns correct keys from parsed HTML."""
-        html_content = (
-            b"<script>"
-            b'window.HiveSSOPoolId="eu-west-1_abc123",'
-            b'window.HiveSSOPublicCognitoClientId="client-xyz"'
-            b"</script>"
-        )
-        mock_response = MagicMock()
-        mock_response.content = html_content
-        api = _make_api()
-        with patch(
-            "apyhiveapi.api.hive_async_api.requests.get", return_value=mock_response
-        ):
-            result = api.get_login_info()
-        assert result["UPID"] == "eu-west-1_abc123"
-        assert result["CLIID"] == "client-xyz"
-        assert result["REGION"] == "eu-west-1_abc123"
-
-    def test_makes_request_to_sso_url(self):
-        """Verifies requests.get is called with the SSO URL."""
-        html_content = (
-            b"<script>"
-            b'window.HiveSSOPoolId="eu-west-1_pool",'
-            b'window.HiveSSOPublicCognitoClientId="cid"'
-            b"</script>"
-        )
-        mock_response = MagicMock()
-        mock_response.content = html_content
-        api = _make_api()
-        with patch(
-            "apyhiveapi.api.hive_async_api.requests.get", return_value=mock_response
-        ) as mock_get:
-            api.get_login_info()
-        mock_get.assert_called_once_with(
-            url="https://sso.hivehome.com/", timeout=api.timeout
-        )
-
-    def test_uses_first_script_tag(self):
-        """PyQuery selects the first script — extra scripts are ignored."""
-        html_content = (
-            b"<script>"
-            b'window.HiveSSOPoolId="eu-west-1_first",'
-            b'window.HiveSSOPublicCognitoClientId="cid-first"'
-            b"</script>"
-            b'<script>window.SomeOtherThing="ignored"</script>'
-        )
-        mock_response = MagicMock()
-        mock_response.content = html_content
-        api = _make_api()
-        with patch(
-            "apyhiveapi.api.hive_async_api.requests.get", return_value=mock_response
-        ):
-            result = api.get_login_info()
-        assert result["UPID"] == "eu-west-1_first"
 
 
 class TestMotionSensorBranches:
@@ -476,12 +429,12 @@ class TestMotionSensorBranches:
         with pytest.raises(web_exceptions.HTTPError):
             await api.motion_sensor(sensor, fromepoch=1000, toepoch=2000)
 
-    async def test_zero_division_raises_http_error(self):
-        """ZeroDivisionError inside the try block causes error() → HTTPError."""
+    async def test_client_error_raises_http_error(self):
+        """aiohttp.ClientError inside the try block causes error() → HTTPError."""
         api = _make_api(status=200)
         api.urls["base"] = ""
         sensor = {"type": "motionsensor", "id": "sensor-003"}
-        api.websession.request.side_effect = ZeroDivisionError()
+        api.websession.request.side_effect = aiohttp.ClientError()
         with pytest.raises(web_exceptions.HTTPError):
             await api.motion_sensor(sensor, fromepoch=1000, toepoch=2000)
 
@@ -541,10 +494,10 @@ class TestGetWeather:
         with pytest.raises(web_exceptions.HTTPError):
             await api.get_weather("?lat=51.5")
 
-    async def test_zero_division_raises_http_error(self):
-        """ZeroDivisionError inside the try block causes error() → HTTPError."""
+    async def test_client_error_raises_http_error(self):
+        """aiohttp.ClientError inside the try block causes error() → HTTPError."""
         api = _make_api(status=200)
-        api.websession.request.side_effect = ZeroDivisionError()
+        api.websession.request.side_effect = aiohttp.ClientError()
         with pytest.raises(web_exceptions.HTTPError):
             await api.get_weather("?lat=51.5")
 

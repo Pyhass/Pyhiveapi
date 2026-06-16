@@ -128,11 +128,13 @@ class TestHiveLifecycle:
             assert hive is not None
 
     async def test_close_calls_websession_close(self):
-        """__aexit__ closes the underlying aiohttp websession."""
+        """__aexit__ closes the lazily created aiohttp websession."""
         async with Hive(
             username="test@example.com",
             password="pass",  # pragma: allowlist secret
         ) as hive:
-            ws = hive.api.websession
+            # The websession is created lazily, on first use inside the loop.
+            assert hive.api.websession is None
+            ws = hive.api._get_websession()
         # After context exit the session should be closed
         assert ws.closed
