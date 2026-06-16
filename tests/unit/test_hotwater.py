@@ -11,7 +11,6 @@ _SCHEDULE_MODE = "SCHEDULE"
 _ON_MODE = "ON"
 _OFF_MODE = "OFF"
 _BOOST_MODE = "BOOST"
-_BOOST_MINS = 30
 
 
 def _make_hotwater(products=None, devices=None):
