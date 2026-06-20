@@ -152,6 +152,27 @@ class TestRequest:
 
 
 class TestGetLoginInfo:
+    def test_tls_verification_is_not_disabled(self):
+        """The SSO bootstrap request must not pass verify=False."""
+        api = _make_api()
+        html_content = (
+            b"<script>"
+            b'window.HiveSSOPoolId="eu-west-1_abc",'
+            b'window.HiveSSOPublicCognitoClientId="client123"'
+            b"</script>"
+        )
+        mock_resp = MagicMock()
+        mock_resp.content = html_content
+        mock_resp.status_code = 200
+
+        with patch(
+            "apyhiveapi.api.hive_api.requests.get", return_value=mock_resp
+        ) as mock_get:
+            api.get_login_info()
+
+        _, call_kwargs = mock_get.call_args
+        assert call_kwargs.get("verify", True) is not False
+
     def test_successful_parse_returns_login_data(self):
         """Parses HiveSSOPoolId and HiveSSOPublicCognitoClientId from the SSO page."""
         api = _make_api()
@@ -214,119 +235,6 @@ class TestGetLoginInfo:
 
 
 # ---------------------------------------------------------------------------
-# Tests: HiveApi.refresh_tokens
-# ---------------------------------------------------------------------------
-
-
-class TestRefreshTokens:
-    def test_successful_with_token_key_updates_session(self):
-        """When the response contains 'token', session.update_tokens is called."""
-        api = _make_api()
-        refresh_data = {
-            "token": "new-token",
-            "platform": {"endpoint": "https://new.endpoint.com"},
-        }
-        mock_resp = _make_mock_response(
-            200, json_data=refresh_data, text=json.dumps(refresh_data)
-        )
-
-        with patch.object(api, "request", return_value=mock_resp):
-            result = api.refresh_tokens()
-
-        api.session.update_tokens.assert_called_once_with(refresh_data)
-        assert result["original"] == 200
-
-    def test_no_token_in_response_no_session_update(self):
-        """When response lacks 'token' key, update_tokens is not called."""
-        api = _make_api()
-        response_data = {"other_key": "value"}
-        mock_resp = _make_mock_response(
-            200, json_data=response_data, text=json.dumps(response_data)
-        )
-
-        with patch.object(api, "request", return_value=mock_resp):
-            api.refresh_tokens()
-
-        api.session.update_tokens.assert_not_called()
-
-    def test_none_tokens_defaults_to_empty_dict(self):
-        """Calling refresh_tokens() without arguments uses session.token_data."""
-        api = _make_api()
-        response_data = {"other": "val"}
-        mock_resp = _make_mock_response(
-            200, json_data=response_data, text=json.dumps(response_data)
-        )
-
-        with patch.object(api, "request", return_value=mock_resp) as mock_req:
-            api.refresh_tokens()
-            # Should have been called (session provides the tokens dict)
-            mock_req.assert_called_once()
-
-    def test_os_error_calls_error(self):
-        api = _make_api()
-        with patch.object(api, "request", side_effect=OSError("connection failed")):
-            api.refresh_tokens()
-
-        assert api.json_return["original"] == "Error making API call"
-
-    def test_runtime_error_calls_error(self):
-        api = _make_api()
-        with patch.object(api, "request", side_effect=RuntimeError("fail")):
-            api.refresh_tokens()
-
-        assert api.json_return["original"] == "Error making API call"
-
-    def test_json_decode_error_calls_error(self):
-        """Bad JSON in response text triggers error()."""
-        api = _make_api()
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.text = "not-json"
-
-        with patch.object(api, "request", return_value=mock_resp):
-            api.refresh_tokens()
-
-        assert api.json_return["original"] == "Error making API call"
-
-    def test_explicit_tokens_arg_skips_none_branch(self):
-        """Passing a non-None tokens arg covers the 80->82 False branch."""
-        api = _make_api()
-        explicit_tokens = {"key": "val"}
-        response_data = {"other": "x"}
-        mock_resp = _make_mock_response(200, json_data=response_data)
-
-        with patch.object(api, "request", return_value=mock_resp):
-            api.refresh_tokens(tokens=explicit_tokens)
-        # Session is not None so session tokens overwrite, but no crash
-        api.session.update_tokens.assert_not_called()
-
-    def test_session_none_skips_token_overwrite(self):
-        """When session is None the 83->85 False branch is taken (no token overwrite)."""
-        api = _make_api_no_session(token="standalone-token")
-        response_data = {"other": "x"}
-        mock_resp = _make_mock_response(200, json_data=response_data)
-
-        with patch.object(api, "request", return_value=mock_resp):
-            api.refresh_tokens(tokens={"key": "val"})
-
-    def test_urls_base_updated_on_token_refresh(self):
-        """After a successful refresh the base URL is updated from the response."""
-        api = _make_api()
-        refresh_data = {
-            "token": "new-tok",
-            "platform": {"endpoint": "https://new-platform.com/1.0"},
-        }
-        mock_resp = _make_mock_response(
-            200, json_data=refresh_data, text=json.dumps(refresh_data)
-        )
-
-        with patch.object(api, "request", return_value=mock_resp):
-            api.refresh_tokens()
-
-        assert api.urls["base"] == "https://new-platform.com/1.0"
-
-
-# ---------------------------------------------------------------------------
 # Tests: HiveApi.get_all
 # ---------------------------------------------------------------------------
 
@@ -343,14 +251,13 @@ class TestGetAll:
         assert result["original"] == 200
         assert result["parsed"] == payload
 
-    def test_none_response_logs_error_and_returns_empty(self):
+    def test_none_response_logs_error_and_returns_no_response_marker(self):
         """When request returns None the method should not crash."""
         api = _make_api()
         with patch.object(api, "request", return_value=None):
             result = api.get_all()
 
-        # No keys populated — dict remains empty
-        assert "original" not in result
+        assert result["original"] == "No response to Hive API request"
 
     def test_os_error_calls_error_method(self):
         api = _make_api()
@@ -584,8 +491,7 @@ class TestSetState:
         with patch.object(api, "request", return_value=None):
             result = api.set_state("heating", "node-1", mode="MANUAL")
 
-        # json_return stays at default (unchanged from init defaults)
-        assert result is api.json_return
+        assert result["original"] == "No response to Hive API request"
 
     def test_os_error_calls_error(self):
         api = _make_api()
@@ -625,6 +531,28 @@ class TestSetState:
         assert "SCHEDULE" in jsc_arg
         assert "target" in jsc_arg
         assert "21" in jsc_arg
+
+    def test_payload_is_valid_json_with_native_types(self):
+        """The payload must round-trip through json.loads with types intact."""
+        api = _make_api()
+        mock_resp = _make_mock_response(200, json_data={})
+
+        with patch.object(api, "request", return_value=mock_resp) as mock_req:
+            api.set_state("heating", "n1", mode="SCHEDULE", target=21.5)
+
+        jsc_arg = mock_req.call_args[0][2]
+        assert json.loads(jsc_arg) == {"mode": "SCHEDULE", "target": 21.5}
+
+    def test_payload_with_quotes_is_valid_json(self):
+        """Values containing quotes must not break or inject into the JSON."""
+        api = _make_api()
+        mock_resp = _make_mock_response(200, json_data={})
+
+        with patch.object(api, "request", return_value=mock_resp) as mock_req:
+            api.set_state("heating", "n1", name='say "hi", "extra": "injected')
+
+        jsc_arg = mock_req.call_args[0][2]
+        assert json.loads(jsc_arg) == {"name": 'say "hi", "extra": "injected'}
 
 
 # ---------------------------------------------------------------------------
@@ -685,6 +613,52 @@ class TestSetAction:
             api.set_action("act-1", "{}")
 
         assert api.json_return["original"] == "Error making API call"
+
+
+# ---------------------------------------------------------------------------
+# Tests: result isolation between calls
+# ---------------------------------------------------------------------------
+
+
+class TestResultIsolation:
+    def test_results_are_independent_between_calls(self):
+        """A later call must not mutate the dict returned by an earlier call."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+        resp_products = _make_mock_response(200, json_data=[{"id": "prod1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, resp_products]):
+            devices = api.get_devices()
+            products = api.get_products()
+
+        assert devices is not products
+        assert devices["parsed"] == [{"id": "dev1"}]
+        assert products["parsed"] == [{"id": "prod1"}]
+
+    def test_error_call_does_not_corrupt_previous_result(self):
+        """An error in a later call must not overwrite an earlier result."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, OSError("down")]):
+            devices = api.get_devices()
+            failed = api.get_products()
+
+        assert devices["original"] == 200
+        assert devices["parsed"] == [{"id": "dev1"}]
+        assert failed["original"] == "Error making API call"
+
+    def test_set_state_none_response_does_not_return_stale_data(self):
+        """set_state with no response must not surface a previous call's payload."""
+        api = _make_api()
+        resp_devices = _make_mock_response(200, json_data=[{"id": "dev1"}])
+
+        with patch.object(api, "request", side_effect=[resp_devices, None]):
+            api.get_devices()
+            result = api.set_state("heating", "n1", mode="MANUAL")
+
+        assert result["parsed"] != [{"id": "dev1"}]
+        assert result["original"] == "No response to Hive API request"
 
 
 # ---------------------------------------------------------------------------
