@@ -130,12 +130,20 @@ class TestHiveHubHolidayMode:
         return HiveHub(session=session)
 
     async def test_get_holiday_mode_returns_parsed_on_200(self):
-        payload = {"active": False, "enabled": False, "start": 1, "end": 2, "temperature": 12}
+        payload = {
+            "active": False,
+            "enabled": False,
+            "start": 1,
+            "end": 2,
+            "temperature": 12,
+        }
         hub = self._make_hub({"original": 200, "parsed": payload})
         assert await hub.get_holiday_mode() == payload
 
     async def test_get_holiday_mode_returns_none_on_failure(self):
-        hub = self._make_hub({"original": 400, "parsed": {"error": "MALFORMED_REQUEST"}})
+        hub = self._make_hub(
+            {"original": 400, "parsed": {"error": "MALFORMED_REQUEST"}}
+        )
         assert await hub.get_holiday_mode() is None
 
     async def test_set_holiday_mode_returns_true_on_200(self):
