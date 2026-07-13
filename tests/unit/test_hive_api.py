@@ -656,7 +656,8 @@ class TestHolidayMode:
 
         assert result["original"] == 200
         assert result["parsed"] == payload
-        method_arg, url_arg, jsc_arg = mock_req.call_args[0]
+        method_arg = mock_req.call_args[0][0]
+        jsc_arg = mock_req.call_args[0][2]
         assert method_arg == "POST"
         assert json.loads(jsc_arg) == {
             "start": 1783767707701,

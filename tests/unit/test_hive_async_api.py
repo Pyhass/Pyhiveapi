@@ -567,8 +567,6 @@ class TestSetStateJsonEncoding:
 
     async def test_set_state_escapes_quotes_in_value(self):
         """A value containing double-quotes must produce valid, parseable JSON."""
-        import json  # noqa: PLC0415
-
         session = MagicMock()
         session.tokens.token_data = {"token": "tok"}
         session.config.file = False
