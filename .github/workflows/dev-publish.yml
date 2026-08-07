@@ -1,5 +1,4 @@
 # Manual workflow to build and publish dev Python packages from non-master branches.
-# Publishes to TestPyPI for development/testing purposes.
 
 name: Dev Publish
 
@@ -26,9 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: guard
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
@@ -39,7 +38,7 @@ jobs:
         run: python -m build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dev-dists
           path: dist/
@@ -56,7 +55,7 @@ jobs:
 
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dev-dists
           path: dist/

@@ -1,4 +1,2 @@
 recursive-include pyhiveapi *
-include requirements.txt
-include requirements_test.txt
 recursive-include data *

@@ -1,0 +1,35 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  claude-review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this pull request for the pyhive-integration Python library. Check for:
+            - Correctness: logic errors, incorrect async/await usage, blocking calls in async context
+            - Type annotations: missing or incorrect types on public methods
+            - Security: no secrets in code, safe HTTP and Cognito API call patterns
+            - Style: snake_case naming, no unused imports, ruff/pylint compliance
+            - Tests: are new features or bug fixes covered by tests?
+            Post inline comments on specific lines where relevant. Be concise.
